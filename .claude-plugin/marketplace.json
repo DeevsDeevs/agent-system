@@ -5,8 +5,8 @@
     "email": "deevsgt15@gmail.com"
   },
   "metadata": {
-    "description": "Comprehensive marketplace for Claude Code, Open Code, and other agentic AI systems",
-    "version": "0.0.1"
+    "description": "Deevs' marketplace for Claude Code, Open Code, and other agentic AI systems",
+    "version": "0.0.2"
   },
   "plugins": [
     {
@@ -14,6 +14,12 @@
       "description": "Multi-session workflow chains for maintaining linked context across conversations",
       "source": "./chain-system",
       "commands": ["./commands/"]
+    },
+    {
+      "name": "tmux",
+      "description": "Interactive terminal control for REPLs, debuggers, and servers",
+      "source": "./tmux",
+      "skills": ["./"]
     }
   ]
 }

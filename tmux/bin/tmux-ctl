@@ -1,0 +1,213 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+VERSION="0.1.0"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIB_DIR="$(cd "$SCRIPT_DIR/../lib" && pwd)"
+
+source "$LIB_DIR/state.sh"
+source "$LIB_DIR/core.sh"
+source "$LIB_DIR/pane.sh"
+source "$LIB_DIR/wait.sh"
+
+show_help() {
+    cat << 'EOF'
+tmux-ctl - Terminal multiplexer control CLI
+
+USAGE:
+    tmux-ctl <command> [options]
+
+COMMANDS:
+    launch <cmd>              Launch command in new pane
+    send <text> --pane=<id>   Send text to pane
+    capture --pane=<id>       Capture pane output
+    list-panes                List all panes (JSON)
+    kill --pane=<id>          Kill pane
+    interrupt --pane=<id>     Send Ctrl+C to pane
+    escape --pane=<id>        Send Escape to pane
+    wait-idle --pane=<id>     Wait until pane is idle
+    wait-for <pattern> --pane=<id>  Wait for pattern
+
+    status                    Show current tmux status
+    state                     Show current state
+    state-refresh             Refresh state from tmux
+    cleanup-all               Kill all tracked sessions
+
+    help                      Show this help
+    version                   Show version
+
+EXAMPLES:
+    tmux-ctl launch zsh
+    tmux-ctl send "echo hello" --pane=1
+    tmux-ctl capture --pane=1
+    tmux-ctl list-panes
+EOF
+}
+
+main() {
+    if [[ $# -eq 0 ]]; then
+        show_help
+        exit 0
+    fi
+
+    local cmd="$1"
+    shift
+
+    case "$cmd" in
+        help|--help|-h)
+            show_help
+            ;;
+        version|--version|-v)
+            echo "tmux-ctl v${VERSION}"
+            ;;
+        state)
+            state_init
+            state_read | jq .
+            ;;
+        status)
+            state_init
+            if tmux_is_inside; then
+                echo "Mode: local (inside tmux)"
+                echo "Session: $(tmux_get_current_session)"
+                echo "Window: $(tmux_get_current_window)"
+                echo "Pane: $(tmux_get_current_pane)"
+            else
+                echo "Mode: remote (outside tmux)"
+                local sessions
+                sessions=$(state_get_sessions)
+                if [[ -n "$sessions" ]]; then
+                    echo "Tracked sessions:"
+                    while IFS= read -r sess; do
+                        echo "  - $sess"
+                    done <<< "$sessions"
+                else
+                    echo "No tracked sessions"
+                fi
+            fi
+            ;;
+        launch)
+            if [[ $# -eq 0 ]]; then
+                echo "Error: launch requires a command argument" >&2
+                exit 1
+            fi
+            pane_launch "$*"
+            ;;
+        capture)
+            local pane_id=""
+            for arg in "$@"; do
+                if [[ "$arg" == --pane=* ]]; then
+                    pane_id="${arg#--pane=}"
+                fi
+            done
+            if [[ -z "$pane_id" ]]; then
+                echo "Error: --pane=<id> required" >&2
+                exit 1
+            fi
+            pane_capture "$pane_id"
+            ;;
+        list-panes)
+            pane_list
+            ;;
+        send)
+            local text="" pane_id="" enter="true"
+            for arg in "$@"; do
+                if [[ "$arg" == --pane=* ]]; then
+                    pane_id="${arg#--pane=}"
+                elif [[ "$arg" == --no-enter ]]; then
+                    enter="false"
+                elif [[ -z "$text" ]]; then
+                    text="$arg"
+                fi
+            done
+            if [[ -z "$text" || -z "$pane_id" ]]; then
+                echo "Error: send requires <text> and --pane=<id>" >&2
+                exit 1
+            fi
+            pane_send "$text" "$pane_id" "$enter"
+            ;;
+        kill)
+            local pane_id=""
+            for arg in "$@"; do
+                if [[ "$arg" == --pane=* ]]; then
+                    pane_id="${arg#--pane=}"
+                fi
+            done
+            if [[ -z "$pane_id" ]]; then
+                echo "Error: --pane=<id> required" >&2
+                exit 1
+            fi
+            pane_kill "$pane_id"
+            ;;
+        interrupt)
+            local pane_id=""
+            for arg in "$@"; do
+                if [[ "$arg" == --pane=* ]]; then
+                    pane_id="${arg#--pane=}"
+                fi
+            done
+            if [[ -z "$pane_id" ]]; then
+                echo "Error: --pane=<id> required" >&2
+                exit 1
+            fi
+            pane_interrupt "$pane_id"
+            ;;
+        escape)
+            local pane_id=""
+            for arg in "$@"; do
+                if [[ "$arg" == --pane=* ]]; then
+                    pane_id="${arg#--pane=}"
+                fi
+            done
+            if [[ -z "$pane_id" ]]; then
+                echo "Error: --pane=<id> required" >&2
+                exit 1
+            fi
+            pane_escape "$pane_id"
+            ;;
+        wait-idle)
+            local pane_id="" idle_time="2" timeout="30"
+            for arg in "$@"; do
+                if [[ "$arg" == --pane=* ]]; then
+                    pane_id="${arg#--pane=}"
+                elif [[ "$arg" == --idle-time=* ]]; then
+                    idle_time="${arg#--idle-time=}"
+                elif [[ "$arg" == --timeout=* ]]; then
+                    timeout="${arg#--timeout=}"
+                fi
+            done
+            if [[ -z "$pane_id" ]]; then
+                echo "Error: --pane=<id> required" >&2
+                exit 1
+            fi
+            wait_idle "$pane_id" "$idle_time" 0.5 "$timeout"
+            ;;
+        wait-for)
+            if [[ $# -eq 0 ]]; then
+                echo "Error: wait-for requires a pattern argument" >&2
+                exit 1
+            fi
+            local pattern="$1"
+            shift
+            local pane_id="" timeout="30"
+            for arg in "$@"; do
+                if [[ "$arg" == --pane=* ]]; then
+                    pane_id="${arg#--pane=}"
+                elif [[ "$arg" == --timeout=* ]]; then
+                    timeout="${arg#--timeout=}"
+                fi
+            done
+            if [[ -z "$pane_id" ]]; then
+                echo "Error: --pane=<id> required" >&2
+                exit 1
+            fi
+            wait_for_pattern "$pattern" "$pane_id" "$timeout"
+            ;;
+        *)
+            echo "Error: Unknown command '$cmd'"
+            echo "Run 'tmux-ctl help' for usage"
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
