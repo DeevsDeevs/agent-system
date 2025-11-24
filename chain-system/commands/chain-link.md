@@ -117,7 +117,7 @@ Create a slug (e.g., `implement-auth-handler`) and readable summary (e.g., "Impl
 
 Create directory and save file:
 1. Create directory: `mkdir -p .claude/chains/[chain-name]` (substitute actual chain name)
-2. Generate timestamp: `YYYY-MM-DD-HHMM` format (e.g., `2025-11-24-0230`)
+2. Generate timestamp using local time: `date '+%Y-%m-%d-%H%M'` (e.g., `2025-11-24-0230`)
 3. Write to: `.claude/chains/[chain-name]/[timestamp]-[slug].md`
 4. Save only the content inside `<plan>` tags to the file
 5. Inform user: file path and how to load with `/chain-load [chain-name]`

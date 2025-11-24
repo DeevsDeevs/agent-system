@@ -4,65 +4,46 @@ Interactive terminal control for REPLs, debuggers, and servers.
 
 ## Overview
 
-Control interactive CLI programs in separate tmux panes. Send commands, wait for output, capture results - all programmatically.
+Control interactive CLI programs in separate tmux panes. High-level API for common tasks, low-level API for advanced control.
 
-**Use for**: Testing scripts with prompts, running REPLs (Python, Node, psql), debugging (lldb, pdb), long-running servers, parallel execution.
-
-## Commands
-
-**Core:**
-- `tmux-ctl launch <command>` - Create pane, returns pane ID
-- `tmux-ctl send <text> --pane=<id>` - Send text (literal mode, safe)
-- `tmux-ctl capture --pane=<id>` - Get output
-- `tmux-ctl kill --pane=<id>` - Kill pane
-
-**Synchronization:**
-- `tmux-ctl wait-for <pattern> --pane=<id>` - Wait for text
-- `tmux-ctl wait-idle --pane=<id>` - Wait until output stops
-
-**Control:**
-- `tmux-ctl interrupt --pane=<id>` - Send Ctrl+C
-- `tmux-ctl escape --pane=<id>` - Send Escape
-
-**Info:**
-- `tmux-ctl list-panes` - List all panes (JSON)
-- `tmux-ctl state` - View tracked state
-- `tmux-ctl status` - Show mode and sessions
-
-## Workflow
+## Quick Start
 
 ```bash
-# 1. Launch shell (safety - pane persists if command fails)
-PANE=$(tmux-ctl launch zsh)
+# Simple execution
+tmux-ctl eval "npm test"
 
-# 2. Send commands
-tmux-ctl send "python3" --pane=$PANE
+# REPL one-shot
+tmux-ctl repl python "2+2"  # → 4
 
-# 3. Wait for prompt
-tmux-ctl wait-for ">>>" --pane=$PANE
+# Long-running process
+tmux-ctl start "npm run dev" --name=server --wait="Server started"
+tmux-ctl logs server
+tmux-ctl stop server
 
-# 4. Interact
-tmux-ctl send "2+2" --pane=$PANE
-
-# 5. Capture output
-tmux-ctl capture --pane=$PANE
-
-# 6. Clean up
-tmux-ctl kill --pane=$PANE
+# Parallel execution
+tmux-ctl start "npm run build" --name=build
+tmux-ctl start "npm test" --name=test
+tmux-ctl wait build test
+tmux-ctl stop build test
 ```
 
-## Critical Rules
+## High-Level Commands
 
-**Python REPL** - Always use `PYTHON_BASIC_REPL=1`:
-```bash
-tmux-ctl send "PYTHON_BASIC_REPL=1 python3" --pane=$PANE
-```
+- `eval <cmd>` - Run and return output (auto-cleanup)
+- `repl <type> [cmd]` - Python/Node/psql REPL (one-shot or session)
+- `exec <cmd>` - Execute in current context
+- `close` - Close current context
+- `use <name>` - Switch to named process
+- `start/stop/ps/logs/wait` - Named process management
 
-**Always wait** - Never send commands without waiting for prompts:
-```bash
-tmux-ctl send "node" --pane=$PANE
-tmux-ctl wait-for ">" --pane=$PANE  # Wait before next command
-```
+## Low-Level Commands
+
+For advanced control:
+- `launch/send/capture/kill` - Pane management
+- `wait-for/wait-idle` - Synchronization
+- `interrupt/escape` - Control keys
+
+See SKILL.md and reference.md for details.
 
 ## Installation
 
@@ -71,20 +52,18 @@ tmux-ctl wait-for ">" --pane=$PANE  # Wait before next command
 /plugin install tmux@deevs-agent-system
 ```
 
-Add `tmux-ctl` to PATH:
+Add to PATH:
 ```bash
 export PATH="$PATH:$HOME/.claude/plugins/tmux@deevs-agent-system/bin"
 ```
 
 ## State Management
 
-All sessions/panes tracked in `.claude/tmux/`:
-```
-.claude/tmux/
-├── sessions.json          # Session metadata, panes
-└── sockets/              # Unix sockets (outside tmux mode)
-    └── claude-main
-```
+State stored in `.claude/tmux/`:
+- `sessions.json` - Session/pane tracking
+- `context.json` - Current context
+- `named_panes.json` - Named processes
+- `sockets/` - tmux sockets (outside tmux mode)
 
 **Inside tmux**: operates on current session
 **Outside tmux**: auto-creates isolated session
@@ -93,12 +72,5 @@ All sessions/panes tracked in `.claude/tmux/`:
 
 - bash 4.0+
 - tmux 2.0+
-- jq (JSON output)
+- jq (JSON)
 - md5sum or md5 (idle detection)
-
-## Architecture
-
-Pure bash implementation combining:
-- **pchalasani/tmux-cli** - Clean interface, safety features
-- **mitsuhiko/tmux skill** - Process intelligence (Python, debuggers)
-- **Custom** - Bash-only, project-scoped state management

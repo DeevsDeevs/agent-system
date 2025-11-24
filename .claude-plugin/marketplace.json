@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Deevs' marketplace for Claude Code, Open Code, and other agentic AI systems",
-    "version": "0.0.2"
+    "version": "0.0.3"
   },
   "plugins": [
     {
@@ -20,6 +20,12 @@
       "description": "Interactive terminal control for REPLs, debuggers, and servers",
       "source": "./tmux",
       "skills": ["./"]
+    },
+    {
+      "name": "dev-experts",
+      "description": "Critical developer personas: architect, devops detective, rust/python purists, grumpy reviewer, testing specialist",
+      "source": "./dev-experts",
+      "agents": ["./agents/"]
     }
   ]
 }
