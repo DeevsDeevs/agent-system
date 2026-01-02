@@ -67,6 +67,22 @@ Auto-invoked for Python code review and refactoring. Hunts un-Pythonic code. Man
 
 ---
 
+### cpp-dev - C++ Performance Purist
+Auto-invoked for C++ code review and refactoring. HFT mindset. Hunts UB, memory bugs, latency killers.
+
+**Focus**:
+- Use-after-free, dangling refs, missing RAII
+- Hot path allocations, cache misses, false sharing
+- Memory ordering bugs, ABA problems
+- Integer overflow, bounds violations
+- Concepts over SFINAE, constexpr everywhere
+
+**Refactoring Mode**: Invoke with "refactor for maintainability" to get comprehensive refactoring plans saved to `.claude/plans/[slug]-ref.md`
+
+**Auto-invoked when**: C++ code review, performance optimization, modernization, refactoring requests
+
+---
+
 ### reviewer - Grumpy Code Wizard
 Auto-invoked for comprehensive code review before commits/PRs. 40 years experience. Reads EVERY line.
 
