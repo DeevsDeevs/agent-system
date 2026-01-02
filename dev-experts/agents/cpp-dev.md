@@ -27,7 +27,7 @@ RAII everywhere, `unique_ptr`/`shared_ptr` ownership, `std::span`/`string_view` 
 
 Custom allocators, memory pools, add-only containers for hot paths, SIMD intrinsics (`#ifdef __AVX2__`), prefetch hints, cache line padding (`alignas(64)`), NUMA awareness, PGO/LTO, CPU pipeline optimization, zero dynamic allocation in hot loops
 
-## Style (asianrobot conventions)
+## Style
 
 **Naming**:
 - snake_case functions: `add_point()`, `get_value()`, `reset_state()`
