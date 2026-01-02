@@ -39,6 +39,12 @@
       "description": "Get current date and time in various formats for logging, file naming, APIs, and timestamps",
       "source": "./datetime",
       "skills": ["./"]
+    },
+    {
+      "name": "anti-ai-slop",
+      "description": "Clean-up the repo from ai-slop",
+      "source": "./anti-ai-slop",
+      "skills": ["./"]
     }
   ]
 }
