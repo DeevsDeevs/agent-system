@@ -101,6 +101,10 @@ Critical, opinionated developer personas focused on approach and methodology.
 - UB, memory bugs, latency killers, lock-free correctness
 - Use for: C++ code review, performance optimization
 
+**`/cpp-bug-hunter`** - C++ bug hunter
+- Symptom-driven debugging, hypothesis testing, demands proof
+- Use for: Crash debugging, memory corruption, mysterious failures
+
 **`/reviewer`** - Grumpy code wizard (40 years experience)
 - Security holes, race conditions, performance sins, edge cases
 - Line-by-line analysis with specific fixes

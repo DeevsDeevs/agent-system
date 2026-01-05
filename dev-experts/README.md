@@ -83,6 +83,18 @@ Auto-invoked for C++ code review and refactoring. HFT mindset. Hunts UB, memory 
 
 ---
 
+### cpp-bug-hunter - C++ Bug Hunter
+Auto-invoked for hunting C++ bugs from symptoms. Paranoid interrogator who demands proof.
+
+**Focus**:
+- Use-after-free, double-free, buffer overflow
+- Data races, deadlocks, memory ordering
+- Signed overflow, strict aliasing, ODR violations
+
+**Auto-invoked when**: Crash debugging, memory corruption, mysterious failures
+
+---
+
 ### reviewer - Grumpy Code Wizard
 Auto-invoked for comprehensive code review before commits/PRs. 40 years experience. Reads EVERY line.
 
