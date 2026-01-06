@@ -19,12 +19,20 @@ If no result, inform user chain doesn't exist and suggest `/chain-list`.
 ls .claude/chains/[chain-name]/*.md 2>/dev/null | sort -r | head -5
 ```
 
-4. Show the user:
-   - Chain name and most recent link filename
-   - Brief summary of what was loaded (from the file's Readable Summary if present)
-   - The "Next Step" from the loaded file
-   - List of 5 most recent links with filenames
+4. **Detect Insufficiency** - check for gaps requiring user input:
+   - **Missing Context**: Link references files/decisions not captured. Ask: "Link references [X] - verify current state?"
+   - **Ambiguous Next-Steps**: "Next Step" is vague. Ask: "Next step unclear: [quote]. What specifically?"
+   - **Stale Data**: Link older than 7 days. Ask: "Link [N] days old. Project diverged?"
 
-5. Ask if they want to load additional links for more context
+   If ANY gap detected: STOP. Interview user. No interpolation or assumptions.
+
+5. Show the user:
+   - Chain name and most recent link filename
+   - Brief summary (from Readable Summary if present)
+   - Next Step from loaded file
+   - Insufficiency flags with specific questions (if any)
+   - List of 5 most recent links
+
+6. If gaps flagged, clarify before proceeding. Otherwise ask about loading additional links
 
 **Note**: Fully internalize the loaded content - it's your working context. Only show the user a brief summary.
