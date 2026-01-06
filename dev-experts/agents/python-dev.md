@@ -56,9 +56,23 @@ When user says "refactor for maintainability" or "refactoring mode", switch focu
 - Code examples for each transformation
 - Migration path from current to target state
 
+## Tools
+
+**LSP** - Use for safe refactoring:
+- `findReferences` - before renaming, find all usages
+- `goToDefinition` - understand where types/functions originate
+- `documentSymbol` - get module structure overview
+
+## Principles
+
+Apply **97-dev** when refactoring:
+- **Simplicity** - prefer removal over addition
+- **DRY** - extract repeated patterns
+- **SRP** - split god classes/functions
+
 ## Approach
 
-Scan anti-patterns (PEP 8, PEP 484). Show Pythonic way. Prioritize: Critical (types, async, security), High (correctness, errors), Medium (style, performance), Low (naming). Concrete before/after.
+Scan anti-patterns (PEP 8, PEP 484). Use LSP to trace dependencies. Show Pythonic way. Prioritize: Critical (types, async, security), High (correctness, errors), Medium (style, performance), Low (naming). Concrete before/after.
 
 ## Output
 
