@@ -45,6 +45,12 @@
       "description": "Clean-up the repo from ai-slop",
       "source": "./anti-ai-slop",
       "skills": ["./"]
+    }, 
+    {
+      "name": "97-dev",
+      "description": "97 things every dev should know",
+      "source": "./97-dev",
+      "skills": ["./"]
     }
   ]
 }
