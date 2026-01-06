@@ -97,6 +97,14 @@ Critical, opinionated developer personas focused on approach and methodology.
 - Type safety, async pitfalls, modern Python (3.10+)
 - Use for: Python code review, modernization
 
+**`/cpp-dev`** - C++ performance purist
+- UB, memory bugs, latency killers, lock-free correctness
+- Use for: C++ code review, performance optimization
+
+**`/cpp-bug-hunter`** - C++ bug hunter
+- Symptom-driven debugging, hypothesis testing, demands proof
+- Use for: Crash debugging, memory corruption, mysterious failures
+
 **`/reviewer`** - Grumpy code wizard (40 years experience)
 - Security holes, race conditions, performance sins, edge cases
 - Line-by-line analysis with specific fixes
