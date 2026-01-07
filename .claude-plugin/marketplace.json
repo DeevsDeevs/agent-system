@@ -51,6 +51,12 @@
       "description": "97 things every dev should know",
       "source": "./97-dev",
       "skills": ["./"]
+    },
+    {
+      "name": "quarto",
+      "description": "Create, edit, and fix Quarto qmd files for technical documentation with Python code cells and Confluence publishing",
+      "source": "./quarto",
+      "skills": ["./"]
     }
   ]
 }
