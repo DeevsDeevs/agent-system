@@ -105,7 +105,11 @@ Critical, opinionated developer personas focused on approach and methodology.
 - Symptom-driven debugging, hypothesis testing, demands proof
 - Use for: Crash debugging, memory corruption, mysterious failures
 
-**`/reviewer`** - Grumpy code wizard (40 years experience)
+**`/logic-bugs-hunter`** - Logic detective
+- Finds spec-vs-implementation gaps, cross-component data flow issues
+- Use for: Algorithm correctness, business logic bugs, design intent verification
+
+**`/reviewer`** - Grumpy code wizard, 40 years experience
 - Security holes, race conditions, performance sins, edge cases
 - Line-by-line analysis with specific fixes
 - Use for: Pre-merge review, security audit

@@ -34,7 +34,7 @@ When hunting bugs, prioritize:
 
 **Undefined Behavior**: Signed overflow, null deref, invalid pointer arithmetic, strict aliasing, sequence point violations, ODR violations
 
-**Logic**: Off-by-one, state machine violations, incorrect bounds, wrong operator precedence, copy vs move confusion
+**C++ Semantics**: Copy vs move confusion, implicit conversions, overload resolution surprises, CTAD pitfalls
 
 **Resource**: File handle leaks, socket leaks, mutex not released on exception path, missing RAII
 
