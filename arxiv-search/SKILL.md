@@ -10,14 +10,23 @@ Search the arXiv preprint repository for scholarly articles across physics, math
 ## Quick Reference
 
 ```bash
-# Basic search
-uv run ${CLAUDE_PLUGIN_ROOT}/arxiv_search.py "transformer attention mechanism"
+# Basic search (auto-selects best implementation)
+${CLAUDE_PLUGIN_ROOT}/arxiv_search "transformer attention mechanism"
 
 # Limit results
-uv run ${CLAUDE_PLUGIN_ROOT}/arxiv_search.py "protein folding" --max-papers 5
+${CLAUDE_PLUGIN_ROOT}/arxiv_search "protein folding" --max-papers 5
+```
 
-# Fallback if uv unavailable
-python3 ${CLAUDE_PLUGIN_ROOT}/arxiv_search.py "neural networks" --max-papers 10
+## Implementation
+
+The skill auto-detects the best available implementation:
+
+1. **Python** (preferred): If `uv` + `arxiv` package or `python3` + `arxiv` are available
+2. **Bash** (fallback): Uses `curl` + `awk` - works everywhere, no dependencies
+
+To enable Python implementation:
+```bash
+uv pip install arxiv
 ```
 
 ## When to Use
@@ -43,33 +52,21 @@ Returns formatted results with:
 
 Papers are separated by blank lines for readability.
 
-## Dependency Installation
-
-This skill requires the `arxiv` Python package:
-
-```bash
-# Preferred: using uv
-uv pip install arxiv
-
-# Alternative: system pip
-pip install arxiv
-```
-
 ## Examples
 
 **Machine learning research:**
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/arxiv_search.py "large language models reasoning" --max-papers 5
+${CLAUDE_PLUGIN_ROOT}/arxiv_search "large language models reasoning" --max-papers 5
 ```
 
 **Physics papers:**
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/arxiv_search.py "quantum computing error correction"
+${CLAUDE_PLUGIN_ROOT}/arxiv_search "quantum computing error correction"
 ```
 
 **Statistics and methods:**
 ```bash
-uv run ${CLAUDE_PLUGIN_ROOT}/arxiv_search.py "bayesian inference neural networks"
+${CLAUDE_PLUGIN_ROOT}/arxiv_search "bayesian inference neural networks"
 ```
 
 ## arXiv Categories
@@ -89,4 +86,5 @@ Common categories for reference:
 - Papers are preprints and may not be peer-reviewed
 - Results sorted by relevance to query
 - No API key required - free access
-- Best for computational and theoretical work
+- Python implementation is more robust for edge cases
+- Bash fallback works on any Unix system with curl

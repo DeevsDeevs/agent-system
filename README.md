@@ -130,16 +130,16 @@ Search arXiv preprint repository for academic papers.
 
 **Quick start**:
 ```bash
-# Basic search
-uv run arxiv_search.py "transformer attention mechanism"
+# Basic search (auto-selects Python or bash)
+arxiv_search "transformer attention mechanism"
 
 # Limit results
-uv run arxiv_search.py "protein folding" --max-papers 5
+arxiv_search "protein folding" --max-papers 5
 ```
 
 **Use when**: Finding preprints, ML/AI papers, mathematical methods, scientific literature before journal publication.
 
-**Dependencies**: `arxiv` package (install with `uv pip install arxiv`)
+**Dependencies**: None (bash fallback). For better reliability: `uv pip install arxiv`
 
 **Details**: [arxiv-search/SKILL.md](arxiv-search/SKILL.md)
 
