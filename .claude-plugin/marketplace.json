@@ -53,12 +53,6 @@
       "skills": ["./"]
     },
     {
-      "name": "quarto",
-      "description": "Create, edit, and fix Quarto qmd files for technical documentation with Python code cells and Confluence publishing",
-      "source": "./quarto",
-      "skills": ["./"]
-    },
-    {
       "name": "arxiv-search",
       "description": "Search arXiv preprint repository for research papers in physics, mathematics, computer science, quantitative biology, finance, and statistics",
       "source": "./arxiv-search",
