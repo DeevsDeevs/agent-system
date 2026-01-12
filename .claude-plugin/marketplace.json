@@ -51,6 +51,12 @@
       "description": "97 things every dev should know",
       "source": "./97-dev",
       "skills": ["./"]
+    },
+    {
+      "name": "arxiv-search",
+      "description": "Search arXiv preprint repository for research papers in physics, mathematics, computer science, quantitative biology, finance, and statistics",
+      "source": "./arxiv-search",
+      "skills": ["./"]
     }
   ]
 }

@@ -105,7 +105,11 @@ Critical, opinionated developer personas focused on approach and methodology.
 - Symptom-driven debugging, hypothesis testing, demands proof
 - Use for: Crash debugging, memory corruption, mysterious failures
 
-**`/reviewer`** - Grumpy code wizard (40 years experience)
+**`/logic-bugs-hunter`** - Logic detective
+- Finds spec-vs-implementation gaps, cross-component data flow issues
+- Use for: Algorithm correctness, business logic bugs, design intent verification
+
+**`/reviewer`** - Grumpy code wizard, 40 years experience
 - Security holes, race conditions, performance sins, edge cases
 - Line-by-line analysis with specific fixes
 - Use for: Pre-merge review, security audit
@@ -150,6 +154,29 @@ find ~/.claude -name "show-cost.py" -path "*/cost-status/*" 2>/dev/null | head -
 
 ```bash
 /plugin install cost-status@deevs-agent-system
+### arxiv-search
+
+Search arXiv preprint repository for academic papers.
+
+**Core**: Query arXiv for research papers across physics, mathematics, computer science, quantitative biology, finance, and statistics.
+
+**Quick start**:
+```bash
+# Basic search (auto-selects Python or bash)
+arxiv_search "transformer attention mechanism"
+
+# Limit results
+arxiv_search "protein folding" --max-papers 5
+```
+
+**Use when**: Finding preprints, ML/AI papers, mathematical methods, scientific literature before journal publication.
+
+**Dependencies**: None (bash fallback). For better reliability: `uv pip install arxiv`
+
+**Details**: [arxiv-search/SKILL.md](arxiv-search/SKILL.md)
+
+```bash
+/plugin install arxiv-search@deevs-agent-system
 ```
 
 ## Credits
