@@ -126,6 +126,34 @@ Critical, opinionated developer personas focused on approach and methodology.
 
 ---
 
+### cost-status
+
+Status bar showing session cost, monthly cost, total cost, and context window usage.
+
+**Display**: `$0.52/$30.00/$150.00 | 38k/200k (19%)`
+
+- `$session/$month/$total` - Cost tracking at three levels
+- `used/max (%)` - Context window usage
+
+**Setup**: After installation, add to `~/.claude/settings.json`:
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "python3 <plugin-path>/scripts/show-cost.py"
+  }
+}
+```
+
+Find the path with:
+```bash
+find ~/.claude -name "show-cost.py" -path "*/cost-status/*" 2>/dev/null | head -1
+```
+
+**Details**: [cost-status/README.md](cost-status/README.md)
+
+```bash
+/plugin install cost-status@deevs-agent-system
 ### arxiv-search
 
 Search arXiv preprint repository for academic papers.
