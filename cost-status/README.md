@@ -29,7 +29,7 @@ Add to `~/.claude/settings.json`:
 {
   "statusLine": {
     "type": "command",
-    "command": "python3 ~/.claude/plugins/cache/deevs-agent-system/cost-status/<version>/scripts/show-cost.py"
+    "command": "bash ~/.claude/plugins/cache/deevs-agent-system/cost-status/<version>/scripts/show-cost.sh"
   }
 }
 ```
@@ -37,17 +37,19 @@ Add to `~/.claude/settings.json`:
 To find the exact path after installation:
 
 ```bash
-find ~/.claude -name "show-cost.py" -path "*/cost-status/*" 2>/dev/null | head -1
+find ~/.claude -name "show-cost.sh" -path "*/cost-status/*" 2>/dev/null | head -1
 ```
 
 ## How It Works
 
-- Reads session data from Claude Code via stdin (JSON)
+- Reads session data via stdin (JSON)
 - Tracks costs across sessions in `~/.claude/cost-tracking.json`
+- Handles multiple concurrent sessions correctly
 - Monthly costs reset automatically each month
 - Context usage = input_tokens + cache_creation_tokens + cache_read_tokens
 
 ## Requirements
 
-- Python 3.6+
-- No external dependencies
+- `jq` - JSON parsing
+- `awk` - floating point arithmetic
+- Bash 4.0+
