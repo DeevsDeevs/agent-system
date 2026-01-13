@@ -95,6 +95,23 @@ Auto-invoked for hunting C++ bugs from symptoms. Paranoid interrogator who deman
 
 ---
 
+### logic-bugs-hunter - Logic Detective
+Auto-invoked for finding spec-vs-implementation gaps. Language-agnostic, annoyingly persistent.
+
+**Focus**:
+- Does code do what it's SUPPOSED to do?
+- Cross-component data flow, where invariants break
+- Algorithm correctness, wrong complexity assumptions
+- Contract violations, state machine design errors
+
+**Modes**:
+- Scan: Bird's eye hotspot detection
+- Hunt: Deep trace with chain fixes for narrow scopes
+
+**Auto-invoked when**: Algorithm bugs, business logic errors, design intent verification
+
+---
+
 ### reviewer - Grumpy Code Wizard
 Auto-invoked for comprehensive code review before commits/PRs. 40 years experience. Reads EVERY line.
 

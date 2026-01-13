@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# arXiv Search - Auto-selects best available implementation
+# Uses Python+arxiv if available, falls back to bash+curl
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Check if Python implementation is available
+can_use_python() {
+    # Check for uv or python3
+    if command -v uv >/dev/null 2>&1; then
+        # Check if arxiv package is installed
+        uv pip show arxiv >/dev/null 2>&1 && return 0
+    elif command -v python3 >/dev/null 2>&1; then
+        python3 -c "import arxiv" 2>/dev/null && return 0
+    fi
+    return 1
+}
+
+if can_use_python; then
+    # Use Python implementation
+    if command -v uv >/dev/null 2>&1; then
+        exec uv run "$SCRIPT_DIR/arxiv_search.py" "$@"
+    else
+        exec python3 "$SCRIPT_DIR/arxiv_search.py" "$@"
+    fi
+else
+    # Fall back to bash implementation
+    exec "$SCRIPT_DIR/arxiv_search.sh" "$@"
+fi
