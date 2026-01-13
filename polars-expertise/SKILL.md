@@ -1,5 +1,5 @@
 ---
-name: polars
+name: polars-expertise
 description: >
   Fast DataFrame library (Apache Arrow) for Python and Rust. Select, filter,
   group_by, joins, lazy evaluation, CSV/Parquet I/O, expression API, streaming
