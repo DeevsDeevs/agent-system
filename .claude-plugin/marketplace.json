@@ -57,6 +57,12 @@
       "description": "Search arXiv preprint repository for research papers in physics, mathematics, computer science, quantitative biology, finance, and statistics",
       "source": "./arxiv-search",
       "skills": ["./"]
+    },
+    {
+      "name": "polars-expertise",
+      "description": "Fast DataFrame library (Apache Arrow) for Python and Rust: expressions, lazy/streaming, GPU acceleration, time series patterns, pandas/spark/kdb migration",
+      "source": "./polars-expertise",
+      "skills": ["./"]
     }
   ]
 }
