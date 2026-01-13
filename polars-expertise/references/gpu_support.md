@@ -13,17 +13,13 @@ Polars provides GPU-accelerated execution for the Lazy API on NVIDIA GPUs using 
 
 ## Installation
 
-### Standard Installation (CUDA 12)
+See SKILL.md for base installation. For GPU support:
 
 ```bash
-pip install polars[gpu]
-```
+uv pip install polars[gpu]
 
-### CUDA 11 (Deprecated)
-
-```bash
-# CUDA 11 support ends with RAPIDS v25.08
-pip install polars cudf-polars-cu11==25.06
+# CUDA 11 (deprecated, ends with RAPIDS v25.08):
+uv pip install polars cudf-polars-cu11==25.06
 ```
 
 ## Basic Usage
@@ -218,18 +214,15 @@ lf = (
 
 ### ImportError on gpu engine
 
-```
-pip install polars[gpu]  # Missing cudf-polars
+```bash
+uv pip install polars[gpu]  # Missing cudf-polars
 ```
 
 ### CUDA version mismatch
 
 ```bash
-# Check CUDA version
-nvcc --version
-
-# Install matching cudf-polars
-pip install cudf-polars-cu12  # for CUDA 12
+nvcc --version  # Check CUDA version
+uv pip install cudf-polars-cu12  # for CUDA 12
 ```
 
 ### Out of Memory

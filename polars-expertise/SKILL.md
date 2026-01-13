@@ -1,13 +1,14 @@
 ---
 name: polars-expertise
+version: 1.0.0
 description: >
-  Fast DataFrame library (Apache Arrow) for Python and Rust. Select, filter,
-  group_by, joins, lazy evaluation, CSV/Parquet I/O, expression API, streaming
-  for large files, time series/financial data, high-performance data analysis.
-  Use for: (1) Data manipulation with polars or LazyFrame, (2) Migrating from
-  pandas/PySpark/kdb+, (3) Processing Parquet/CSV/Arrow files, (4) Time series
-  analysis with OHLCV, rolling windows, group_by_dynamic, (5) Market data and
-  financial workflows, (6) ML feature engineering, (7) GPU-accelerated queries.
+  This skill should be used when the user asks about Polars DataFrame library
+  (Apache Arrow) for Python or Rust. Triggers: "polars expressions", "lazy vs eager",
+  "scan_parquet streaming", "convert pandas to polars", "pyspark to polars",
+  "kdb to polars", "group_by_dynamic", "rolling_mean", "polars window functions",
+  "asof join", "polars GPU", "polars parquet", "LazyFrame". Time series: OHLCV
+  resampling, rolling windows, financial data patterns. Performance: native
+  expressions over map_elements, early projection, categorical types, streaming.
 ---
 
 # Polars
@@ -205,3 +206,19 @@ trades.join_asof(quotes, on="timestamp", by="symbol", strategy="backward")
 ```
 
 Load [python/best_practices.md](references/python/best_practices.md) for comprehensive time series patterns.
+
+## Runnable Examples
+
+| Example | File | Purpose |
+|---------|------|---------|
+| Financial OHLCV | [examples/financial_ohlcv.py](examples/financial_ohlcv.py) | OHLCV resampling, rolling stats, VWAP |
+| Pandas Migration | [examples/pandas_migration.py](examples/pandas_migration.py) | Side-by-side pandas vs polars |
+| Streaming Large Files | [examples/streaming_large_file.py](examples/streaming_large_file.py) | Out-of-memory processing patterns |
+
+## Development Tips
+
+Use LSP for navigating Polars code:
+- **Python**: Pyright/Pylance provides excellent type inference for Polars expressions
+- **Rust**: rust-analyzer understands Polars types and expression chains
+
+LSP operations like `goToDefinition` and `hover` help explore Polars API without leaving the editor.
