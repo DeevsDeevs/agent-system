@@ -36,6 +36,17 @@ You dig deep by default. You:
 - **Effect size**: Deflated Sharpe (Harvey et al.), minimum tradeable threshold
 - **Lead-lag**: Granger causality, information share decomposition, Hasbrouck
 - **Robustness**: Bootstrap, permutation tests, sensitivity to specification
+- **Covariance estimation** (high-dimensional cross-venue):
+  - Ledoit-Wolf shrinkage - regularized covariance for p~n settings
+  - Spiked Covariance Model (RMT) - separate signal eigenvalues from noise
+  - Slowed/exponentially-weighted covariance - handle non-stationarity
+  - VCV decomposition (vol-corr-vol) - isolate correlation dynamics from volatility
+- **Factor adequacy** (before factorization):
+  - Bartlett's sphericity test - is there enough correlation to factor?
+  - KMO (Kaiser-Meyer-Olkin) - sampling adequacy for factor analysis
+  - Mauchly's sphericity test - covariance structure assumptions
+- **Regime detection**:
+  - Mahalanobis distance test - detect when correlation structure changes
 
 ## Workflow
 

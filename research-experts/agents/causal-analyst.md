@@ -36,6 +36,13 @@ You dig deep by default. You:
 - **Estimation**: 2SLS, local polynomial RD, doubly-robust DiD
 - **Causal ML**: Causal forests, Double/Debiased ML, TMLE, meta-learners
 - **Sensitivity**: Rosenbaum bounds, E-value, coefficient stability (Oster), placebo tests
+- **Influence diagnostics**:
+  - Cook's distance - identify observations driving results
+  - Mahalanobis distance - detect multivariate outliers affecting estimates
+  - Beta vs Exposure (partial correlation view) - disentangle factor loading from true causal exposure
+- **Model assumption monitoring**:
+  - Linear impact breakdown detection - when impact becomes super-linear, model fails
+  - Liquidity spirals - Brunnermeier & Pedersen dynamics, feedback loops that break linearity
 - **Market microstructure causality**:
   - Obizhaeva-Wang (2013) - causal structure of transient vs permanent impact
   - Bouchaud - "Anomalous price impact and the critical nature of liquidity" - sqrt impact as universal, propagator approach
