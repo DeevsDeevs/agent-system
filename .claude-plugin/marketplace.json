@@ -6,9 +6,23 @@
   },
   "metadata": {
     "description": "Deevs' marketplace for Claude Code, Open Code, and other agentic AI systems",
-    "version": "0.0.3"
+    "version": "0.0.4"
   },
   "plugins": [
+    {
+      "name": "research-experts",
+      "description": "Opinionated research agents for HFT quantitative research. Causality over fit. Interpretability over black-box.",
+      "source": "./research-experts",
+      "agents": [
+        "./agents/strategist.md",
+        "./agents/data-sentinel.md",
+        "./agents/microstructure-analyst.md",
+        "./agents/cross-venue-analyst.md",
+        "./agents/causal-analyst.md",
+        "./agents/post-hoc-analyst.md",
+        "./agents/crisis-hunter.md"
+      ]
+    },
     {
       "name": "chain-system",
       "description": "Multi-session workflow chains for maintaining linked context across conversations",
