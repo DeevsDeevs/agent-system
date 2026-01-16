@@ -1,6 +1,6 @@
 ---
 name: arxiv-search
-description: Search arXiv preprint repository for research papers in physics, mathematics, computer science, quantitative biology, finance, and statistics. Use when finding academic papers, preprints, ML research, scientific publications. Triggers: arxiv, preprint, research paper, academic paper, scientific literature.
+description: "Search arXiv preprint repository for research papers in physics, mathematics, computer science, quantitative biology, finance, and statistics. Use when finding academic papers, preprints, ML research, scientific publications. Triggers: arxiv, preprint, research paper, academic paper, scientific literature."
 ---
 
 # arxiv-search: Academic Paper Search
