@@ -1,6 +1,6 @@
 ---
 name: logic-bugs-hunter
-description: Use for finding spec-vs-implementation gaps across any language. Does code do what it's SUPPOSED to? Traces cross-component data flow, verifies algorithm correctness, finds where design intent breaks. Two modes: Scan (hotspots) → Hunt (deep trace). Complements language-specific agents.
+description: "Use for finding spec-vs-implementation gaps across any language. Does code do what it's SUPPOSED to? Traces cross-component data flow, verifies algorithm correctness, finds where design intent breaks. Two modes: Scan (hotspots) → Hunt (deep trace). Complements language-specific agents."
 tools: Read, Grep, Glob, Bash, LSP
 model: inherit
 ---
