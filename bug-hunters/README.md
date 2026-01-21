@@ -13,90 +13,74 @@ Systematic bug hunting with spec reconstruction, adversarial validation, and con
 ## Agents
 
 ### orchestrator - Central Brain
-The meta-agent coordinating systematic bug discovery. Reconstructs specs, spawns hunters, challenges findings, filters false positives.
+Meta-agent coordinating systematic bug discovery. Two hunting modes with different lead/challenger roles.
 
-**Workflow**:
-1. Spec Reconstruction → 2. Hotspot Scan → 3. Hunter Deployment → 4. Adversarial Challenge → 5. Confidence Scoring → 6. Report
+**Modes**:
+- **Logic-First**: algorithm bugs, spec gaps, design violations → `logic-hunter` leads, coding agents challenge
+- **Code-First**: memory bugs, UB, async issues, type violations → language hunter leads, `logic-hunter` challenges
 
 **Invokes**: All hunters + dev-experts coding agents (as challengers)
 
 ---
 
 ### logic-hunter - Spec Detective
-Language-agnostic logic bug hunter. Finds spec-vs-implementation gaps, cross-component data flow issues, algorithm correctness failures.
+Language-agnostic. Finds spec-vs-implementation gaps, data flow issues, algorithm failures.
 
-**Focus**:
-- Does code do what it's SUPPOSED to do?
-- Contract violations, state machine errors
-- Data/control flow bugs, invariant breaks
+**Modes**: Scan (hotspots) → Hunt (deep trace)
 
-**Modes**:
-- Scan: Bird's eye hotspot detection
-- Hunt: Deep trace with evidence chain
-
-**Invoked by**: orchestrator, user
+**Role**: Lead in logic-first, challenger in code-first
 
 ---
 
 ### cpp-hunter - C++ Bug Hunter
-C++ specific bug hunting. Memory corruption, UB, concurrency issues.
+Memory corruption, UB, concurrency issues.
 
-**Focus**:
-- Use-after-free, double-free, buffer overflow
-- Data races, deadlocks, memory ordering
-- Signed overflow, strict aliasing, ODR violations
-
-**Invoked by**: orchestrator (for C++ targets), user
+**Role**: Lead in code-first (C++), support in logic-first
 
 ---
 
 ### python-hunter - Python Bug Hunter
-Python specific bug hunting. Async pitfalls, None propagation, type violations.
+Async pitfalls, None propagation, type violations.
 
-**Focus**:
-- Mutable defaults, None propagation
-- Async/await pitfalls, GIL issues
-- Type hint violations, import cycles
-
-**Invoked by**: orchestrator (for Python targets), user
+**Role**: Lead in code-first (Python), support in logic-first
 
 ---
 
 ## Flow
 
 ```
-                         USER
-                           │
-                           ▼
-                     ┌─────────────┐
-                     │ orchestrator │ ◄─── Spec Reconstruction
-                     └──────┬──────┘
-                            │
-              ┌─────────────┼─────────────┐
-              ▼             ▼             ▼
-        logic-hunter   cpp-hunter   python-hunter
-              │             │             │
-              └─────────────┴─────────────┘
-                            │
-                            ▼
-                   ┌────────────────┐
-                   │  CHALLENGE     │ ◄─── dev-experts agents
-                   │  (adversarial) │      (cpp-dev, python-dev)
-                   └────────┬───────┘
-                            │
-              ┌─────────────┼─────────────┐
-              ▼             ▼             ▼
-        FALSE_POSITIVE   CONFIRMED   NEEDS_CONTEXT
-           (discard)         │         (re-hunt)
-                            ▼
-                   ┌────────────────┐
-                   │  Confidence    │
-                   │  Scoring       │
-                   └────────┬───────┘
-                            │
-                            ▼
-                      FINAL REPORT
-                   (MEDIUM+ confidence)
+                              USER
+                                │
+                    "logic bugs or code-specific?"
+                                │
+             ┌──────────────────┴──────────────────┐
+             ▼                                     ▼
+      LOGIC-FIRST                           CODE-FIRST
+             │                                     │
+             ▼                                     ▼
+      logic-hunter (lead)                 language hunter (lead)
+             │                                     │
+             ▼                                     ▼
+      language hunter (support)           logic-hunter (challenger)
+             │                                     │
+             ▼                                     │
+      coding agent (challenger)                   │
+             │                                     │
+             └──────────────────┬──────────────────┘
+                                │
+                                ▼
+                         CHALLENGE VERDICT
+                                │
+              ┌─────────────────┼─────────────────┐
+              ▼                 ▼                 ▼
+        FALSE_POSITIVE     CONFIRMED        NEEDS_CONTEXT
+           (discard)            │             (re-hunt)
+                                ▼
+                      Confidence Scoring
+                                │
+                                ▼
+                          FINAL REPORT
+                       (MEDIUM+ confidence)
 ```
 
 ## Confidence Levels
@@ -106,21 +90,7 @@ Python specific bug hunting. Async pitfalls, None propagation, type violations.
 | `CERTAIN` | Spec violation + reproducible + challenger confirmed |
 | `HIGH` | Strong evidence + challenger failed to disprove |
 | `MEDIUM` | Circumstantial evidence + known pattern |
-| `LOW` | Suspicious but weak evidence (filtered from report) |
-
-## Evidence Weights
-
-| Evidence | Weight |
-|----------|--------|
-| Explicit spec violation | +3 |
-| Type system violation | +2 |
-| Test failure proves it | +2 |
-| Challenger failed | +2 |
-| Naming contradiction | +1 |
-| Comment/code mismatch | +1 |
-| Plausible alternative | -1 |
-| Valid counterargument | -2 |
-| Intentional per user | -3 |
+| `LOW` | Suspicious but weak (filtered from report) |
 
 ## Key Rules
 
@@ -132,12 +102,10 @@ Python specific bug hunting. Async pitfalls, None propagation, type violations.
 
 ## Collaboration with dev-experts
 
-Bug hunters **invoke** dev-experts agents as challengers:
-- `cpp-dev` challenges `cpp-hunter` findings
-- `python-dev` challenges `python-hunter` findings
-- `rust-dev` acts as both hunter and challenger for Rust
+- **Logic-first**: `cpp-dev`/`python-dev` challenge hunter findings
+- **Code-first**: `logic-hunter` challenges language hunter findings
 
-This creates adversarial tension that filters false positives.
+This adversarial tension filters false positives.
 
 ---
 
