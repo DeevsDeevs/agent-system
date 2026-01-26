@@ -61,6 +61,38 @@ All research agents **MUST** read this file first and ask the user which venue m
 
 ---
 
+#### Binance Spot specific
+
+**Data Characteristics:**
+
+Update frequency: 100ms / 250ms / 500ms (configurable via @100ms suffix)
+Depth: up to 5000 levels per side
+Timestamp: Unix ms, server time (sync via /api/v3/time)
+1024 streams/connection, 300 connections / 5 min / IP
+
+**Structural Quirks:**
+
+Weight-based rate limiting (shared REST + WebSocket)
+5 msg/sec inbound (Spot), 10/sec (Futures)
+IP ban escalation: 2 min → 3 days for repeat offenders
+Fees: 0.1% / 0.1% maker/taker (VIP tiers reduce)
+
+**Data Quality Concerns:**
+
+@0ms frequency dynamically degraded under load
+No built-in checksum — validate via periodic REST snapshot
+Sequence gaps → full snapshot required via GET /api/v3/depth
+Symbol renames (LUNA→LUNC) break historical continuity
+
+**Known Gotchas:**
+
+Binance.US — separate API, different limits
+Testnet data quality ≠ production
+Delisting affects data 24-48h before removal
+Status 429 = rate limit; 418 = IP ban (check Retry-After)
+
+---
+
 ### Crypto Derivatives (Perpetuals, Futures)
 
 **Data Characteristics:**
