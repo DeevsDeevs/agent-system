@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "You are a skill activation analyzer. Read the skill rules from the project's skill-rules.json and analyze the user's prompt.\n\nUser prompt: $USER_PROMPT\n\nFor each skill in skill-rules.json, check:\n1. Does the prompt contain any keywords from promptTriggers.keywords?\n2. Does the prompt match any regex in promptTriggers.intentPatterns?\n\nIf ANY skill matches, return a systemMessage in this format:\n\n{\"systemMessage\": \"SKILL ACTIVATION CHECK\\n\\nRelevant skills detected:\\n- [skill-name]: [brief reason]\\n\\nConsider invoking these skills before responding.\"}\n\nIf NO skills match, return: {\"systemMessage\": \"\"}\n\nBe concise. Only list genuinely relevant skills.",
+            "prompt": "You are a skill activation analyzer. Check if the user's prompt matches any skill rules.\n\nUser prompt: $USER_PROMPT\n\nSKILL RULES:\n1. polars-expertise - keywords: polars, dataframe, lazyframe, parquet, scan_parquet, group_by_dynamic, rolling_mean, asof join, OHLCV, window function. Intent patterns: convert/migrate pandas/pyspark/kdb to polars, lazy/eager evaluation, read/write/scan parquet, rolling/window operations, time series resample/aggregate.\n\n2. arxiv-search - keywords: arxiv, preprint, research paper, academic paper, scientific literature, paper search, find papers, ML research, recent research. Intent patterns: find/search/look up paper/research/preprint, latest/recent research/paper/work, what does the literature/research say, state of the art/SOTA.\n\nIf ANY skill matches (keyword found OR intent pattern matches), return:\n{\"ok\": true, \"systemMessage\": \"SKILL ACTIVATION CHECK - Relevant: [skill-name] ([reason])\"}\n\nIf NO skills match, return:\n{\"ok\": true, \"systemMessage\": \"\"}\n\nBe concise. Case-insensitive matching.",
             "timeout": 30
           }
         ]
@@ -20,21 +20,8 @@
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "You are a self-check reminder. Analyze what was done in this session.\n\nReview the conversation and any files that were edited. For each skill in skill-rules.json that has stopChecks defined:\n\n1. Check if edited files match the skill's fileTriggers (pathPatterns or contentPatterns)\n2. If they match, check if the file content contains any stopChecks.patterns\n3. If patterns found, include the corresponding reminders\n\nReturn format:\n{\"decision\": \"approve\", \"systemMessage\": \"Self-check reminders:\\n- [reminder 1]\\n- [reminder 2]\"}\n\nIf no relevant patterns found, return:\n{\"decision\": \"approve\", \"systemMessage\": \"\"}\n\nAlways approve (advisory only). Keep reminders brief and actionable.",
+            "prompt": "You are a self-check reminder for code quality. Based on the session context, check if any of these reminders apply:\n\nFor Python files with polars code, check for anti-patterns:\n- map_elements (use native expressions instead)\n- iter_rows (use vectorized operations)\n- apply() (use expressions)\n- pandas imports alongside polars (stick to one)\n\nIf any apply, return:\n{\"ok\": true, \"decision\": \"approve\", \"systemMessage\": \"Self-check: [relevant reminders]\"}\n\nIf nothing applies, return:\n{\"ok\": true, \"decision\": \"approve\", \"systemMessage\": \"\"}\n\nAlways approve. Keep brief.",
             "timeout": 30
-          }
-        ]
-      }
-    ],
-
-    "SessionStart": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cat ${CLAUDE_PLUGIN_ROOT}/config/skill-rules.json 2>/dev/null || echo '{}'",
-            "timeout": 5
           }
         ]
       }
