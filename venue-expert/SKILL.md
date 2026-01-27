@@ -44,12 +44,17 @@ Each level inherits concepts from its parent. Exchange-level files assume famili
 - `equity/` - Equity market fundamentals
 - `equity/amer/` - US equity market structure (Reg NMS, NBBO, SIP, TRF)
 - `equity/amer/nasdaq/` - Nasdaq-specific mechanics (ITCH, OUCH, crosses)
+- `crypto/` - Crypto market fundamentals
+- `crypto/CEX/` - Centralized exchange mechanics
+- `crypto/CEX/Binance/` - Binance-specific mechanics
 
 **Planned paths:**
 - `equity/amer/nyse/` - NYSE mechanics
 - `equity/emea/lse/` - London Stock Exchange
 - `futures/amer/cme/` - CME Group
-- `crypto/binance/` - Binance exchange
+- `crypto/CEX/Bybit/` - Bybit exchange
+- `crypto/CEX/OKX/` - OKX exchange
+- `crypto/DEX/` - Decentralized exchange mechanics
 
 ## Navigation
 
@@ -62,6 +67,9 @@ Route to appropriate depth based on query specificity:
 | Generic equity concepts | `equity/equity.md` |
 | US market structure, Reg NMS, NBBO | `equity/amer/equity_amer.md` |
 | Nasdaq-specific (ITCH, NOII, crosses) | `equity/amer/nasdaq/nasdaq.md` |
+| Generic crypto concepts | `crypto/crypto.md` |
+| CEX mechanics, rate limits, WebSocket | `crypto/CEX/cex.md` |
+| Binance-specific (API, depth, fees) | `crypto/CEX/Binance/binance.md` |
 
 ### Drill-Down Behavior
 
@@ -90,9 +98,15 @@ When debugging trading system issues:
 
 ### Content Files
 
+**Equity:**
 - `equity/equity.md` - Equity market fundamentals
 - `equity/amer/equity_amer.md` - US equity market structure
 - `equity/amer/nasdaq/nasdaq.md` - Nasdaq exchange mechanics
+
+**Crypto:**
+- `crypto/crypto.md` - Crypto market fundamentals
+- `crypto/CEX/cex.md` - Centralized exchange mechanics
+- `crypto/CEX/Binance/binance.md` - Binance exchange mechanics
 
 ### Reference Files
 
@@ -110,3 +124,9 @@ When debugging trading system issues:
 - `equity/amer/nasdaq/references/specs/totalview.md` - TotalView product
 - `equity/amer/nasdaq/references/regulatory/nasdaq_rules.md` - Nasdaq rulebook
 - `equity/amer/nasdaq/references/academic/auction_theory.md` - Auction research
+
+**Binance References:**
+- `crypto/CEX/Binance/references/specs/websocket_api.md` - WebSocket API specification
+- `crypto/CEX/Binance/references/specs/rest_api.md` - REST API specification
+- `crypto/CEX/Binance/references/specs/futures_api.md` - Futures API and mechanics
+- `crypto/CEX/Binance/references/regulatory/terms_of_service.md` - Platform rules and compliance
