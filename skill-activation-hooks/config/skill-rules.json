@@ -1,0 +1,80 @@
+{
+  "version": "1.0",
+  "description": "Skill activation rules - add your own skills here",
+
+  "skills": {
+    "polars-expertise": {
+      "description": "Polars DataFrame library for Python/Rust - expressions, lazy evaluation, performance",
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+
+      "promptTriggers": {
+        "keywords": [
+          "polars", "dataframe", "lazyframe", "parquet",
+          "scan_parquet", "group_by_dynamic", "rolling_mean",
+          "asof join", "OHLCV", "window function"
+        ],
+        "intentPatterns": [
+          "(convert|migrate).*?(pandas|pyspark|kdb).*?polars",
+          "(lazy|eager).*?(evaluation|execution)",
+          "(read|write|scan).*?parquet",
+          "(rolling|window).*?(mean|std|sum)",
+          "time series.*?(resample|aggregate)"
+        ]
+      },
+
+      "fileTriggers": {
+        "pathPatterns": ["**/*.py", "**/*.rs"],
+        "contentPatterns": [
+          "import polars",
+          "use polars::",
+          "pl\\.scan_",
+          "pl\\.read_",
+          "LazyFrame",
+          "\\.collect\\(\\)"
+        ]
+      },
+
+      "stopChecks": {
+        "patterns": ["map_elements", "iter_rows", "apply\\(", "pandas"],
+        "reminders": [
+          "Using native expressions instead of map_elements?",
+          "Early projection (select columns before filter)?",
+          "Lazy evaluation for large data?"
+        ]
+      }
+    },
+
+    "arxiv-search": {
+      "description": "Search arXiv for academic papers and preprints",
+      "type": "research",
+      "enforcement": "suggest",
+      "priority": "medium",
+
+      "promptTriggers": {
+        "keywords": [
+          "arxiv", "preprint", "research paper", "academic paper",
+          "scientific literature", "paper search", "find papers",
+          "ML research", "recent research"
+        ],
+        "intentPatterns": [
+          "(find|search|look up).*?(paper|research|preprint)",
+          "(latest|recent).*?(research|paper|work).*?(on|about)",
+          "what does the (literature|research) say",
+          "(state of the art|SOTA).*?(in|for)"
+        ]
+      },
+
+      "fileTriggers": {
+        "pathPatterns": [],
+        "contentPatterns": []
+      },
+
+      "stopChecks": {
+        "patterns": [],
+        "reminders": []
+      }
+    }
+  }
+}

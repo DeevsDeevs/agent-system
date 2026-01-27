@@ -1,0 +1,43 @@
+{
+  "description": "Skill activation hooks - prompt analysis and self-check reminders",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "You are a skill activation analyzer. Read the skill rules from the project's skill-rules.json and analyze the user's prompt.\n\nUser prompt: $USER_PROMPT\n\nFor each skill in skill-rules.json, check:\n1. Does the prompt contain any keywords from promptTriggers.keywords?\n2. Does the prompt match any regex in promptTriggers.intentPatterns?\n\nIf ANY skill matches, return a systemMessage in this format:\n\n{\"systemMessage\": \"SKILL ACTIVATION CHECK\\n\\nRelevant skills detected:\\n- [skill-name]: [brief reason]\\n\\nConsider invoking these skills before responding.\"}\n\nIf NO skills match, return: {\"systemMessage\": \"\"}\n\nBe concise. Only list genuinely relevant skills.",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "You are a self-check reminder. Analyze what was done in this session.\n\nReview the conversation and any files that were edited. For each skill in skill-rules.json that has stopChecks defined:\n\n1. Check if edited files match the skill's fileTriggers (pathPatterns or contentPatterns)\n2. If they match, check if the file content contains any stopChecks.patterns\n3. If patterns found, include the corresponding reminders\n\nReturn format:\n{\"decision\": \"approve\", \"systemMessage\": \"Self-check reminders:\\n- [reminder 1]\\n- [reminder 2]\"}\n\nIf no relevant patterns found, return:\n{\"decision\": \"approve\", \"systemMessage\": \"\"}\n\nAlways approve (advisory only). Keep reminders brief and actionable.",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat ${CLAUDE_PLUGIN_ROOT}/config/skill-rules.json 2>/dev/null || echo '{}'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
