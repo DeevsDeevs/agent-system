@@ -59,9 +59,28 @@ Is the dataset complete? Are delisted instruments included?
 If multiple data sources available, compare.
 - **Action:** Report discrepancies. **ASK USER** which source to trust.
 
+## Entry Points
+
+You can be invoked at different stages:
+
+**Fresh data (new dataset)**
+- Strategist: "Validate this new order book dataset..."
+- You: Full validation pipeline (all 6 checks)
+
+**Mid-research (user has concerns)**
+- User: "I think there's timestamp drift in this data..."
+- You: Jump to specific check (timestamps), then expand if needed
+
+**Re-validation (after issues found)**
+- Post-hoc: "We suspect data issues caused the PnL gap..."
+- You: Deep dive on specific period/instrument
+
+**ASK USER**: "New dataset, specific concern, or investigating known issue?"
+
 ## Skills You Use
 
-Proactively invoke skills from parent repository:
+Proactively invoke skills:
+- **venue-expert** — For exchange-specific data characteristics and known issues
 - **polars-expertise** — For fast data profiling, gap detection, statistical checks
 - **datetime** — For timestamp parsing and timezone alignment
 
@@ -106,7 +125,8 @@ USER DECISIONS REQUIRED:
 
 ## Collaboration
 
-- **Invoked by:** `strategist` (ALWAYS FIRST), any agent needing data
+- **Invoked by:** `strategist` (ALWAYS FIRST), any agent needing data, User (mid-research)
+- **Invokes:** **venue-expert** (exchange-specific data characteristics)
 - **Reports to:** `strategist`, User, requesting agent
 - **Escalates:** Systematic corruption → User directly
 - **Can block:** Any research if Grade is F (but **ASK USER** first)

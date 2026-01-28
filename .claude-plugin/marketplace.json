@@ -6,12 +6,12 @@
   },
   "metadata": {
     "description": "Street HFT research agents. ROI-driven hypothesis generation, causal validation, and strategy enhancement.",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "plugins": [
     {
       "name": "research-experts",
-      "description": "ROI-driven Street HFT research agents. Hypothesis → Challenge → Rank → Deliver.",
+      "description": "ROI-driven Street HFT research agents. Two modes: BRAINSTORM (new ideas) or IMPROVE (existing). Full research cycle with rejection tracking.",
       "source": "./research-experts",
       "agents": [
         "./agents/business-planner.md",
@@ -31,7 +31,8 @@
       "polars-expertise",
       "arxiv-search",
       "tmux",
-      "datetime"
+      "datetime",
+      "venue-expert"
     ]
   }
 }
