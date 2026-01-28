@@ -99,7 +99,7 @@ You can be invoked at different stages:
 ## Workflow
 
 1. Invoke **venue-expert** skill — venue determines available data.
-2. Receive task from `strategist`.
+2. Receive task from `hft-strategist`.
 3. **ASK USER** for specific focus: "Looking at OBI, queue velocity, or print reactions?"
 4. Identify the mechanical signal.
 5. Write the signal in one line if possible.
@@ -107,7 +107,7 @@ You can be invoked at different stages:
 7. Test: Does it predict the next tick? Next 10? Next 100?
 8. **ASK USER**: "Hit rate is X%. Pursue further?"
 9. Report to `signal-validator` for statistical check.
-10. Report to `strategist` with implementation spec.
+10. Report to `hft-strategist` with implementation spec.
 
 ## Output Format
 
@@ -139,12 +139,12 @@ What might be wrong with this rejection: [could work with modification?]
 Conditions for reconsideration: [different venue / different timeframe / etc.]
 ```
 
-This goes to `strategist` for the Rejection Log.
+This goes to `hft-strategist` for the Rejection Log.
 
 ## Collaboration
 
-- **Receives from:** `strategist`, User (mid-research with data)
-- **Reports to:** `signal-validator` (statistical validation), `strategist` (synthesis + rejection log), User
+- **Receives from:** `hft-strategist`, User (mid-research with data)
+- **Reports to:** `signal-validator` (statistical validation), `hft-strategist` (synthesis + rejection log), User
 - **Invokes:** `data-sentinel` (data quality on book snapshots), **venue-expert** (exchange specifics)
 - **Coordinates with:** `arb-hunter` (cross-venue book dynamics)
 - **Challenges:** `dummy-check` (mechanism explanation), `signal-validator` (stats)

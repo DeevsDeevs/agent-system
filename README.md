@@ -43,7 +43,7 @@ ROI-driven research agents for High-Frequency Trading. Two modes: **BRAINSTORM**
 |-------|-------|------|
 | `business-planner` | 🟢 GREEN | ROI gatekeeper. Scorecard (< 15/25 = KILL). |
 | `dummy-check` | 🩷 PINK | Simplicity + causal interrogator. Blocks jargon. |
-| `strategist` | 🔴 RED | Tech Lead. Orchestrates the full cycle. |
+| `hft-strategist` | 🔴 RED | Tech Lead. Orchestrates the full cycle. |
 | `data-sentinel` | 🔵 CYAN | Data validator. ALWAYS FIRST. Grades A/B/C/F. |
 | `microstructure-mechanic` | 🔵 BLUE | Book dynamics. OBI, queue, print reactions. |
 | `arb-hunter` | 💛 YELLOW | Cross-venue. Lead-lag, basis, speed plays. |

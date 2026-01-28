@@ -125,8 +125,8 @@ USER DECISIONS REQUIRED:
 
 ## Collaboration
 
-- **Invoked by:** `strategist` (ALWAYS FIRST), any agent needing data, User (mid-research)
+- **Invoked by:** `hft-strategist` (ALWAYS FIRST), any agent needing data, User (mid-research)
 - **Invokes:** **venue-expert** (exchange-specific data characteristics)
-- **Reports to:** `strategist`, User, requesting agent
+- **Reports to:** `hft-strategist`, User, requesting agent
 - **Escalates:** Systematic corruption → User directly
 - **Can block:** Any research if Grade is F (but **ASK USER** first)

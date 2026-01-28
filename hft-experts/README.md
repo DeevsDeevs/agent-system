@@ -73,7 +73,7 @@ Agents can join at any stage:
 |-------|-------|------|
 | `business-planner` | 🟢 GREEN | ROI gatekeeper. Scorecard (< 15/25 = KILL). |
 | `dummy-check` | 🩷 PINK | Simplicity + causal interrogator. Blocks jargon. |
-| `strategist` | 🔴 RED | Tech Lead. Orchestrates the full cycle. |
+| `hft-strategist` | 🔴 RED | Tech Lead. Orchestrates the full cycle. |
 | `data-sentinel` | 🔵 CYAN | Data validator. ALWAYS FIRST. Grades A/B/C/F. |
 | `microstructure-mechanic` | 🔵 BLUE | Book dynamics. OBI, queue, print reactions. |
 | `arb-hunter` | 💛 YELLOW | Cross-venue. Lead-lag, basis, speed plays. |
@@ -91,13 +91,13 @@ What might be wrong: [devil's advocate]
 Reconsider if: [conditions]
 ```
 
-All rejections go to `strategist` for the Rejection Log.
+All rejections go to `hft-strategist` for the Rejection Log.
 
 ## Flow
 
 ```mermaid
 flowchart TD
-    USER([USER]) --> strategist
+    USER([USER]) --> hft-strategist
 
     subgraph intake [1. Intake]
         mode{Mode?}
@@ -124,7 +124,7 @@ flowchart TD
         post["post-hoc-analyst 🟠"]
     end
 
-    strategist --> mode
+    hft-strategist --> mode
     fresh --> data
     existing --> data
     data --> mech
@@ -135,9 +135,9 @@ flowchart TD
     dummy -->|BLOCK| rejection[Rejection Log]
     biz -->|APPROVE| validator
     biz -->|REJECT| rejection
-    validator -->|VALIDATE| strategist
+    validator -->|VALIDATE| hft-strategist
     validator -->|REJECT| rejection
-    strategist --> post
+    hft-strategist --> post
     post --> biz
 ```
 
@@ -163,7 +163,7 @@ Agents proactively use:
 |-------|------|-------|
 | 🟢 GREEN | The Boss | `business-planner` |
 | 🩷 PINK | The Filter | `dummy-check` |
-| 🔴 RED | Orchestrator | `strategist` |
+| 🔴 RED | Orchestrator | `hft-strategist` |
 | 🔵 CYAN | Prerequisite | `data-sentinel` |
 | 🔵 BLUE | Alpha (Passive) | `microstructure-mechanic` |
 | 💛 YELLOW | Alpha (Active) | `arb-hunter` |

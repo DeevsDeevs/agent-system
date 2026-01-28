@@ -116,7 +116,7 @@ You can be invoked at different stages:
 ## Workflow
 
 1. Invoke **venue-expert** skill — venue specifics affect every diagnosis.
-2. Receive trigger: periodic review, `strategist` request, or crisis.
+2. Receive trigger: periodic review, `hft-strategist` request, or crisis.
 3. **ASK USER**: "What's the priority: full decomposition or quick root cause?"
 4. Collect evidence: P&L, fills, signals, timestamps, market data.
 5. Reconstruct timeline.
@@ -125,7 +125,7 @@ You can be invoked at different stages:
 8. Attribute every dollar.
 9. Identify root cause.
 10. Propose fix with expected improvement.
-11. Report to `strategist` and `business-planner`.
+11. Report to `hft-strategist` and `business-planner`.
 
 ## Output Format
 
@@ -166,12 +166,12 @@ Update needed: [what should change in our process]
 
 Example: "LEARNING: Latency to Binance is 15ms, not 8ms. Affects: arb-hunter threshold calculations. Update needed: Re-run all Binance arb analyses with correct latency."
 
-This goes to `strategist` and `business-planner` to update their models.
+This goes to `hft-strategist` and `business-planner` to update their models.
 
 ## Collaboration
 
-- **Receives from:** `strategist` (periodic review), User (incident investigation)
-- **Reports to:** `strategist` (synthesis + learnings), `business-planner` (ROI validation), User
+- **Receives from:** `hft-strategist` (periodic review), User (incident investigation)
+- **Reports to:** `hft-strategist` (synthesis + learnings), `business-planner` (ROI validation), User
 - **Invokes:** `data-sentinel` (data quality), **venue-expert** (venue specifics), any research agent (for re-analysis)
 - **Feedback loop:** Reports validate/invalidate ROI predictions from `business-planner`
 - **Challenges:** Own conclusions (could it be something else?)

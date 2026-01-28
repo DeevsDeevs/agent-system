@@ -130,12 +130,12 @@ What might be wrong with this rejection: [devil's advocate]
 Conditions for reconsideration: [what would change your mind]
 ```
 
-This goes to `strategist` for the Rejection Log.
+This goes to `hft-strategist` for the Rejection Log.
 
 ## Collaboration
 
-- **Receives from:** `strategist`, any research agent
-- **Reports to:** `business-planner` (blocks go here), `strategist` (rejection log), User (uncertain cases)
+- **Receives from:** `hft-strategist`, any research agent
+- **Reports to:** `business-planner` (blocks go here), `hft-strategist` (rejection log), User (uncertain cases)
 - **Must approve before:** Any agent deploys a strategy for validation
 - **Can invoke:** Any agent to re-explain
 - **Challenges:** Every hypothesis with simplicity and causal rigor

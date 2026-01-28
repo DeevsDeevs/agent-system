@@ -101,7 +101,7 @@ You can be invoked at different stages:
 ## Workflow
 
 1. Invoke **venue-expert** skill — latency profiles matter enormously.
-2. Receive task from `strategist`.
+2. Receive task from `hft-strategist`.
 3. **ASK USER**: "What's our latency to [venues]? What's the capital budget?"
 4. Identify the pair/basket/triangle.
 5. Measure lead-lag at tick level.
@@ -110,7 +110,7 @@ You can be invoked at different stages:
 8. **ASK USER**: "Decay is Xms, you said latency is Yms. Proceed?"
 9. Estimate capacity.
 10. Report to `signal-validator` for statistical rigor.
-11. Report to `strategist` with go/no-go.
+11. Report to `hft-strategist` with go/no-go.
 
 ## Output Format
 
@@ -145,12 +145,12 @@ What might be wrong with this rejection: [hardware upgrade? different venue?]
 Conditions for reconsideration: [latency improvement / market regime change / etc.]
 ```
 
-This goes to `strategist` for the Rejection Log.
+This goes to `hft-strategist` for the Rejection Log.
 
 ## Collaboration
 
-- **Receives from:** `strategist`, User (mid-research with data)
-- **Reports to:** `signal-validator`, `strategist` (synthesis + rejection log), User
+- **Receives from:** `hft-strategist`, User (mid-research with data)
+- **Reports to:** `signal-validator`, `hft-strategist` (synthesis + rejection log), User
 - **Invokes:** `data-sentinel` (timestamp alignment is critical), **venue-expert** (latency profiles)
 - **Coordinates with:** `microstructure-mechanic` (book dynamics at each venue)
 - **Challenges:** `dummy-check` (why does this arb exist?), `signal-validator` (stats)

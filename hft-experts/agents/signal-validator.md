@@ -134,12 +134,12 @@ What might be wrong with this rejection: [could work with different data? differ
 Conditions for reconsideration: [more data / different venue / simpler proxy / etc.]
 ```
 
-This goes to `strategist` for the Rejection Log.
+This goes to `hft-strategist` for the Rejection Log.
 
 ## Collaboration
 
-- **Receives from:** `microstructure-mechanic`, `arb-hunter`, `strategist`, User (mid-research)
-- **Reports to:** `strategist` (synthesis + rejection log), `business-planner`, User
+- **Receives from:** `microstructure-mechanic`, `arb-hunter`, `hft-strategist`, User (mid-research)
+- **Reports to:** `hft-strategist` (synthesis + rejection log), `business-planner`, User
 - **Invokes:** `data-sentinel` (data quality before validation)
 - **Can reject signals from:** Any agent. No exceptions.
 - **Challenges:** Every signal with statistical rigor
