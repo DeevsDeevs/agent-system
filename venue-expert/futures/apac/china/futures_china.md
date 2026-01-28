@@ -6,13 +6,13 @@ Chinese futures operate via CTP (综合交易平台) across five exchanges. Assu
 
 ### The Five Exchanges
 
-| Exchange | Chinese Name | Focus | Night Session |
-|----------|--------------|-------|---------------|
-| SHFE | 上海期货交易所 | Metals, energy, rubber | Yes (varies by product) |
-| INE | 上海国际能源交易中心 | Internationalized products | Yes |
-| DCE | 大连商品交易所 | Ferrous, agricultural | Yes |
-| CZCE | 郑州商品交易所 | Agricultural, chemicals | Yes |
-| CFFEX | 中国金融期货交易所 | Index futures, treasury | No |
+| Exchange | Chinese Name | Focus | Night Session | Timezone |
+|----------|--------------|-------|---------------|----------|
+| SHFE | 上海期货交易所 | Metals, energy, rubber | Yes (varies by product) | CST (UTC+8) |
+| INE | 上海国际能源交易中心 | Internationalized products | Yes | CST (UTC+8) |
+| DCE | 大连商品交易所 | Ferrous, agricultural | Yes | CST (UTC+8) |
+| CZCE | 郑州商品交易所 | Agricultural, chemicals | Yes | CST (UTC+8) |
+| CFFEX | 中国金融期货交易所 | Index futures, treasury | No | CST (UTC+8) |
 
 ### Critical Constraints
 

@@ -6,6 +6,7 @@ Agricultural products, chemicals. Assumes familiarity with `futures_china.md`.
 
 | Attribute | Value |
 |-----------|-------|
+| Timezone | **CST (UTC+8)** |
 | Focus | Agricultural (cotton, sugar), chemicals (PTA, methanol) |
 | Night session | Yes (23:00-23:30 end) |
 | Contract format | **3-digit year (YMM)** - ambiguous across decades |

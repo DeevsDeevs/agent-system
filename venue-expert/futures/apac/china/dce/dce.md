@@ -6,6 +6,7 @@ Ferrous metals, agricultural products. Assumes familiarity with `futures_china.m
 
 | Attribute | Value |
 |-----------|-------|
+| Timezone | **CST (UTC+8)** |
 | Focus | Ferrous (iron ore, coke), agricultural (soybeans, palm) |
 | Night session | Yes (23:00 end) |
 | Stop orders | **Only exchange with native stop orders** |

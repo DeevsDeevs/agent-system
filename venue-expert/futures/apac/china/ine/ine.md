@@ -6,6 +6,7 @@ Internationalized products for foreign participation. Assumes familiarity with `
 
 | Attribute | Value |
 |-----------|-------|
+| Timezone | **CST (UTC+8)** |
 | Focus | Internationalized commodities |
 | Foreign access | **Direct** (no QFII required) |
 | Pricing | **Net-of-tax** (不含税价格) |

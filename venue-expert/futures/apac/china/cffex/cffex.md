@@ -6,6 +6,7 @@ Stock index futures, treasury bond futures. Assumes familiarity with `futures_ch
 
 | Attribute | Value |
 |-----------|-------|
+| Timezone | **CST (UTC+8)** |
 | Focus | Financial derivatives |
 | Night session | **No** |
 | Settlement | **Last-hour VWAP** (not full-day) |

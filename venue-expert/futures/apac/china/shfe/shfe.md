@@ -6,6 +6,7 @@ Base metals, precious metals, energy, rubber. Assumes familiarity with `futures_
 
 | Attribute | Value |
 |-----------|-------|
+| Timezone | **CST (UTC+8)** |
 | Focus | Metals, energy, rubber |
 | Night session | Yes (varies by product) |
 | L2 data | Free via UDP multicast (colocation) |
