@@ -1,73 +1,77 @@
-# Research Experts
+# Research Experts — The "Street HFT" Squad
 
-Opinionated research agents for HFT quantitative research. Causality over fit. Interpretability over black-box. Every decision flows to user.
+ROI-driven research agents for HFT. Maximizing **Sharpe per unit of Engineering Effort**, not mathematical elegance. C++ pipeline research with business-oriented agents who know causal math, econometrics, and microstructure — but prioritize shipping over perfection.
 
 ## Philosophy
 
-- **Causality first** - mechanism over statistical fit
-- **Interpretability** - understand why, not just that
-- **User decides** - agents advise and ask, never assume
-- **Deep by default** - dig until you understand
-- **Complementary** - agents complete each other, not overlap
+- **ROI over elegance** — a heuristic that works 51% at 10ns beats a "correct" model at 10ms
+- **Explicit mechanism** — no data mining, every signal has a causal story
+- **Linear baselines first** — no ML until OLS/LARS fails
+- **C++ first** — if it needs Python, it's research, not production
+- **Simple kills complex** — if you can't explain it to a 5-year-old, it breaks in production
+
+## The Ranking Layer
+
+Every hypothesis is ranked:
+1. **Intuition** — Can you explain it simply?
+2. **Complexity** — How many lines of code?
+3. **Robustness** — Does it survive LARS?
 
 ## Agents
 
-### strategist - Central Brain
-The orchestrator who knows the strategy inside-out. Decomposes questions, coordinates agents, challenges ideas, synthesizes findings. Asks complementary questions EVERY TIME before proceeding.
+### business-planner 🟢 — The Boss
+ROI Manager. Calculates "Profitability Score" for every idea. Rejects high-complexity/low-return research immediately. Scorecard: Complexity × Latency × Intuition × Edge × Implementation.
 
-**Invokes**: All research agents
-**Key trait**: Obsessive about understanding the full mechanism
-
----
-
-### data-sentinel - Paranoid Data Guardian
-MUST BE INVOKED FIRST on any data. Trusts nothing. Assumes all feeds are corrupt until proven otherwise. Asks user before any filter/transform.
-
-**Invoked by**: strategist (always first), any agent needing data
-**Key trait**: Pathologically suspicious of data quality
+**Key trait**: "If it takes 2 weeks to build and makes 1bp, kill it."
 
 ---
 
-### microstructure-analyst - Econometrician
-Order book dynamics, venue mechanics, information models. Builds structural models from economic foundations. Kyle, Glosten-Milgrom, Hawkes. Causal ML when appropriate.
+### dummy-check 🩷 — The Filter
+Simplicity enforcer + causal interrogator. Pretends to be dumb, catches every logical gap. Blocks the pipeline if the strategy can't be explained in plain language.
 
-**Invoked by**: strategist
-**Escalates to**: causal-analyst (mechanism validation)
-**Key trait**: Pattern without model is not alpha
+**Key trait**: "I don't get it. Explain it again."
 
 ---
 
-### cross-venue-analyst - Statistics Purist
-Multi-venue relationships, lead-lag, information transmission. Pre-registers hypotheses, corrects for multiple testing, demands out-of-sample validation.
+### strategist 🔴 — The Tech Lead
+Orchestrator. Breaks business goals into research tasks. Knows every HFT strategy type at implementation level. Must satisfy both `business-planner` and `dummy-check` before deploying specialists.
 
-**Invoked by**: strategist
-**Escalates to**: causal-analyst (MANDATORY before tradeable claims)
-**Key trait**: False discoveries offend personally
+**Key trait**: Obsessive about mechanism and edge cases
 
 ---
 
-### causal-analyst - Gatekeeper
-Destroys spurious correlations. DAGs, IV, RDD, DiD, sensitivity analysis. Validates mechanisms submitted by other agents. PASS/REJECT with full reasoning.
+### data-sentinel ⚫ — The Prerequisite
+Data integrity checker. ALWAYS FIRST. Timestamps, sequence gaps, outliers. Pragmatic — grades data A/B/C/F and says what's usable, not just what's broken.
 
-**Invoked by**: microstructure-analyst, cross-venue-analyst, strategist
-**Key trait**: Correlation without mechanism is noise
-
----
-
-### post-hoc-analyst - Forensic Investigator
-Finds what we believed wrong. Traces assumption failures through the chain. Paranoid about everything. Asks before attributing blame.
-
-**Invoked by**: strategist (periodic), crisis-hunter (after incidents)
-**Key trait**: Never trust the first explanation
+**Key trait**: "Bad Data in the Asian session; usable in the US session."
 
 ---
 
-### crisis-hunter - Incident Commander
-INVOKE when something breaks. Knows where bugs hide - integration points, assumption boundaries, temporal edges. Coordinates investigation.
+### microstructure-mechanic 🔵 — The Plumber
+Flow and book dynamics. OBI, Queue Depletion, Large Lot reactions. Treats the order book like a hydraulic machine. Mechanical heuristics over stochastic calculus.
 
-**Invoked by**: user, strategist, any agent
-**Hands off to**: post-hoc-analyst (after closure)
-**Key trait**: "Fixed" is a hypothesis until verified
+**Key trait**: If the signal takes more than one line of C++, it's suspicious
+
+---
+
+### arb-hunter 💛 — The Speedster
+Cross-venue correlations, lead-lag, basis trades. Speed is the only variable. If our latency > signal decay, we don't play.
+
+**Key trait**: "If we can't be first, we don't play."
+
+---
+
+### signal-validator 🟣 — The Math Pragmatist
+LARS, OLS, Gram-Schmidt. Validates signals for orthogonality and overfitting. Enforces the speed constraint — anything slower than LARS in the hot loop is rejected.
+
+**Key trait**: "Did LARS pick it? Is it orthogonal? Is it fast enough?"
+
+---
+
+### post-hoc-analyst 🟠 — The Forensic
+Explains implementation shortfall. Decomposes PnL gaps into Latency, Impact, Adverse Selection, Fees, Queue Slippage, and Bugs. Knows where to search first when things break.
+
+**Key trait**: "It's always a bug first."
 
 ## Flow
 
@@ -75,54 +79,65 @@ INVOKE when something breaks. Knows where bugs hide - integration points, assump
 flowchart TD
     USER([USER]) --> strategist
 
-    subgraph orchestration [Orchestration]
-        strategist[/"strategist<br/>🔴 Central Brain"/]
+    subgraph gate [Gate — Must Pass Both]
+        biz["business-planner 🟢<br/>ROI Scorecard"]
+        dummy["dummy-check 🩷<br/>Simplicity Lock"]
     end
 
-    subgraph research [Research Layer]
-        data-sentinel[/"data-sentinel<br/>🔵 ALWAYS FIRST"/]
-        micro["microstructure-analyst<br/>🔵"]
-        cross["cross-venue-analyst<br/>🔵"]
-        post-hoc["post-hoc-analyst<br/>🔵"]
+    subgraph prerequisite [Always First]
+        data["data-sentinel ⚫<br/>Data Grade: A/B/C/F"]
+    end
+
+    subgraph alpha [Alpha Squad]
+        mech["microstructure-mechanic 🔵<br/>Book Dynamics"]
+        arb["arb-hunter 💛<br/>Cross-Venue"]
     end
 
     subgraph validation [Validation]
-        causal["causal-analyst<br/>🔵 Gatekeeper"]
+        validator["signal-validator 🟣<br/>LARS / OLS / Orthogonality"]
     end
 
-    subgraph crisis [Crisis Response]
-        crisis-hunter[/"crisis-hunter<br/>🔴 When needed"/]
+    subgraph forensics [Forensics]
+        post["post-hoc-analyst 🟠<br/>Implementation Shortfall"]
     end
 
-    strategist --> data-sentinel
-    strategist --> micro
-    strategist --> cross
-    strategist --> post-hoc
-
-    micro --> causal
-    cross --> causal
-
-    crisis-hunter -.-> post-hoc
-    strategist -.-> crisis-hunter
+    strategist --> biz
+    strategist --> dummy
+    biz -->|approved| data
+    dummy -->|passed| data
+    data --> mech
+    data --> arb
+    mech --> validator
+    arb --> validator
+    validator --> strategist
+    strategist --> post
+    post -->|feedback| biz
 ```
 
 ## Key Rules
 
-1. **data-sentinel FIRST** - always validate data before research
-2. **causal-analyst VALIDATES** - no tradeable claims without mechanism
-3. **strategist ASKS** - complementary questions every time
-4. **USER DECIDES** - agents present options, never assume
+1. **business-planner APPROVES** — no research without ROI scorecard (score ≥ 15/25)
+2. **dummy-check PASSES** — no deployment without plain-language explanation
+3. **data-sentinel FIRST** — always validate data before research
+4. **signal-validator VALIDATES** — LARS/OLS before any claim
+5. **post-hoc-analyst CHECKS** — every dollar of shortfall gets attributed
 
 ## Venue Context
 
 All agents read `EXCHANGE_CONTEXT.md` first and ask which venue mode applies.
 
----
-
 ## Color Scheme
 
-❤️ RED = `strategist`, `crisis-hunter` (orchestrators)
-💚 CYAN = `data-sentinel`, `microstructure-analyst`, `cross-venue-analyst`, `causal-analyst`, `post-hoc-analyst` (researchers)
+| Color | Role | Agent |
+|-------|------|-------|
+| 🟢 GREEN | The Boss | `business-planner` |
+| 🩷 PINK | The Filter | `dummy-check` |
+| 🔴 RED | Orchestrator | `strategist` |
+| ⚫ GRAY | Prerequisite | `data-sentinel` |
+| 🔵 BLUE | Alpha (Passive) | `microstructure-mechanic` |
+| 💛 YELLOW | Alpha (Active) | `arb-hunter` |
+| 🟣 PURPLE | Validation | `signal-validator` |
+| 🟠 ORANGE | Forensics | `post-hoc-analyst` |
 
 ## Installation
 

@@ -11,16 +11,17 @@
   "plugins": [
     {
       "name": "research-experts",
-      "description": "Opinionated research agents for HFT quantitative research. Causality over fit. Interpretability over black-box.",
+      "description": "ROI-driven Street HFT research agents. Sharpe per unit of Engineering Effort. C++ pipeline, mechanical heuristics, causal math.",
       "source": "./research-experts",
       "agents": [
+        "./agents/business-planner.md",
+        "./agents/dummy-check.md",
         "./agents/strategist.md",
         "./agents/data-sentinel.md",
-        "./agents/microstructure-analyst.md",
-        "./agents/cross-venue-analyst.md",
-        "./agents/causal-analyst.md",
-        "./agents/post-hoc-analyst.md",
-        "./agents/crisis-hunter.md"
+        "./agents/microstructure-mechanic.md",
+        "./agents/arb-hunter.md",
+        "./agents/signal-validator.md",
+        "./agents/post-hoc-analyst.md"
       ]
     },
     {

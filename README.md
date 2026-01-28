@@ -216,11 +216,14 @@ Universal color scheme across all agent plugins:
 
 | Color | Role | Examples |
 |-------|------|----------|
-| ❤️ **RED** | Deciders & Orchestrators | `architect`, `strategist`, `orchestrator`, `crisis-hunter`, `devops` |
-| 🧡 **ORANGE** | Hybrid (can lead or challenge) | `logic-hunter` |
-| 💛 **YELLOW** | Checkers & Validators | `reviewer`, `cpp-hunter`, `python-hunter` |
-| 💙 **BLUE** | Builders & Implementers | `cpp-dev`, `python-dev`, `rust-dev`, `tester` |
-| 💚 **CYAN** | Researchers & Analysts | `data-sentinel`, `microstructure-analyst`, `causal-analyst` |
+| ❤️ **RED** | Deciders & Orchestrators | `architect`, `strategist`, `orchestrator`, `devops` |
+| 🟢 **GREEN** | Business & ROI | `business-planner` |
+| 🩷 **PINK** | Simplicity & Causal Filter | `dummy-check` |
+| 🧡 **ORANGE** | Hybrid (can lead or challenge) | `logic-hunter`, `post-hoc-analyst` |
+| 💛 **YELLOW** | Checkers & Validators | `reviewer`, `cpp-hunter`, `python-hunter`, `arb-hunter` |
+| 🟣 **PURPLE** | Math & Validation | `signal-validator` |
+| 💙 **BLUE** | Builders & Implementers | `cpp-dev`, `python-dev`, `rust-dev`, `tester`, `microstructure-mechanic` |
+| ⚫ **GRAY** | Data & Prerequisites | `data-sentinel` |
 
 ## Credits
 
