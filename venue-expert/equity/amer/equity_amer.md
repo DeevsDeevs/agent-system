@@ -1,5 +1,7 @@
 # US Equity Market Structure
 
+**Timezone:** ET (Eastern Time, UTC-5 / UTC-4 DST)
+
 US equity markets operate under Regulation NMS, creating a linked national market system. This document covers concepts shared across all US equity venues.
 
 ## Overview and Role

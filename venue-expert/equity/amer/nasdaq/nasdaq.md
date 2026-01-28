@@ -1,5 +1,7 @@
 # Nasdaq Exchange Mechanics
 
+**Timezone:** ET (Eastern Time, UTC-5 / UTC-4 DST)
+
 Nasdaq-specific market microstructure. Assumes familiarity with US equity concepts from `equity_amer.md`.
 
 ## Overview and Role
