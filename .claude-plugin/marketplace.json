@@ -1,17 +1,17 @@
 {
-  "name": "deevs-agent-system",
+  "name": "hft-research-agents",
   "owner": {
     "name": "Deevs",
     "email": "deevsgt15@gmail.com"
   },
   "metadata": {
-    "description": "Deevs' marketplace for Claude Code, Open Code, and other agentic AI systems",
-    "version": "0.0.4"
+    "description": "Street HFT research agents. ROI-driven hypothesis generation, causal validation, and strategy enhancement.",
+    "version": "0.1.0"
   },
   "plugins": [
     {
       "name": "research-experts",
-      "description": "ROI-driven Street HFT research agents. Sharpe per unit of Engineering Effort. C++ pipeline, mechanical heuristics, causal math.",
+      "description": "ROI-driven Street HFT research agents. Hypothesis → Challenge → Rank → Deliver.",
       "source": "./research-experts",
       "agents": [
         "./agents/business-planner.md",
@@ -23,73 +23,15 @@
         "./agents/signal-validator.md",
         "./agents/post-hoc-analyst.md"
       ]
-    },
-    {
-      "name": "chain-system",
-      "description": "Multi-session workflow chains for maintaining linked context across conversations",
-      "source": "./chain-system",
-      "commands": ["./commands/"]
-    },
-    {
-      "name": "tmux",
-      "description": "Interactive terminal control for REPLs, debuggers, and servers",
-      "source": "./tmux",
-      "skills": ["./"]
-    },
-    {
-      "name": "dev-experts",
-      "description": "Critical developer personas: architect, devops detective, rust/python/cpp purists, grumpy reviewer, testing specialist",
-      "source": "./dev-experts",
-      "agents": [
-        "./agents/architect.md",
-        "./agents/devops.md",
-        "./agents/cpp-dev.md",
-        "./agents/python-dev.md",
-        "./agents/reviewer.md",
-        "./agents/rust-dev.md",
-        "./agents/tester.md"
-      ]
-    },
-    {
-      "name": "bug-hunters",
-      "description": "Systematic bug hunting with spec reconstruction, adversarial validation, and confidence-ranked reports",
-      "source": "./bug-hunters",
-      "agents": [
-        "./agents/orchestrator.md",
-        "./agents/logic-hunter.md",
-        "./agents/cpp-hunter.md",
-        "./agents/python-hunter.md"
-      ]
-    },
-    {
-      "name": "datetime",
-      "description": "Get current date and time in various formats for logging, file naming, APIs, and timestamps",
-      "source": "./datetime",
-      "skills": ["./"]
-    },
-    {
-      "name": "anti-ai-slop",
-      "description": "Clean-up the repo from ai-slop",
-      "source": "./anti-ai-slop",
-      "skills": ["./"]
-    }, 
-    {
-      "name": "97-dev",
-      "description": "97 things every dev should know",
-      "source": "./97-dev",
-      "skills": ["./"]
-    },
-   {
-      "name": "arxiv-search",
-      "description": "Search arXiv preprint repository for research papers in physics, mathematics, computer science, quantitative biology, finance, and statistics",
-      "source": "./arxiv-search",
-      "skills": ["./"]
-    },
-    {
-      "name": "polars-expertise",
-      "description": "Fast DataFrame library (Apache Arrow) for Python and Rust: expressions, lazy/streaming, GPU acceleration, time series patterns, pandas/spark/kdb migration",
-      "source": "./polars-expertise",
-      "skills": ["./"]
     }
-  ]
+  ],
+  "external_skills": {
+    "note": "These skills are available from the parent repository (DeevsDeevs/agent-system)",
+    "skills": [
+      "polars-expertise",
+      "arxiv-search",
+      "tmux",
+      "datetime"
+    ]
+  }
 }

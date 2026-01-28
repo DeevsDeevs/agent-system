@@ -133,7 +133,7 @@ All agents read `EXCHANGE_CONTEXT.md` first and ask which venue mode applies.
 | 🟢 GREEN | The Boss | `business-planner` |
 | 🩷 PINK | The Filter | `dummy-check` |
 | 🔴 RED | Orchestrator | `strategist` |
-| ⚫ GRAY | Prerequisite | `data-sentinel` |
+| 🔵 CYAN | Prerequisite | `data-sentinel` |
 | 🔵 BLUE | Alpha (Passive) | `microstructure-mechanic` |
 | 💛 YELLOW | Alpha (Active) | `arb-hunter` |
 | 🟣 PURPLE | Validation | `signal-validator` |
