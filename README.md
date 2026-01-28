@@ -31,48 +31,6 @@ Multi-session workflow chains for maintaining context across conversations.
 
 ---
 
-### tmux
-
-Interactive terminal control for REPLs, debuggers, and servers.
-
-**Core**: Run and control interactive CLI programs in separate tmux panes with high-level API.
-
-**Quick start**:
-```bash
-# One-shot execution
-tmux-ctl eval "npm test"
-
-# REPL interaction
-tmux-ctl repl python "2+2"
-
-# Long-running process
-tmux-ctl start "npm run dev" --name=server --wait="Server started"
-tmux-ctl logs server
-tmux-ctl stop server
-
-# Parallel execution
-tmux-ctl start "npm run build" --name=build
-tmux-ctl start "npm test" --name=test
-tmux-ctl wait build test
-```
-
-**Use when**: Need to interact with REPLs (Python, Node, psql), control debuggers, monitor servers, run parallel tasks.
-
-**Details**: [tmux/README.md](tmux/README.md) | [tmux/SKILL.md](tmux/SKILL.md) | [tmux/reference.md](tmux/reference.md)
-
-**Setup**: Add to PATH after installation:
-```bash
-export PATH="$PATH:$HOME/.claude/plugins/tmux@deevs-agent-system/bin"
-```
-
-**Dependencies**: bash 4.0+, tmux 2.0+, jq, md5sum/md5
-
-```bash
-/plugin install tmux@deevs-agent-system
-```
-
----
-
 ### dev-experts
 
 Critical, opinionated developer personas focused on approach and methodology.
