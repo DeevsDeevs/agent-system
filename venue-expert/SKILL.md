@@ -151,6 +151,10 @@ When debugging trading system issues:
 - `equity/amer/nasdaq/references/regulatory/nasdaq_rules.md` - Nasdaq rulebook
 - `equity/amer/nasdaq/references/academic/auction_theory.md` - Auction research
 
+**Futures References:**
+- `futures/references/spreads.md` - Calendar/inter-commodity spread mechanics (CME/ICE)
+- `futures/references/flow_interpretation.md` - Flow analysis framework (when flow signals direction)
+
 **Chinese Futures References:**
 - `futures/apac/china/references/specs/ctp_market_data.md` - CTP struct specification
 - `futures/apac/china/references/specs/data_quality_checklist.md` - Validation checklist
@@ -159,4 +163,5 @@ When debugging trading system issues:
 - `futures/apac/china/references/models/trade_direction.md` - Trade direction inference
 - `futures/apac/china/references/models/causal_analysis.md` - Causal identification framework
 - `futures/apac/china/references/models/cross_product_analysis.md` - Cross-product patterns
+- `futures/apac/china/references/models/spreads.md` - Chinese spread execution (CTP, legging risk)
 - `futures/apac/china/references/regime_changes.md` - Regime change database

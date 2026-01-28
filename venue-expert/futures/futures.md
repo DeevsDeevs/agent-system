@@ -102,6 +102,18 @@ Simultaneous long/short in different expiry months. Used for:
 - Expressing term structure views
 - Reducing margin vs outright positions
 
+**Naming:** Spread instruments use hyphenated front-back notation: `NGc1-NGc2` (buy front, sell back), `CLZ24-CLH25`.
+
+**Critical venue distinction:**
+
+| Venue | Spread Execution | Legging Risk |
+|-------|-----------------|--------------|
+| CME/ICE | Listed instruments, atomic fill | None |
+| Chinese (DCE/CZCE) | Native spread orders (SP/SPD) | None |
+| Chinese (SHFE/INE/CFFEX) | Leg-by-leg synthetic | Full exposure |
+
+CME spread orders guarantee simultaneous leg execution at spread price. Chinese exchanges vary: DCE/CZCE provide atomic mechanisms, others require separate leg orders with timing risk.
+
 ### Roll Period
 
 When most open interest migrates from front to next month:
@@ -109,7 +121,16 @@ When most open interest migrates from front to next month:
 - Index futures: typically week before expiry
 - Commodities: varies by delivery logistics
 
-**Gotcha:** Roll dynamics create predictable patterns in volume, spread, and price.
+**Roll Schedules:**
+
+| Participant | Timing | Products |
+|-------------|--------|----------|
+| GSCI index funds | 5th-9th BD monthly | 24 commodities |
+| BCOM index funds | 6th-10th BD monthly | 25 commodities |
+| Equity (ES/NQ) | Monday before 3rd Friday | Quarterly |
+| ETFs (USO/UNG) | 2 weeks before expiry | Front month energy |
+
+**Gotcha:** Roll dynamics create predictable, massive flow with zero directional content.
 
 ## Price Discovery
 
@@ -122,6 +143,51 @@ Futures markets often lead spot price discovery:
 **Basis** = Spot Price - Futures Price
 
 Basis converges to zero at expiry. Deviations create arbitrage opportunities.
+
+## Flow Interpretation
+
+**Core principle:** Futures flow rarely signals direction. 50-70% of volume is non-directional (hedging, basis arbitrage, rolling, delta hedging). Default: large position = non-informative until proven otherwise.
+
+### Non-Directional Flow
+
+| Motivation | Mechanism | Volume Share |
+|------------|-----------|--------------|
+| Commercial hedging | Producers/consumers locking prices | 40-60% (commodities) |
+| Basis trading | Long cash + short futures arbitrage | 10-20% (equities), 60%+ (Treasuries) |
+| Rolling | Index funds, ETFs migrating expiry | 10-15% |
+| Delta hedging | Options MMs neutralizing gamma | 5-15% |
+
+### When Flow IS Informative
+
+Flow is **potentially directional** when ALL conditions met:
+- Persists >30 min same direction
+- Cumulative >5% ADV
+- >20 days to expiry
+- OI change correlates with price
+- Low spread ratio (<10%)
+
+**OI-Price patterns:**
+
+| Pattern | Interpretation |
+|---------|----------------|
+| OI↑ + Price↑ | New longs (bullish) |
+| OI↑ + Price↓ | New shorts (bearish) |
+| OI↓ + Price↑ | Short covering |
+| OI↓ + Price↓ | Long liquidation |
+
+See `references/flow_interpretation.md` for decision tree and thresholds.
+
+## Liquid Hours
+
+| Product | 90% Volume Window | Notes |
+|---------|-------------------|-------|
+| ES/NQ | 8:30am-3:15pm CT | 70-80% RTH |
+| CL | 8:00am-2:30pm CT | EIA Wed 9:30am spike |
+| Brent | 2:00am-12:00pm CT | London settlement |
+| FESX/FGBL | 2:00am-11:30am CT | European hours |
+| SHFE/DCE | 9:00-11:30am CST | Night overlaps LME |
+
+**Session weights:** RTH Open 1.2x, RTH Core 1.0x, European 0.6-0.8x, Asian 0.3-0.5x
 
 ## Key Metrics
 
@@ -157,5 +223,12 @@ Basis converges to zero at expiry. Deviations create arbitrage opportunities.
 3. **Settlement time** - Varies by exchange; affects end-of-day calculations
 4. **Margin efficiency** - Cross-margining reduces capital requirements
 5. **Delivery risk** - Physical contracts require active roll management
+6. **Flow interpretation** - Large positions ≠ directional signal; majority is hedging/arbitrage
+7. **Treasury shorts** - Usually basis trades (long cash + short futures), not rate bets
+8. **Roll window noise** - Predictable, massive, zero directional content
+9. **Near-expiry flow** - <5 days dominated by gamma hedging and delivery mechanics
+10. **Liquid hours ≠ open hours** - Weight signals by session; Asian 0.3-0.5x vs RTH 1.0x
 
 See geography-specific files for detailed coverage.
+See `references/spreads.md` for spread mechanics.
+See `references/flow_interpretation.md` for flow analysis framework.
