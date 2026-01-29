@@ -1,117 +1,104 @@
 # Research Experts
 
-Opinionated research agents for HFT quantitative research. Causality over fit. Interpretability over black-box. Every decision flows to user.
+Opinionated hypothesis generation agents for quantitative research. Mechanism over fit. Counterparty over correlation. Every hypothesis must identify who loses money and why.
 
 ## Philosophy
 
-- **Causality first** - mechanism over statistical fit
-- **Interpretability** - understand why, not just that
+- **Mechanism first** - no hypothesis without a causal diagram
+- **Counterparty required** - who loses money? why are they forced?
+- **Data Sentinel first** - always validate data before research
 - **User decides** - agents advise and ask, never assume
 - **Deep by default** - dig until you understand
-- **Complementary** - agents complete each other, not overlap
+- **Complementary** - Alpha Squad attacks from four angles simultaneously
 
 ## Agents
 
-### strategist - Central Brain
-The orchestrator who knows the strategy inside-out. Decomposes questions, coordinates agents, challenges ideas, synthesizes findings. Asks complementary questions EVERY TIME before proceeding.
+### strategist - Obsessive Coordinator
+The single brain that orchestrates hypothesis generation and destruction. Routes to Data Sentinel FIRST, always, no exceptions. Sequences Alpha Squad → Factor Geometer → Skeptic. Synthesizes SHIP/KILL/ITERATE.
 
-**Invokes**: All research agents
-**Key trait**: Obsessive about understanding the full mechanism
-
----
-
-### data-sentinel - Paranoid Data Guardian
-MUST BE INVOKED FIRST on any data. Trusts nothing. Assumes all feeds are corrupt until proven otherwise. Asks user before any filter/transform.
-
-**Invoked by**: strategist (always first), any agent needing data
-**Key trait**: Pathologically suspicious of data quality
+**Invokes**: All research agents + validators
+**Key trait**: Refuses to let any step proceed without understanding the full chain
 
 ---
 
-### microstructure-analyst - Econometrician
-Order book dynamics, venue mechanics, information models. Builds structural models from economic foundations. Kyle, Glosten-Milgrom, Hawkes. Causal ML when appropriate.
+### data-sentinel - Paranoid Gatekeeper
+MUST BE INVOKED FIRST on any data. Trusts nothing. Every timestamp, every price, every identifier is lying until proven otherwise. Asks user before any filter/transform.
 
-**Invoked by**: strategist
-**Escalates to**: causal-analyst (mechanism validation)
-**Key trait**: Pattern without model is not alpha
-
----
-
-### cross-venue-analyst - Statistics Purist
-Multi-venue relationships, lead-lag, information transmission. Pre-registers hypotheses, corrects for multiple testing, demands out-of-sample validation.
-
-**Invoked by**: strategist
-**Escalates to**: causal-analyst (MANDATORY before tradeable claims)
-**Key trait**: False discoveries offend personally
+**Invoked by**: Strategist (always first), any agent needing data
+**Key trait**: Point-in-time or point-in-lie
 
 ---
 
-### causal-analyst - Gatekeeper
-Destroys spurious correlations. DAGs, IV, RDD, DiD, sensitivity analysis. Validates mechanisms submitted by other agents. PASS/REJECT with full reasoning.
+### Alpha Squad - Hypothesis Engine
 
-**Invoked by**: microstructure-analyst, cross-venue-analyst, strategist
-**Key trait**: Correlation without mechanism is noise
+Four specialists who jointly attack hypothesis generation from complementary angles. They argue with each other. They demand mechanisms. Every hypothesis must identify counterparty, constraint, decay, and Paleologo source.
+
+#### fundamentalist - Accounting & Value Lens
+Financial statements, earnings quality, capital efficiency. Finds mispricing by understanding what the market misreads in the accounting.
+
+**Key trait**: Accruals revert. Cash flow persists.
+
+#### vulture - Flows & Constraints Lens
+Forced sellers, index reconstitutions, 13F crowding, liquidation signatures. Finds alpha from someone else's mandate, not someone else's mistake.
+
+**Key trait**: Every forced seller has a signature
+
+#### graph-architect - Relationships & Propagation Lens
+Customer-supplier networks, lead-lag structures, contagion paths. Models how information travels along graph edges.
+
+**Key trait**: Sector correlation is symptom. Supply chain is cause.
+
+#### causal-detective - Mechanisms & Confounding Lens
+Frisch-Waugh-Lovell orthogonalization, Double ML, placebo tests. Proves that the squad's hypotheses are causal, not confounded.
+
+**Key trait**: Correlation is unobserved confounding until proven otherwise
 
 ---
-
-### post-hoc-analyst - Forensic Investigator
-Finds what we believed wrong. Traces assumption failures through the chain. Paranoid about everything. Asks before attributing blame.
-
-**Invoked by**: strategist (periodic), crisis-hunter (after incidents)
-**Key trait**: Never trust the first explanation
-
----
-
-### crisis-hunter - Incident Commander
-INVOKE when something breaks. Knows where bugs hide - integration points, assumption boundaries, temporal edges. Coordinates investigation.
-
-**Invoked by**: user, strategist, any agent
-**Hands off to**: post-hoc-analyst (after closure)
-**Key trait**: "Fixed" is a hypothesis until verified
 
 ## Flow
 
 ```mermaid
 flowchart TD
-    USER([USER]) --> strategist
+    USER([USER]) --> strategist[/"strategist<br/>🔴 Obsessive Coordinator"/]
 
-    subgraph orchestration [Orchestration]
-        strategist[/"strategist<br/>🔴 Central Brain"/]
-    end
-
-    subgraph research [Research Layer]
+    subgraph sentinel [Data Gate]
         data-sentinel[/"data-sentinel<br/>🔵 ALWAYS FIRST"/]
-        micro["microstructure-analyst<br/>🔵"]
-        cross["cross-venue-analyst<br/>🔵"]
-        post-hoc["post-hoc-analyst<br/>🔵"]
     end
 
-    subgraph validation [Validation]
-        causal["causal-analyst<br/>🔵 Gatekeeper"]
-    end
+    subgraph squad [Alpha Squad]
+        fundamentalist["fundamentalist 🔵<br/>Value"]
+        vulture["vulture 🔵<br/>Flows"]
+        graph-architect["graph-architect 🔵<br/>Networks"]
+        causal-detective["causal-detective 🔵<br/>Mechanisms"]
 
-    subgraph crisis [Crisis Response]
-        crisis-hunter[/"crisis-hunter<br/>🔴 When needed"/]
+        fundamentalist <-->|"value or flow?"| vulture
+        graph-architect <-->|"real or spurious?"| causal-detective
+        fundamentalist --> causal-detective
+        vulture --> causal-detective
     end
 
     strategist --> data-sentinel
-    strategist --> micro
-    strategist --> cross
-    strategist --> post-hoc
+    data-sentinel --> squad
 
-    micro --> causal
-    cross --> causal
-
-    crisis-hunter -.-> post-hoc
-    strategist -.-> crisis-hunter
+    squad -->|"hypothesis bundle"| validators["research-validators<br/>Factor Geometer → Skeptic"]
+    validators -->|"SHIP/KILL/ITERATE"| strategist
 ```
+
+**Alpha Squad Output** (every hypothesis):
+- Mechanism diagram (DAG)
+- Counterparty identification
+- Constraint specification
+- Decay estimate
+- Paleologo source (risk preferences, liquidity, funding, predictable flows, information)
+- Required data (to Data Sentinel)
 
 ## Key Rules
 
-1. **data-sentinel FIRST** - always validate data before research
-2. **causal-analyst VALIDATES** - no tradeable claims without mechanism
-3. **strategist ASKS** - complementary questions every time
-4. **USER DECIDES** - agents present options, never assume
+1. **Data Sentinel FIRST** - always validate data before research
+2. **Counterparty required** - no hypothesis without identifying who loses
+3. **Mechanism required** - no hypothesis without a causal diagram
+4. **Strategist ASKS** - complementary questions every time
+5. **USER DECIDES** - agents present options, never assume
 
 ## Venue Context
 
@@ -121,8 +108,8 @@ All agents read `EXCHANGE_CONTEXT.md` first and ask which venue mode applies.
 
 ## Color Scheme
 
-❤️ RED = `strategist`, `crisis-hunter` (orchestrators)
-💚 CYAN = `data-sentinel`, `microstructure-analyst`, `cross-venue-analyst`, `causal-analyst`, `post-hoc-analyst` (researchers)
+❤️ RED = `strategist` (orchestrator)
+💚 CYAN = `data-sentinel`, `fundamentalist`, `vulture`, `graph-architect`, `causal-detective` (researchers)
 
 ## Installation
 
