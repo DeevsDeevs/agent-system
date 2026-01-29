@@ -87,6 +87,7 @@ flowchart TD
         fundamentalist["fundamentalist 🔵"]
         vulture["vulture 🔵"]
         graph-architect["graph-architect 🔵"]
+        book-physicist["book-physicist 🔵"]
         causal-detective["causal-detective 🔵"]
     end
 
@@ -100,6 +101,7 @@ flowchart TD
     strategist --> fundamentalist
     strategist --> vulture
     strategist --> graph-architect
+    strategist --> book-physicist
     strategist --> causal-detective
     strategist --> factor-geometer
     strategist --> skeptic
@@ -112,7 +114,7 @@ flowchart TD
 
 **Invokes**: All research agents and validators
 - Data Sentinel: ALWAYS FIRST for any data
-- Alpha Squad: hypothesis generation (fundamentalist, vulture, graph-architect, causal-detective)
+- Alpha Squad: hypothesis generation (fundamentalist, vulture, graph-architect, book-physicist, causal-detective)
 - Factor Geometer: risk model, alpha-orthogonal decomposition
 - Skeptic: causal + statistical validation
 - Forensic Auditor: periodic review + crisis response

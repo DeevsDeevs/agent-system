@@ -134,7 +134,7 @@ Opinionated hypothesis generation agents for quantitative research. Mechanism ov
 - Trusts nothing, asks before filtering
 - Use for: Any data validation
 
-**Alpha Squad** (hypothesis engine - four specialists):
+**Alpha Squad** (hypothesis engine - five specialists):
 
 **`/fundamentalist`** - Accounting & value lens
 - Financial statements, earnings quality, capital efficiency
@@ -147,6 +147,10 @@ Opinionated hypothesis generation agents for quantitative research. Mechanism ov
 **`/graph-architect`** - Relationships & propagation lens
 - Customer-supplier networks, lead-lag, contagion paths
 - Use for: Information propagation, network effects
+
+**`/book-physicist`** - Microstructure & entropy lens
+- Order book entropy, informativity decomposition, structural models (Kyle, Hawkes)
+- Use for: Microstructure alpha, order flow informativity, entropy regime detection
 
 **`/causal-detective`** - Mechanisms & confounding lens
 - Frisch-Waugh-Lovell, Double ML, placebo tests
@@ -288,7 +292,7 @@ Universal color scheme across all agent plugins:
 | 🧡 **ORANGE** | Hybrid (can lead or challenge) | `logic-hunter` |
 | 💛 **YELLOW** | Checkers & Validators | `reviewer`, `cpp-hunter`, `python-hunter`, `skeptic`, `forensic-auditor` |
 | 💙 **BLUE** | Builders & Implementers | `cpp-dev`, `python-dev`, `rust-dev`, `tester` |
-| 💚 **CYAN** | Researchers & Analysts | `data-sentinel`, `fundamentalist`, `vulture`, `graph-architect`, `causal-detective`, `factor-geometer` |
+| 💚 **CYAN** | Researchers & Analysts | `data-sentinel`, `fundamentalist`, `vulture`, `graph-architect`, `book-physicist`, `causal-detective`, `factor-geometer` |
 
 ## Credits
 

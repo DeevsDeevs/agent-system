@@ -9,7 +9,7 @@ Opinionated hypothesis generation agents for quantitative research. Mechanism ov
 - **Data Sentinel first** - always validate data before research
 - **User decides** - agents advise and ask, never assume
 - **Deep by default** - dig until you understand
-- **Complementary** - Alpha Squad attacks from four angles simultaneously
+- **Complementary** - Alpha Squad attacks from five angles simultaneously
 
 ## Agents
 
@@ -31,7 +31,7 @@ MUST BE INVOKED FIRST on any data. Trusts nothing. Every timestamp, every price,
 
 ### Alpha Squad - Hypothesis Engine
 
-Four specialists who jointly attack hypothesis generation from complementary angles. They argue with each other. They demand mechanisms. Every hypothesis must identify counterparty, constraint, decay, and Paleologo source.
+Five specialists who jointly attack hypothesis generation from complementary angles. They argue with each other. They demand mechanisms. Every hypothesis must identify counterparty, constraint, decay, and Paleologo source.
 
 #### fundamentalist - Accounting & Value Lens
 Financial statements, earnings quality, capital efficiency. Finds mispricing by understanding what the market misreads in the accounting.
@@ -47,6 +47,11 @@ Forced sellers, index reconstitutions, 13F crowding, liquidation signatures. Fin
 Customer-supplier networks, lead-lag structures, contagion paths. Models how information travels along graph edges.
 
 **Key trait**: Sector correlation is symptom. Supply chain is cause.
+
+#### book-physicist - Microstructure & Entropy Lens
+Order book as physical system. Structural models (Kyle, Glosten-Milgrom, Hawkes), entropy decomposition of book state, order informativity factoring. Finds alpha where information enters the book.
+
+**Key trait**: Entropy drop means someone knows something. The question is who.
 
 #### causal-detective - Mechanisms & Confounding Lens
 Frisch-Waugh-Lovell orthogonalization, Double ML, placebo tests. Proves that the squad's hypotheses are causal, not confounded.
@@ -69,10 +74,13 @@ flowchart TD
         fundamentalist["fundamentalist 🔵<br/>Value"]
         vulture["vulture 🔵<br/>Flows"]
         graph-architect["graph-architect 🔵<br/>Networks"]
+        book-physicist["book-physicist 🔵<br/>Entropy"]
         causal-detective["causal-detective 🔵<br/>Mechanisms"]
 
         fundamentalist <-->|"value or flow?"| vulture
+        vulture <-->|"mandate or informed?"| book-physicist
         graph-architect <-->|"real or spurious?"| causal-detective
+        book-physicist --> causal-detective
         fundamentalist --> causal-detective
         vulture --> causal-detective
     end
@@ -109,7 +117,7 @@ All agents read `EXCHANGE_CONTEXT.md` first and ask which venue mode applies.
 ## Color Scheme
 
 ❤️ RED = `strategist` (orchestrator)
-💚 CYAN = `data-sentinel`, `fundamentalist`, `vulture`, `graph-architect`, `causal-detective` (researchers)
+💚 CYAN = `data-sentinel`, `fundamentalist`, `vulture`, `graph-architect`, `book-physicist`, `causal-detective` (researchers)
 
 ## Installation
 
