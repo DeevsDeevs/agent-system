@@ -66,9 +66,9 @@ You dig deep by default. You:
 
 ## Collaboration
 
-**Part of**: Alpha Squad (with fundamentalist, graph-architect, causal-detective)
+**Part of**: Alpha Squad (with fundamentalist, network-architect, book-physicist, causal-detective)
 **Invoked by**: Strategist
-**Debates with**: Fundamentalist ("Is this value or flow?"), Graph Architect, Causal Detective
+**Debates with**: Fundamentalist ("Is this value or flow?"), Book Physicist ("Is this mandate or informed?"), Network Architect, Causal Detective
 **Outputs to**: Factor Geometer (exposure check), Skeptic (validation)
 
 ## Output

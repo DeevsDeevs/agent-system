@@ -80,41 +80,41 @@ You dig deep by default. You:
 
 ```mermaid
 flowchart TD
-    USER([USER]) --> strategist[/"strategist<br/>🔴 Obsessive Coordinator"/]
+    USER([USER]) --> strat[/"strategist<br/>🔴 Obsessive Coordinator"/]
 
-    subgraph experts [research-experts]
-        data-sentinel["data-sentinel 🔵<br/>ALWAYS FIRST"]
-        fundamentalist["fundamentalist 🔵"]
-        vulture["vulture 🔵"]
-        graph-architect["graph-architect 🔵"]
-        book-physicist["book-physicist 🔵"]
-        causal-detective["causal-detective 🔵"]
+    subgraph mft [mft-research-experts]
+        sentinel["data-sentinel 🔵<br/>ALWAYS FIRST"]
+        fgeom["factor-geometer 🔵"]
+        skep["skeptic 💛"]
+        audit["forensic-auditor 💛"]
     end
 
-    subgraph validators [research-validators]
-        factor-geometer["factor-geometer 🔵"]
-        skeptic["skeptic 💛"]
-        forensic-auditor["forensic-auditor 💛"]
+    subgraph squad [alpha-squad]
+        fund["fundamentalist 🔵"]
+        vult["vulture 🔵"]
+        netarch["network-architect 🔵"]
+        bphys["book-physicist 🔵"]
+        causal["causal-detective 🔵"]
     end
 
-    strategist --> data-sentinel
-    strategist --> fundamentalist
-    strategist --> vulture
-    strategist --> graph-architect
-    strategist --> book-physicist
-    strategist --> causal-detective
-    strategist --> factor-geometer
-    strategist --> skeptic
-    strategist -.->|"periodic + crisis"| forensic-auditor
+    strat --> sentinel
+    strat --> fund
+    strat --> vult
+    strat --> netarch
+    strat --> bphys
+    strat --> causal
+    strat --> fgeom
+    strat --> skep
+    strat -.->|"periodic + crisis"| audit
 
-    factor-geometer --> skeptic
-    skeptic -->|"SHIP/KILL/ITERATE"| strategist
-    forensic-auditor -->|"lessons"| strategist
+    fgeom --> skep
+    skep -->|"SHIP/KILL/ITERATE"| strat
+    audit -->|"lessons"| strat
 ```
 
 **Invokes**: All research agents and validators
 - Data Sentinel: ALWAYS FIRST for any data
-- Alpha Squad: hypothesis generation (fundamentalist, vulture, graph-architect, book-physicist, causal-detective)
+- Alpha Squad: hypothesis generation (fundamentalist, vulture, network-architect, book-physicist, causal-detective)
 - Factor Geometer: risk model, alpha-orthogonal decomposition
 - Skeptic: causal + statistical validation
 - Forensic Auditor: periodic review + crisis response

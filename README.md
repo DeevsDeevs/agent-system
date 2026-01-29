@@ -118,9 +118,43 @@ Critical, opinionated developer personas focused on approach and methodology.
 
 ---
 
-### research-experts
+### alpha-squad
 
-Opinionated hypothesis generation agents for quantitative research. Mechanism over fit. Counterparty over correlation.
+Five hypothesis generators attacking from complementary angles. Mechanism over fit. Counterparty over correlation.
+
+**Agents**:
+
+**`/fundamentalist`** - Accounting & value lens
+- Financial statements, earnings quality, capital efficiency
+- Use for: Mispricing from accounting misreads
+
+**`/vulture`** - Flows & constraints lens
+- Forced sellers, index reconstitutions, 13F crowding
+- Use for: Constraint-driven alpha, calendar flows
+
+**`/network-architect`** - Relationships & propagation lens
+- Customer-supplier networks, lead-lag, contagion paths
+- Use for: Information propagation, network effects
+
+**`/book-physicist`** - Microstructure & entropy lens
+- Order book entropy, informativity decomposition, structural models (Kyle, Hawkes)
+- Use for: Microstructure alpha, order flow informativity, entropy regime detection
+
+**`/causal-detective`** - Mechanisms & confounding lens
+- Frisch-Waugh-Lovell, Double ML, placebo tests
+- Use for: Proving causal mechanisms, killing confounded signals
+
+**Details**: [alpha-squad/README.md](alpha-squad/README.md)
+
+```bash
+/plugin install alpha-squad@deevs-agent-system
+```
+
+---
+
+### mft-research-experts
+
+Orchestration, data validation, risk geometry, hypothesis execution, and forensic audit. The infrastructure that makes alpha-squad real - or kills it.
 
 **Agents**:
 
@@ -134,42 +168,6 @@ Opinionated hypothesis generation agents for quantitative research. Mechanism ov
 - Trusts nothing, asks before filtering
 - Use for: Any data validation
 
-**Alpha Squad** (hypothesis engine - five specialists):
-
-**`/fundamentalist`** - Accounting & value lens
-- Financial statements, earnings quality, capital efficiency
-- Use for: Mispricing from accounting misreads
-
-**`/vulture`** - Flows & constraints lens
-- Forced sellers, index reconstitutions, 13F crowding
-- Use for: Constraint-driven alpha, calendar flows
-
-**`/graph-architect`** - Relationships & propagation lens
-- Customer-supplier networks, lead-lag, contagion paths
-- Use for: Information propagation, network effects
-
-**`/book-physicist`** - Microstructure & entropy lens
-- Order book entropy, informativity decomposition, structural models (Kyle, Hawkes)
-- Use for: Microstructure alpha, order flow informativity, entropy regime detection
-
-**`/causal-detective`** - Mechanisms & confounding lens
-- Frisch-Waugh-Lovell, Double ML, placebo tests
-- Use for: Proving causal mechanisms, killing confounded signals
-
-**Details**: [research-experts/README.md](research-experts/README.md)
-
-```bash
-/plugin install research-experts@deevs-agent-system
-```
-
----
-
-### research-validators
-
-Validation and audit agents for quantitative research. Prove it or kill it.
-
-**Agents**:
-
 **`/factor-geometer`** - Risk architect
 - Factor loadings, covariance estimation, alpha-orthogonal decomposition
 - Use for: Geometry check, factor exposure analysis
@@ -182,10 +180,10 @@ Validation and audit agents for quantitative research. Prove it or kill it.
 - Traces assumption failures, runs on schedule and crisis
 - Use for: Pipeline review, incident investigation, periodic audit
 
-**Details**: [research-validators/README.md](research-validators/README.md)
+**Details**: [mft-research-experts/README.md](mft-research-experts/README.md)
 
 ```bash
-/plugin install research-validators@deevs-agent-system
+/plugin install mft-research-experts@deevs-agent-system
 ```
 
 ---
@@ -292,7 +290,7 @@ Universal color scheme across all agent plugins:
 | 🧡 **ORANGE** | Hybrid (can lead or challenge) | `logic-hunter` |
 | 💛 **YELLOW** | Checkers & Validators | `reviewer`, `cpp-hunter`, `python-hunter`, `skeptic`, `forensic-auditor` |
 | 💙 **BLUE** | Builders & Implementers | `cpp-dev`, `python-dev`, `rust-dev`, `tester` |
-| 💚 **CYAN** | Researchers & Analysts | `data-sentinel`, `fundamentalist`, `vulture`, `graph-architect`, `book-physicist`, `causal-detective`, `factor-geometer` |
+| 💚 **CYAN** | Researchers & Analysts | `data-sentinel`, `fundamentalist`, `vulture`, `network-architect`, `book-physicist`, `causal-detective`, `factor-geometer` |
 
 ## Credits
 

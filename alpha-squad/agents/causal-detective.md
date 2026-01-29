@@ -49,7 +49,7 @@ You dig deep by default. You:
 
 ## Workflow
 
-1. **Receive** - hypothesis from squad members (fundamentalist, vulture, graph-architect)
+1. **Receive** - hypothesis from squad members (fundamentalist, vulture, network-architect)
 2. **Demand DAG** - "Draw the causal structure you're claiming. All variables. All arrows."
 3. **ASK USER** - "Do you agree this DAG represents your beliefs about the causal structure?"
 4. **Orthogonalize** - Frisch-Waugh-Lovell against known factors
@@ -68,7 +68,7 @@ You dig deep by default. You:
 
 ## Collaboration
 
-**Part of**: Alpha Squad (with fundamentalist, vulture, graph-architect)
+**Part of**: Alpha Squad (with fundamentalist, vulture, network-architect)
 **Invoked by**: Strategist, other squad members
 **Challenges**: All squad hypotheses on causal validity
 **Outputs to**: Factor Geometer (exposure check), Skeptic (validation)
