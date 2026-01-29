@@ -118,6 +118,76 @@ Critical, opinionated developer personas focused on approach and methodology.
 
 ---
 
+### alpha-squad
+
+Five hypothesis generators attacking from complementary angles. Mechanism over fit. Counterparty over correlation.
+
+**Agents**:
+
+**`/fundamentalist`** - Accounting & value lens
+- Financial statements, earnings quality, capital efficiency
+- Use for: Mispricing from accounting misreads
+
+**`/vulture`** - Flows & constraints lens
+- Forced sellers, index reconstitutions, 13F crowding
+- Use for: Constraint-driven alpha, calendar flows
+
+**`/network-architect`** - Relationships & propagation lens
+- Customer-supplier networks, lead-lag, contagion paths
+- Use for: Information propagation, network effects
+
+**`/book-physicist`** - Microstructure & entropy lens
+- Order book entropy, informativity decomposition, structural models (Kyle, Hawkes)
+- Use for: Microstructure alpha, order flow informativity, entropy regime detection
+
+**`/causal-detective`** - Mechanisms & confounding lens
+- Frisch-Waugh-Lovell, Double ML, placebo tests
+- Use for: Proving causal mechanisms, killing confounded signals
+
+**Details**: [alpha-squad/README.md](alpha-squad/README.md)
+
+```bash
+/plugin install alpha-squad@deevs-agent-system
+```
+
+---
+
+### mft-research-experts
+
+Orchestration, data validation, risk geometry, hypothesis execution, and forensic audit. The infrastructure that makes alpha-squad real - or kills it.
+
+**Agents**:
+
+**`/strategist`** - Obsessive coordinator
+- Orchestrates hypothesis generation and destruction
+- Routes Data Sentinel → Alpha Squad → Factor Geometer → Skeptic
+- Use for: Starting any research, SHIP/KILL/ITERATE decisions
+
+**`/data-sentinel`** - Paranoid gatekeeper
+- MUST be invoked FIRST on any data
+- Trusts nothing, asks before filtering
+- Use for: Any data validation
+
+**`/factor-geometer`** - Risk architect
+- Factor loadings, covariance estimation, alpha-orthogonal decomposition
+- Use for: Geometry check, factor exposure analysis
+
+**`/skeptic`** - Hypothesis executioner
+- Dual causal + statistical validation gauntlet
+- Use for: Full hypothesis validation (Rademacher, walk-forward, placebos)
+
+**`/forensic-auditor`** - Post-mortem investigator
+- Traces assumption failures, runs on schedule and crisis
+- Use for: Pipeline review, incident investigation, periodic audit
+
+**Details**: [mft-research-experts/README.md](mft-research-experts/README.md)
+
+```bash
+/plugin install mft-research-experts@deevs-agent-system
+```
+
+---
+
 ### bug-hunters
 
 Systematic bug hunting with spec reconstruction, adversarial validation, and confidence-ranked reports.
@@ -216,11 +286,11 @@ Universal color scheme across all agent plugins:
 
 | Color | Role | Examples |
 |-------|------|----------|
-| ❤️ **RED** | Deciders & Orchestrators | `architect`, `strategist`, `orchestrator`, `crisis-hunter`, `devops` |
+| ❤️ **RED** | Deciders & Orchestrators | `architect`, `strategist`, `orchestrator`, `devops` |
 | 🧡 **ORANGE** | Hybrid (can lead or challenge) | `logic-hunter` |
-| 💛 **YELLOW** | Checkers & Validators | `reviewer`, `cpp-hunter`, `python-hunter` |
+| 💛 **YELLOW** | Checkers & Validators | `reviewer`, `cpp-hunter`, `python-hunter`, `skeptic`, `forensic-auditor` |
 | 💙 **BLUE** | Builders & Implementers | `cpp-dev`, `python-dev`, `rust-dev`, `tester` |
-| 💚 **CYAN** | Researchers & Analysts | `data-sentinel`, `microstructure-analyst`, `causal-analyst` |
+| 💚 **CYAN** | Researchers & Analysts | `data-sentinel`, `fundamentalist`, `vulture`, `network-architect`, `book-physicist`, `causal-detective`, `factor-geometer` |
 
 ## Credits
 
