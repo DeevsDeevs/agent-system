@@ -13,7 +13,7 @@ Orchestration, data validation, risk geometry, hypothesis execution, and forensi
 
 ## Agents
 
-### strategist - Obsessive Coordinator
+### mft-strategist - Obsessive Coordinator
 The single brain that orchestrates hypothesis generation and destruction. Routes to Data Sentinel FIRST, always, no exceptions. Sequences Alpha Squad → Factor Geometer → Skeptic. Synthesizes SHIP/KILL/ITERATE.
 
 **Invokes**: All agents across both alpha-squad and mft-research-experts
@@ -57,7 +57,7 @@ Finds what we believed wrong. Traces assumption failures through the full chain.
 
 ```mermaid
 flowchart TD
-    USER([USER]) --> strat[/"strategist<br/>🔴 Obsessive Coordinator"/]
+    USER([USER]) --> strat[/"mft-strategist<br/>🔴 Obsessive Coordinator"/]
 
     subgraph datagate [Data Gate]
         sentinel[/"data-sentinel<br/>🔵 ALWAYS FIRST"/]
@@ -135,7 +135,7 @@ Anomaly detected → Forensic Auditor (lead)
 
 ## Color Scheme
 
-❤️ RED = `strategist` (orchestrator)
+❤️ RED = `mft-strategist` (orchestrator)
 💚 CYAN = `data-sentinel`, `factor-geometer` (researchers)
 💛 YELLOW = `skeptic`, `forensic-auditor` (validators)
 

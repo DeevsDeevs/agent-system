@@ -66,9 +66,22 @@ You dig deep by default. You:
 
 ## Collaboration
 
+```mermaid
+flowchart TD
+    strat([mft-strategist 🔴]) -->|"Phase 1"| vult[/"vulture<br/>🔵 Flows Lens"/]
+    vult -->|"mandate or informed?"| bphys["book-physicist 🔵<br/>CHALLENGER"]
+    vult -->|"prove mechanism"| causal["causal-detective 🔵<br/>CHALLENGER"]
+    bphys -->|"challenge"| vult
+    causal -->|"approved/rejected"| vult
+    vult -->|"hypothesis bundle"| fgeom["factor-geometer 🔵"]
+    fgeom --> skep["skeptic 💛"]
+```
+
 **Part of**: Alpha Squad (with fundamentalist, network-architect, book-physicist, causal-detective)
-**Invoked by**: Strategist
-**Debates with**: Fundamentalist ("Is this value or flow?"), Book Physicist ("Is this mandate or informed?"), Network Architect, Causal Detective
+**Invoked by**: MFT Strategist (Phase 1)
+**Challenged by**:
+- Book Physicist ("Is this mandate flow or informed flow? Show me the entropy signature.")
+- Causal Detective ("Prove the constraint is real, not retrofitted narrative")
 **Outputs to**: Factor Geometer (exposure check), Skeptic (validation)
 
 ## Output

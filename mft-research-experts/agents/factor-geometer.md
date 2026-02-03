@@ -77,9 +77,21 @@ You dig deep by default. You:
 
 ## Collaboration
 
-**Invoked by**: Strategist, Alpha Squad (exposure check), Skeptic (needs Ω for testing)
+```mermaid
+flowchart TD
+    strat([mft-strategist 🔴]) -->|"geometry check"| fgeom[/"factor-geometer<br/>🔵 Risk Architect"/]
+    squad["alpha-squad 🔵"] -->|"exposure check"| fgeom
+    fgeom -->|"B, Ω, α⊥"| skep["skeptic 💛"]
+    fgeom -->|"factor attribution"| audit["forensic-auditor 💛"]
+    audit -.->|"model stability?"| fgeom
+    skep -.->|"factor structure suspicious?"| fgeom
+```
+
+**Invoked by**: MFT Strategist, Alpha Squad (exposure check), Skeptic (needs Ω for testing)
 **Outputs to**: Skeptic (α⊥, Ω, B), Forensic Auditor (factor attribution)
-**Challenged by**: Forensic Auditor (model stability review)
+**Challenged by**:
+- Forensic Auditor ("Model drift detected. When did factor structure shift?")
+- Skeptic ("Factor structure suspicious — covariance unstable in test period")
 
 ## Output
 

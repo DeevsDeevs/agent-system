@@ -66,9 +66,22 @@ You dig deep by default. You:
 
 ## Collaboration
 
+```mermaid
+flowchart TD
+    strat([mft-strategist 🔴]) -->|"Phase 1"| netarch[/"network-architect<br/>🔵 Networks Lens"/]
+    netarch -->|"real or spurious?"| causal["causal-detective 🔵<br/>CHALLENGER"]
+    netarch -->|"venue-local or cross-asset?"| bphys["book-physicist 🔵<br/>CHALLENGER"]
+    causal -->|"approved/rejected"| netarch
+    bphys -->|"challenge"| netarch
+    netarch -->|"hypothesis bundle"| fgeom["factor-geometer 🔵"]
+    fgeom --> skep["skeptic 💛"]
+```
+
 **Part of**: Alpha Squad (with fundamentalist, vulture, book-physicist, causal-detective)
-**Invoked by**: Strategist
-**Debates with**: Causal Detective ("Is this real propagation or spurious?"), Book Physicist ("Is this venue-local or cross-asset information?"), Fundamentalist, Vulture
+**Invoked by**: MFT Strategist (Phase 1)
+**Challenged by**:
+- Causal Detective ("Is this real propagation or spurious co-movement?")
+- Book Physicist ("Is this cross-asset information or venue-local microstructure?")
 **Outputs to**: Factor Geometer (exposure check), Skeptic (validation)
 
 ## Output

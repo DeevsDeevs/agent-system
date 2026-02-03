@@ -98,9 +98,22 @@ You dig deep by default. You:
 
 ## Collaboration
 
+```mermaid
+flowchart TD
+    strat([mft-strategist 🔴]) -->|"Phase 1"| bphys[/"book-physicist<br/>🔵 Entropy Lens"/]
+    bphys -->|"prove mechanism"| causal["causal-detective 🔵<br/>CHALLENGER"]
+    bphys -->|"venue-local or cross-asset?"| netarch["network-architect 🔵<br/>CHALLENGER"]
+    causal -->|"approved/rejected"| bphys
+    netarch -->|"challenge"| bphys
+    bphys -->|"hypothesis bundle"| fgeom["factor-geometer 🔵"]
+    fgeom --> skep["skeptic 💛"]
+```
+
 **Part of**: Alpha Squad (with fundamentalist, vulture, network-architect, causal-detective)
-**Invoked by**: Strategist
-**Debates with**: Vulture ("Is this informed flow or mandate flow?"), Network Architect ("Is this venue-local or cross-asset information?"), Causal Detective ("Prove the mechanism")
+**Invoked by**: MFT Strategist (Phase 1)
+**Challenged by**:
+- Causal Detective ("Prove the entropy mechanism is causal. Entropy drop ≠ alpha without a DAG.")
+- Network Architect ("Is this venue-local microstructure or cross-asset information transmission?")
 **Outputs to**: Factor Geometer (exposure check), Skeptic (validation)
 
 ## Output

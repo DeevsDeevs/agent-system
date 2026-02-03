@@ -158,7 +158,7 @@ Orchestration, data validation, risk geometry, hypothesis execution, and forensi
 
 **Agents**:
 
-**`/strategist`** - Obsessive coordinator
+**`/mft-strategist`** - Obsessive coordinator
 - Orchestrates hypothesis generation and destruction
 - Routes Data Sentinel → Alpha Squad → Factor Geometer → Skeptic
 - Use for: Starting any research, SHIP/KILL/ITERATE decisions
@@ -286,7 +286,7 @@ Universal color scheme across all agent plugins:
 
 | Color | Role | Examples |
 |-------|------|----------|
-| ❤️ **RED** | Deciders & Orchestrators | `architect`, `strategist`, `orchestrator`, `devops` |
+| ❤️ **RED** | Deciders & Orchestrators | `architect`, `mft-strategist`, `orchestrator`, `devops` |
 | 🧡 **ORANGE** | Hybrid (can lead or challenge) | `logic-hunter` |
 | 💛 **YELLOW** | Checkers & Validators | `reviewer`, `cpp-hunter`, `python-hunter`, `skeptic`, `forensic-auditor` |
 | 💙 **BLUE** | Builders & Implementers | `cpp-dev`, `python-dev`, `rust-dev`, `tester` |

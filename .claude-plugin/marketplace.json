@@ -26,7 +26,7 @@
       "description": "Orchestration, data validation, risk geometry, hypothesis execution, and forensic audit for quantitative research",
       "source": "./mft-research-experts",
       "agents": [
-        "./agents/strategist.md",
+        "./agents/mft-strategist.md",
         "./agents/data-sentinel.md",
         "./agents/factor-geometer.md",
         "./agents/skeptic.md",

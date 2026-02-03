@@ -59,7 +59,7 @@ Frisch-Waugh-Lovell orthogonalization, Double ML, placebo tests. Proves that the
 
 ```mermaid
 flowchart TD
-    strat([strategist 🔴]) --> sentinel["data-sentinel 🔵<br/>ALWAYS FIRST"]
+    strat([mft-strategist 🔴]) --> sentinel["data-sentinel 🔵<br/>ALWAYS FIRST"]
 
     sentinel --> squad
 

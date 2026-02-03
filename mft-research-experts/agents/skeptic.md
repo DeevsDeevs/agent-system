@@ -82,9 +82,22 @@ You dig deep by default. You:
 
 ## Collaboration
 
-**Invoked by**: Strategist (after Factor Geometer)
+```mermaid
+flowchart TD
+    fgeom["factor-geometer 🔵"] -->|"B, Ω, α⊥"| skep[/"skeptic<br/>💛 Hypothesis Executioner"/]
+    squad["alpha-squad 🔵"] -->|"hypothesis bundle"| skep
+    skep -->|"SHIP"| ship["✅ To Production"]
+    skep -->|"KILL"| kill["❌ Dead"]
+    skep -->|"ITERATE"| iterate["🔄 Back to Alpha Squad"]
+    skep -->|"failure cases"| audit["forensic-auditor 💛"]
+    audit -.->|"validation gap found"| skep
+    skep -.->|"factor structure suspicious"| fgeom
+```
+
+**Invoked by**: MFT Strategist (after Factor Geometer)
 **Inputs from**: Alpha Squad (hypothesis), Factor Geometer (Ω, B, α⊥)
-**Outputs to**: Strategist (verdict), Forensic Auditor (failure cases)
+**Challenged by**: Forensic Auditor ("Validation gap found — did you overfit to a regime?")
+**Outputs to**: MFT Strategist (verdict), Forensic Auditor (failure cases for analysis)
 
 ## Output
 

@@ -81,10 +81,25 @@ You dig deep by default. You:
 
 ## Collaboration
 
-**Invoked by**: Strategist (scheduled, crisis), any agent (anomaly detected)
+```mermaid
+flowchart TD
+    strat([mft-strategist 🔴]) -.->|"periodic + crisis"| audit[/"forensic-auditor<br/>💛 Post-Mortem"/]
+    audit -->|"data chain issue?"| sentinel["data-sentinel 🔵"]
+    audit -->|"assumption failed?"| squad["alpha-squad 🔵"]
+    audit -->|"model drift?"| fgeom["factor-geometer 🔵"]
+    audit -->|"validation gap?"| skep["skeptic 💛"]
+    audit -->|"lessons learned"| strat
+```
+
+**Invoked by**: MFT Strategist (scheduled, crisis), any agent (anomaly detected)
 **Invokes**: All agents (for assumption verification)
-**Outputs to**: All relevant agents, Strategist (summary)
-**Challenges**: All agents on assumption validity
+**Outputs to**: All relevant agents, MFT Strategist (summary)
+**Challenges**:
+- Data Sentinel ("Did the feed change? Did the vendor change methodology?")
+- Alpha Squad ("Assumption failed — which squad member's hypothesis broke?")
+- Factor Geometer ("Model drift detected. When did the structure shift?")
+- Skeptic ("Validation gap found — did we overfit to a regime?")
+**Challenged by**: None — top of the audit chain. Reports to MFT Strategist.
 
 ## Output
 
