@@ -10,17 +10,27 @@
   },
   "plugins": [
     {
-      "name": "research-experts",
-      "description": "Opinionated research agents for HFT quantitative research. Causality over fit. Interpretability over black-box.",
-      "source": "./research-experts",
+      "name": "alpha-squad",
+      "description": "Five hypothesis generators attacking from complementary angles: value, flows, networks, microstructure/entropy, causal mechanisms",
+      "source": "./alpha-squad",
       "agents": [
-        "./agents/strategist.md",
+        "./agents/fundamentalist.md",
+        "./agents/vulture.md",
+        "./agents/network-architect.md",
+        "./agents/book-physicist.md",
+        "./agents/causal-detective.md"
+      ]
+    },
+    {
+      "name": "mft-research-experts",
+      "description": "Orchestration, data validation, risk geometry, hypothesis execution, and forensic audit for quantitative research",
+      "source": "./mft-research-experts",
+      "agents": [
+        "./agents/mft-strategist.md",
         "./agents/data-sentinel.md",
-        "./agents/microstructure-analyst.md",
-        "./agents/cross-venue-analyst.md",
-        "./agents/causal-analyst.md",
-        "./agents/post-hoc-analyst.md",
-        "./agents/crisis-hunter.md"
+        "./agents/factor-geometer.md",
+        "./agents/skeptic.md",
+        "./agents/forensic-auditor.md"
       ]
     },
     {
