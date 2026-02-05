@@ -83,6 +83,12 @@
       "description": "Fast DataFrame library (Apache Arrow) for Python and Rust: expressions, lazy/streaming, GPU acceleration, time series patterns, pandas/spark/kdb migration",
       "source": "./polars-expertise",
       "skills": ["./"]
+    },
+    {
+      "name": "golang-pro",
+      "description": "Senior Go developer expertise (Go 1.21+): concurrency, generics, performance optimization, GC tuning, testing, coverage",
+      "source": "./golang-pro",
+      "skills": ["./"]
     }
   ]
 }
