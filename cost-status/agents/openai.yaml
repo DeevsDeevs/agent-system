@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cost Status"
+  short_description: "Claude Code cost/status line setup"
+  default_prompt: "Use $cost-status to configure the cost status line."

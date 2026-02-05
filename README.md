@@ -8,6 +8,84 @@ Deevs' plugin marketplace for Claude Code with workflow chains, terminal control
 /plugin marketplace add git@github.com:DeevsDeevs/agent-system.git
 ```
 
+## Codex Setup
+
+Codex loads repo-scoped skills from `.codex/skills`. This repo includes symlinks to each skill folder, so no extra install step is required.
+
+Usage:
+- Invoke a skill with `$skill-name` or `/skills`.
+- For chain operations: `$chain-system link <name>`, `$chain-system load <name>`, `$chain-system list`.
+- For persona workflows: `$dev-experts <persona>`, `$bug-hunters <role>`, `$research-experts <role>`.
+
+If Codex was already running, restart it to reload the skills.
+
+Global (user-scoped) install for any repo:
+
+```bash
+git clone git@github.com:DeevsDeevs/agent-system.git ~/src/agent-system
+mkdir -p ~/.codex/skills
+for d in 97-dev anti-ai-slop datetime golang-pro polars-expertise arxiv-search chain-system dev-experts bug-hunters research-experts cost-status; do
+  ln -s ~/src/agent-system/$d ~/.codex/skills/$d
+done
+```
+
+One-line installer (review before running):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \\
+  | bash -s -- --platform codex --clone-dir ~/src/agent-system --target ~/.codex/skills
+```
+
+Interactive installer (default):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \\
+  | bash -s --
+```
+
+Pin to a repo ref (tag/branch/commit):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \\
+  | bash -s -- --platform codex --repo-ref v1.2.0 --clone-dir ~/src/agent-system --target ~/.codex/skills
+```
+
+Non-interactive install:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \\
+  | bash -s -- --non-interactive --platform codex --clone-dir ~/src/agent-system --target ~/.codex/skills
+```
+
+Claude Code instructions only:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \\
+  | bash -s -- --platform claude
+```
+
+Install both Codex and Claude Code:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \\
+  | bash -s -- --platform both --clone-dir ~/src/agent-system --target ~/.codex/skills
+```
+
+Uninstall Codex skills:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \\
+  | bash -s -- --platform codex --uninstall --target ~/.codex/skills
+```
+
+Install a single skill by URL:
+
+```bash
+$skill-installer install https://github.com/DeevsDeevs/agent-system/tree/main/chain-system
+```
+
+All skills are Apache-2.0 licensed; each skill directory includes a `LICENSE.txt` for compatibility with skill installers.
+
 ## Plugins
 
 ### chain-system
