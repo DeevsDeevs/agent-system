@@ -9,14 +9,14 @@ Use a single skill with role selection. If the user specifies a hunter, use that
 
 ## Role Map
 
-- `orchestrator` → `bug-hunters/agents/orchestrator.md`
-- `logic-hunter` → `bug-hunters/agents/logic-hunter.md`
-- `cpp-hunter` → `bug-hunters/agents/cpp-hunter.md`
-- `python-hunter` → `bug-hunters/agents/python-hunter.md`
+- `orchestrator` → `agents/orchestrator.md`
+- `logic-hunter` → `agents/logic-hunter.md`
+- `cpp-hunter` → `agents/cpp-hunter.md`
+- `python-hunter` → `agents/python-hunter.md`
 
 ## Workflow
 
-1. Read `bug-hunters/README.md` and follow the “hunt, don’t fix” rule.
+1. Read `README.md` and follow the “hunt, don’t fix” rule.
 2. Choose mode:
    - Logic-first when the problem is algorithm/spec correctness.
    - Code-first when the problem is language-specific failures or UB.

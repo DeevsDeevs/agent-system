@@ -36,6 +36,7 @@ CLONE_DIR="$HOME/src/agent-system"
 TARGET="${CODEX_HOME:-$HOME/.codex}/skills"
 MODE="symlink"
 SKILLS_CSV=""
+SKILLS_LIST=()
 REPO_DIR=""
 REPO_REF=""
 UNINSTALL="false"
@@ -150,7 +151,11 @@ run_interactive() {
 }
 
 if [[ "$NON_INTERACTIVE" == "false" ]]; then
-  run_interactive
+  if [[ -r /dev/tty ]]; then
+    run_interactive
+  else
+    NON_INTERACTIVE="true"
+  fi
 fi
 
 ensure_repo() {
@@ -170,16 +175,15 @@ ensure_repo() {
 }
 
 collect_skills() {
-  local -n out=$1
-  out=()
+  SKILLS_LIST=()
   if [[ -n "$SKILLS_CSV" ]]; then
-    IFS=',' read -r -a out <<< "$SKILLS_CSV"
+    IFS=',' read -r -a SKILLS_LIST <<< "$SKILLS_CSV"
   else
     while IFS= read -r -d '' skill_path; do
       local skill_dir rel
       skill_dir="$(dirname "$skill_path")"
       rel="${skill_dir#$REPO_DIR/}"
-      out+=("$rel")
+      SKILLS_LIST+=("$rel")
     done < <(find "$REPO_DIR" \
         -path "$REPO_DIR/.git" -prune -o \
         -path "$REPO_DIR/.codex" -prune -o \
@@ -193,10 +197,8 @@ install_codex() {
 
   mkdir -p "$TARGET"
 
-  local skills=()
-  collect_skills skills
-
-  for skill in "${skills[@]}"; do
+  collect_skills
+  for skill in "${SKILLS_LIST[@]}"; do
     local src dst
     src="$REPO_DIR/$skill"
     dst="$TARGET/$skill"
@@ -216,21 +218,28 @@ install_codex() {
 }
 
 uninstall_codex() {
-  ensure_repo
+  if [[ -z "$SKILLS_CSV" ]]; then
+    ensure_repo
+  elif [[ -n "$REPO_REF" ]]; then
+    echo "Warning: --repo-ref is ignored when --skills is provided for uninstall." >&2
+  fi
 
-  local skills=()
-  collect_skills skills
-
-  for skill in "${skills[@]}"; do
+  collect_skills
+  for skill in "${SKILLS_LIST[@]}"; do
     local dst link_target
     dst="$TARGET/$skill"
     if [[ -L "$dst" ]]; then
-      link_target="$(readlink "$dst")"
-      if [[ "$link_target" == "$REPO_DIR"* ]]; then
+      if [[ -n "$REPO_DIR" ]]; then
+        link_target="$(readlink "$dst")"
+        if [[ "$link_target" == "$REPO_DIR"* ]]; then
+          rm -f "$dst"
+          echo "Removed $dst"
+        else
+          echo "Skipping $dst (symlink not pointing to repo)" >&2
+        fi
+      else
         rm -f "$dst"
         echo "Removed $dst"
-      else
-        echo "Skipping $dst (symlink not pointing to repo)" >&2
       fi
     elif [[ -d "$dst" ]]; then
       if [[ -f "$dst/SKILL.md" ]]; then
@@ -263,6 +272,21 @@ Note: These are Claude Code commands and will not run in a shell.
 EOC
 }
 
+print_claude_uninstall() {
+  cat <<'EOC'
+Run the following commands inside Claude Code:
+
+/plugin uninstall chain-system@deevs-agent-system
+/plugin uninstall dev-experts@deevs-agent-system
+/plugin uninstall bug-hunters@deevs-agent-system
+/plugin uninstall research-experts@deevs-agent-system
+/plugin uninstall cost-status@deevs-agent-system
+/plugin uninstall arxiv-search@deevs-agent-system
+
+Note: These are Claude Code commands and will not run in a shell.
+EOC
+}
+
 case "$PLATFORM" in
   codex)
     if [[ "$UNINSTALL" == "true" ]]; then
@@ -273,10 +297,7 @@ case "$PLATFORM" in
     ;;
   claude)
     if [[ "$UNINSTALL" == "true" ]]; then
-      cat <<'EOC'
-Uninstall Claude Code plugins inside Claude Code (plugin manager or /plugin commands).
-This installer only prints shell-safe instructions.
-EOC
+      print_claude_uninstall
     else
       print_claude_instructions
     fi
@@ -285,10 +306,7 @@ EOC
     if [[ "$UNINSTALL" == "true" ]]; then
       uninstall_codex
       printf '\n'
-      cat <<'EOC'
-Uninstall Claude Code plugins inside Claude Code (plugin manager or /plugin commands).
-This installer only prints shell-safe instructions.
-EOC
+      print_claude_uninstall
     else
       install_codex
       printf '\n'

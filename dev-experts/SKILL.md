@@ -9,17 +9,17 @@ Use a single skill with persona selection. If the user specifies a persona name,
 
 ## Persona Map
 
-- `architect` → `dev-experts/agents/architect.md`
-- `devops` → `dev-experts/agents/devops.md`
-- `rust-dev` → `dev-experts/agents/rust-dev.md`
-- `python-dev` → `dev-experts/agents/python-dev.md`
-- `cpp-dev` → `dev-experts/agents/cpp-dev.md`
-- `reviewer` → `dev-experts/agents/reviewer.md`
-- `tester` → `dev-experts/agents/tester.md`
+- `architect` → `agents/architect.md`
+- `devops` → `agents/devops.md`
+- `rust-dev` → `agents/rust-dev.md`
+- `python-dev` → `agents/python-dev.md`
+- `cpp-dev` → `agents/cpp-dev.md`
+- `reviewer` → `agents/reviewer.md`
+- `tester` → `agents/tester.md`
 
 ## Workflow
 
-1. Read `dev-experts/README.md` for the global flow and constraints.
+1. Read `README.md` for the global flow and constraints.
 2. Read the selected persona file and follow its workflow verbatim.
 3. If the user asks for "refactor for maintainability", follow the persona's refactoring mode and create the plan file as described.
 4. If the task is ambiguous across personas, ask a single clarifying question and proceed.

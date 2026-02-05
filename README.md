@@ -29,60 +29,20 @@ for d in 97-dev anti-ai-slop datetime golang-pro polars-expertise arxiv-search c
 done
 ```
 
-One-line installer (review before running):
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \\
-  | bash -s -- --platform codex --clone-dir ~/src/agent-system --target ~/.codex/skills
-```
-
-Interactive installer (default):
+Installer (interactive by default):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \\
   | bash -s --
 ```
 
-Pin to a repo ref (tag/branch/commit):
+Installer flags: `--non-interactive`, `--platform claude|codex|both`, `--repo-ref <tag|branch|commit>`, `--uninstall`, `--skills a,b,c`.
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \\
-  | bash -s -- --platform codex --repo-ref v1.2.0 --clone-dir ~/src/agent-system --target ~/.codex/skills
-```
+Uninstall:
+- Codex: run the installer with `--uninstall`.
+- Claude Code: use `/plugin uninstall <plugin>@deevs-agent-system` inside Claude Code.
 
-Non-interactive install:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \\
-  | bash -s -- --non-interactive --platform codex --clone-dir ~/src/agent-system --target ~/.codex/skills
-```
-
-Claude Code instructions only:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \\
-  | bash -s -- --platform claude
-```
-
-Install both Codex and Claude Code:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \\
-  | bash -s -- --platform both --clone-dir ~/src/agent-system --target ~/.codex/skills
-```
-
-Uninstall Codex skills:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \\
-  | bash -s -- --platform codex --uninstall --target ~/.codex/skills
-```
-
-Install a single skill by URL:
-
-```bash
-$skill-installer install https://github.com/DeevsDeevs/agent-system/tree/main/chain-system
-```
+Install a single skill by URL with `$skill-installer`.
 
 All skills are Apache-2.0 licensed; each skill directory includes a `LICENSE.txt` for compatibility with skill installers.
 
