@@ -44,8 +44,6 @@ Uninstall:
 
 Install a single skill by URL with `$skill-installer`.
 
-All skills are Apache-2.0 licensed; each skill directory includes a `LICENSE.txt` for compatibility with skill installers.
-
 ## Plugins
 
 ### chain-system
