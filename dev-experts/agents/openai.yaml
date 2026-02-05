@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dev Experts"
+  short_description: "Expert personas for plans, reviews, tests"
+  default_prompt: "Use $dev-experts to run a persona-guided review or plan."

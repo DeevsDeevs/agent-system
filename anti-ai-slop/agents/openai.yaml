@@ -1,0 +1,4 @@
+interface:
+  display_name: "Anti AI Slop"
+  short_description: "Strip unnecessary AI bloat"
+  default_prompt: "Use $anti-ai-slop to clean the diff to minimal, idiomatic changes."

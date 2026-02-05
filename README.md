@@ -8,6 +8,42 @@ Deevs' plugin marketplace for Claude Code with workflow chains, terminal control
 /plugin marketplace add git@github.com:DeevsDeevs/agent-system.git
 ```
 
+## Codex Setup
+
+Codex loads repo-scoped skills from `.codex/skills`. This repo includes symlinks to each skill folder, so no extra install step is required.
+
+Usage:
+- Invoke a skill with `$skill-name` or `/skills`.
+- For chain operations: `$chain-system link <name>`, `$chain-system load <name>`, `$chain-system list`.
+- For persona workflows: `$dev-experts <persona>`, `$bug-hunters <role>`, `$research-experts <role>`.
+
+If Codex was already running, restart it to reload the skills.
+
+Global (user-scoped) install for any repo:
+
+```bash
+git clone git@github.com:DeevsDeevs/agent-system.git ~/src/agent-system
+mkdir -p ~/.codex/skills
+for d in 97-dev anti-ai-slop datetime golang-pro polars-expertise arxiv-search chain-system dev-experts bug-hunters research-experts cost-status; do
+  ln -s ~/src/agent-system/$d ~/.codex/skills/$d
+done
+```
+
+Installer (interactive by default):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \\
+  | bash -s --
+```
+
+Installer flags: `--non-interactive`, `--platform claude|codex|both`, `--repo-ref <tag|branch|commit>`, `--uninstall`, `--skills a,b,c`.
+
+Uninstall:
+- Codex: run the installer with `--uninstall`.
+- Claude Code: use `/plugin uninstall <plugin>@deevs-agent-system` inside Claude Code.
+
+Install a single skill by URL with `$skill-installer`.
+
 ## Plugins
 
 ### chain-system
