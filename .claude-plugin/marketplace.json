@@ -89,6 +89,12 @@
       "description": "Senior Go developer expertise (Go 1.21+): concurrency, generics, performance optimization, GC tuning, testing, coverage",
       "source": "./golang-pro",
       "skills": ["./"]
+    },
+    {
+      "name": "venue-expert",
+      "description": "Hierarchical microstructure knowledge base for trading venues: exchange mechanics, order books, auctions, Reg NMS, Chinese futures (CTP), feed handlers, execution models",
+      "source": "./venue-expert",
+      "skills": ["./"]
     }
   ]
 }
