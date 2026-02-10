@@ -94,7 +94,6 @@ Each level has a `references/` directory with subdirectories:
 
 - `regulatory/` - Rules, regulations, compliance guidance
 - `specs/` - Protocol specifications, data formats
-- `academic/` - Research papers, theoretical models
 
 Reference files provide deep detail on specific topics. Load them when queries require specification-level precision.
 
@@ -141,15 +140,12 @@ When debugging trading system issues:
 - `equity/amer/references/regulatory/finra_rules.md` - FINRA rules
 - `equity/amer/references/regulatory/rule_605_606.md` - Disclosure rules
 - `equity/amer/references/specs/sip_specs.md` - SIP specifications
-- `equity/amer/references/academic/spread_models.md` - Spread theory
-- `equity/amer/references/academic/market_impact.md` - Impact models
 
 **Nasdaq References:**
 - `equity/amer/nasdaq/references/specs/itch_protocol.md` - ITCH 5.0 spec
 - `equity/amer/nasdaq/references/specs/ouch_protocol.md` - OUCH 4.2/5.0 spec
 - `equity/amer/nasdaq/references/specs/totalview.md` - TotalView product
 - `equity/amer/nasdaq/references/regulatory/nasdaq_rules.md` - Nasdaq rulebook
-- `equity/amer/nasdaq/references/academic/auction_theory.md` - Auction research
 
 **Futures References:**
 - `futures/references/spreads.md` - Calendar/inter-commodity spread mechanics (CME/ICE)
