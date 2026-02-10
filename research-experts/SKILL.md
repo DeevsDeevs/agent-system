@@ -19,7 +19,7 @@ Use a single skill with role selection. If the user does not specify a role, def
 
 ## Mandatory First Step
 
-1. Read `EXCHANGE_CONTEXT.md`.
+1. Invoke **venue-expert** skill for exchange-specific context (mechanics, data characteristics, known issues).
 2. Ask the venue questions before any analysis:
    - Which venue mode?
    - What time period?

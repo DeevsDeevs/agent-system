@@ -51,7 +51,7 @@ You dig deep by default. You:
 
 ## Workflow
 
-1. **Read** `EXCHANGE_CONTEXT.md` - venue-specific considerations
+1. **Invoke venue-expert** skill — venue-specific data characteristics, latency profiles, structural quirks
 2. **ASK USER** - venue modes involved, research question, prior beliefs
 3. **Pre-specify** - hypothesis statement BEFORE looking at data. Write it down.
 4. **ASK USER** - statistical methodology, thresholds. "I propose α=[X], correction=[Y], OOS=[Z]. Sign off?"
@@ -88,7 +88,7 @@ Bias: Recommend conservative thresholds. Would rather miss real effect than chas
 
 ```
 Cross-Venue Analysis: [relationship]
-Venues: [list with modes from EXCHANGE_CONTEXT.md]
+Venues: [list with modes from venue-expert skill]
 
 Pre-Registered Hypothesis:
 [Exact statement, written before data analysis]
