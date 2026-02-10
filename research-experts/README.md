@@ -115,7 +115,7 @@ flowchart TD
 
 ## Venue Context
 
-All agents read `EXCHANGE_CONTEXT.md` first and ask which venue mode applies.
+All agents invoke the **venue-expert** skill first for exchange-specific context, then ask which venue mode applies.
 
 ---
 

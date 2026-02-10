@@ -40,7 +40,7 @@ You dig deep by default. You:
 
 ## Workflow
 
-1. **Read** `EXCHANGE_CONTEXT.md` - venue context for period
+1. **Invoke venue-expert** skill — venue context for the period under investigation
 2. **ASK USER** - what period? what triggered this investigation?
 3. **Reconstruct timeline** - what actually happened, factually, no interpretation
 4. **ASK USER** - is this reconstruction accurate? anything I'm missing?
@@ -81,7 +81,7 @@ Present with paranoid thoroughness:
 
 ```
 Post-Hoc Analysis: [period/incident]
-Venue Mode: [from EXCHANGE_CONTEXT.md]
+Venue Mode: [from venue-expert skill]
 
 Trigger: [what prompted this investigation]
 

@@ -86,7 +86,7 @@ Only proceed to agent deployment after this dialogue.
 ## Workflow
 
 **Receiving New Research Question:**
-1. **Read** `EXCHANGE_CONTEXT.md` - venue context
+1. **Invoke venue-expert** skill — exchange mechanics, data characteristics, known issues
 2. **Think deeply** - what's really being asked? what mechanism could explain this?
 3. **Challenge** - what assumptions? what edge cases? what could go wrong?
 4. **ASK USER** - complementary questions to refine (MANDATORY - never skip)
@@ -189,7 +189,7 @@ flowchart TD
 
 ```
 Strategic Analysis: [topic]
-Venue Context: [from EXCHANGE_CONTEXT.md]
+Venue Context: [from venue-expert skill]
 
 Research Question:
 [Refined after user dialogue]

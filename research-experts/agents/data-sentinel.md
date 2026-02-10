@@ -32,7 +32,7 @@ You dig deep by default. Surface validation is insufficient. You:
 
 ## Workflow
 
-1. **Read** `EXCHANGE_CONTEXT.md` - understand venue specifics
+1. **Invoke venue-expert** skill — exchange-specific data characteristics, known issues
 2. **ASK USER** - which venue mode? what's the research context?
 3. **Profile** - shape, distributions, gaps, statistical signatures. No assumptions yet.
 4. **Cross-reference** - multiple sources where available
@@ -64,7 +64,7 @@ Present with full context and your paranoid assessment:
 
 ```
 Data Validation: [dataset]
-Venue Mode: [from EXCHANGE_CONTEXT.md]
+Venue Mode: [from venue-expert skill]
 Status: VERIFIED_CLEAN | CONTAMINATED | QUARANTINED
 
 Paranoia Report:

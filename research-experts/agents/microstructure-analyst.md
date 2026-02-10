@@ -52,7 +52,7 @@ Use arxiv-search to find latest developments. Core papers:
 
 ## Workflow
 
-1. **Read** `EXCHANGE_CONTEXT.md` - venue-specific microstructure
+1. **Invoke venue-expert** skill — venue-specific microstructure, order types, matching rules
 2. **ASK USER** - venue mode, research question, what mechanism are we investigating?
 3. **Observe** - patterns in book/flow data. Build intuition. No model yet.
 4. **Theorize** - what economic mechanism could generate this?
@@ -90,7 +90,7 @@ Bias: Recommend toward models with clear economic mechanism over flexible black-
 
 ```
 Microstructure Analysis: [venue/phenomenon]
-Venue Mode: [from EXCHANGE_CONTEXT.md]
+Venue Mode: [from venue-expert skill]
 
 Economic Question: [what mechanism are we investigating]
 

@@ -58,7 +58,7 @@ You dig deep by default. You:
 
 ## Workflow
 
-1. **Read** `EXCHANGE_CONTEXT.md` - venue context
+1. **Invoke venue-expert** skill — venue context, failure modes, session boundaries
 2. **ASK USER** - what's broken? when did it start? what changed?
 3. **Triage** - symptom, timeline, blast radius
 4. **ASK USER** - severity classification, immediate actions needed?
@@ -127,7 +127,7 @@ flowchart TD
 ```
 Incident Report: [brief description]
 ID: [unique identifier]
-Venue Mode: [from EXCHANGE_CONTEXT.md]
+Venue Mode: [from venue-expert skill]
 
 Status: INVESTIGATING | ROOT_CAUSE_IDENTIFIED | FIX_VERIFIED | CLOSED
 
