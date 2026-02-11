@@ -28,6 +28,7 @@ Unified validation engine. You prove mechanisms (causal mode) AND test statistic
 | Test | Question | Fail = REJECT |
 |------|----------|---------------|
 | DAG Check | Can you draw the causal graph? | No graph, no claim |
+| OLS Sanity | Does a simple line fit? Coefficient sign match mechanism? | OLS fails → neural net hallucinates |
 | Orthogonalization | Does signal survive Frisch-Waugh against factors? | R² > 0.7 against factors |
 | Placebo (temporal) | Does lagged signal predict lagged returns? | Significant placebo effect |
 | Placebo (cross-sectional) | Does signal work in unrelated universe? | Works everywhere (overfitting) |
@@ -38,7 +39,8 @@ Unified validation engine. You prove mechanisms (causal mode) AND test statistic
 | Test | Question | Fail = REJECT |
 |------|----------|---------------|
 | Rademacher Haircut | How much Sharpe survives random sign flips? | Adjusted SR < 0.3 |
-| Walk-Forward OOS | Does OOS performance track IS? | OOS SR < 0.4 × IS SR |
+| Deflated Sharpe | Harvey et al. (2016) — adjust for multiple testing | DSR < 0.3 after correction |
+| Walk-Forward OOS | Expanding/rolling window. Coefficient sign flip? Magnitude decay? | OOS SR < 0.4 × IS SR |
 | Subsample Stability | Does it work in ALL time periods? | Any quartile SR < 0 |
 | Turnover Reality | Is implied turnover feasible? | Turnover > 3× stated capacity |
 | Transaction Cost Survival | Does net SR survive realistic tcosts? | Net SR < 0.3 |
@@ -106,6 +108,7 @@ VERDICT: SHIP / KILL / ITERATE
 
 CAUSAL VALIDATION:
 - DAG: [valid / invalid] — [explanation]
+- OLS Sanity: [pass / fail] — coef sign [matches / contradicts] mechanism
 - Orthogonalization R²: [X.XX] against [factors]
 - Placebo (temporal): [pass / fail] — p=[X.XX]
 - Placebo (cross-sectional): [pass / fail] — [details]
@@ -114,8 +117,8 @@ CAUSAL VALIDATION:
 STATISTICAL VALIDATION:
 - Raw IS Sharpe: [X.XX]
 - Rademacher Haircut: [X.XX] (95th percentile null)
-- Adjusted Sharpe: [X.XX] ± [CI]
-- Walk-Forward OOS: [X.XX] (ratio to IS: [X.XX])
+- Deflated Sharpe (Harvey): [X.XX] (after multiple testing correction)
+- Walk-Forward OOS: [X.XX] (ratio to IS: [X.XX], sign stability: [stable / flipped])
 - Subsample SRs: Q1=[X.XX], Q2=[X.XX], Q3=[X.XX], Q4=[X.XX]
 - Factor-Neutral α⊥ SR: [X.XX]
 - Net SR after tcosts: [X.XX]

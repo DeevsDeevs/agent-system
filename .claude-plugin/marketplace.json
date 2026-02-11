@@ -40,12 +40,6 @@
       "commands": ["./commands/"]
     },
     {
-      "name": "tmux",
-      "description": "Interactive terminal control for REPLs, debuggers, and servers",
-      "source": "./tmux",
-      "skills": ["./"]
-    },
-    {
       "name": "dev-experts",
       "description": "Critical developer personas: architect, devops detective, rust/python/cpp purists, grumpy reviewer, testing specialist",
       "source": "./dev-experts",
@@ -98,6 +92,18 @@
       "name": "polars-expertise",
       "description": "Fast DataFrame library (Apache Arrow) for Python and Rust: expressions, lazy/streaming, GPU acceleration, time series patterns, pandas/spark/kdb migration",
       "source": "./polars-expertise",
+      "skills": ["./"]
+    },
+    {
+      "name": "golang-pro",
+      "description": "Senior Go developer expertise (Go 1.21+): concurrency, generics, performance optimization, GC tuning, testing, coverage",
+      "source": "./golang-pro",
+      "skills": ["./"]
+    },
+    {
+      "name": "venue-expert",
+      "description": "Hierarchical microstructure knowledge base for trading venues: exchange mechanics, order books, auctions, Reg NMS, Chinese futures (CTP), feed handlers, execution models",
+      "source": "./venue-expert",
       "skills": ["./"]
     }
   ]

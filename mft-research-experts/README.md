@@ -120,7 +120,7 @@ Anomaly detected → Forensic Auditor (lead)
 
 ## Venue Context
 
-`EXCHANGE_CONTEXT.md` lives in this directory. All agents (including alpha-squad) read it first.
+All agents invoke `/venue-expert` skill first for venue-specific microstructure context (exchange mechanics, order books, auctions, feed protocols, etc.).
 
 ## Key Rules
 

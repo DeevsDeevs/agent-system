@@ -92,7 +92,7 @@ flowchart TD
 
 ## Venue Context
 
-All agents read `EXCHANGE_CONTEXT.md` (in mft-research-experts) first and ask which venue mode applies.
+All agents invoke `/venue-expert` skill first for venue-specific microstructure context.
 
 ## Key Rules
 

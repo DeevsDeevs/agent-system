@@ -41,6 +41,10 @@ You build the risk model infrastructure that everyone else depends on. You defin
 - Off-diagonal clustering for idiosyncratic covariance (supply chain residuals)
 - VCV decomposition (vol-corr-vol) to isolate correlation dynamics
 
+**Feature Selection & Redundancy:**
+- LARS (Least Angle Regression) — gold standard for signal selection. O(p×n), handles correlated inputs. If LARS doesn't pick your signal early, it's noise.
+- Gram-Schmidt orthogonalization — is new signal redundant? `signal_orth = signal - proj(signal, existing)`. If `var(signal_orth) < threshold` → REJECT (it's the old signal in a wig)
+
 ## The Geometry Check
 
 1. Regress proposed alpha against known factors
@@ -71,6 +75,8 @@ You dig deep by default. You:
 ## Decision Points → USER
 
 - "Signal R² against factors: [X]. This is mostly a [factor] bet. Orthogonalize or accept factor exposure?"
+- "LARS rank: signal enters at step [N] of [M]. Early = real. Late = noise. Your threshold?"
+- "Gram-Schmidt variance ratio: [X]% after orthogonalizing against existing signals. Redundant or novel?"
 - "Covariance estimate unstable in [period]. Shrink more aggressively or accept wider confidence intervals?"
 - "Idiosyncratic residuals cluster by [supply chain / geography]. Model the clustering or assume diagonal?"
 - "Eigenvalue analysis suggests [K] true factors. Sample shows [K+N]. The extra [N] are noise."
@@ -112,7 +118,9 @@ Alpha Decomposition:
 - Raw signal SR: [X]
 - Factor R²: [X] against [factors]
 - Alpha-orthogonal α⊥ SR: [X]
-- VERDICT: [ALPHA / FACTOR BET / MIXED]
+- LARS rank: [N] of [M] (early = good)
+- Gram-Schmidt variance ratio: [X]% (vs existing signals)
+- VERDICT: [ALPHA / FACTOR BET / REDUNDANT / MIXED]
 
 If FACTOR BET:
 - Dominant exposures: [factor list with loadings]
