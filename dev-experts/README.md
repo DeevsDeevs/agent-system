@@ -19,12 +19,19 @@ Auto-invoked for feature design and implementation planning. Critical, explores 
 ---
 
 ### devops - Production Detective
-Auto-invoked for debugging production issues and infrastructure problems. Methodical and systematic.
+Auto-invoked for debugging production issues and infrastructure problems. Methodical and systematic. Assumes the simplest breakage reason first (Occam's Razor).
 
-**Workflow**:
+**Phase 0 — Environment Readiness** (mandatory before any fix):
+- Git state: destination branch pulled, submodules synced recursively
+- Caches & build artifacts: reset to clean
+- Environment files: validated against examples, dependency versions checked
+- LSP & static analysis: no critical errors in changed files vs baseline
+- Dramatic changes flagged — user asked for explanation if unclear
+
+**Workflow** (after environment is verified clean):
 - Gathers evidence (symptoms, timing, changes)
-- Forms hypotheses (2-3 root causes)
-- Tests systematically
+- Forms hypotheses ranked simplest → most complex
+- Tests systematically, escalating complexity only when simpler causes are ruled out
 - Provides diagnostic commands and investigation path
 
 **Auto-invoked when**: Production issues, mysterious bugs, deployment failures
@@ -145,7 +152,10 @@ flowchart TD
     reviewer -->|"issues found"| coders
     reviewer -->|"✅ approved"| done["🚀 Ready"]
 
-    devops["devops 🔴<br/>(when production breaks)"] -.->|"investigate"| coders
+    devops["devops 🔴<br/>(when production breaks)"] -.->|"Phase 0: env readiness"| readiness{"Environment<br/>clean?"}
+    readiness -->|"yes"| investigate["investigate"]
+    readiness -->|"no — fix env first"| readiness
+    investigate -.->|"diagnose"| coders
 ```
 
 **Phases**:
