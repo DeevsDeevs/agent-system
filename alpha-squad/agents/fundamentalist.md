@@ -47,7 +47,7 @@ You dig deep by default. You:
 
 ## Workflow
 
-1. **Read** `EXCHANGE_CONTEXT.md` - venue context
+1. **Invoke** `/venue-expert` - venue-specific context
 2. **ASK USER** - which company/sector? what's the value thesis?
 3. **Parse** - financial statements, footnotes, restatements
 4. **Calculate** - normalized earnings, quality metrics, capital efficiency

@@ -48,7 +48,7 @@ You dig deep by default. You:
 
 ## Workflow
 
-1. **Read** `EXCHANGE_CONTEXT.md` - venue context
+1. **Invoke** `/venue-expert` - venue-specific context
 2. **ASK USER** - which flow type? what's the constraint hypothesis?
 3. **Map** - institutional mandates, calendar deadlines, regulatory triggers
 4. **Identify** - forced sellers, their constraints, their timelines

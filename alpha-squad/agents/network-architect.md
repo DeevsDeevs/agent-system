@@ -48,7 +48,7 @@ You dig deep by default. You:
 
 ## Workflow
 
-1. **Read** `EXCHANGE_CONTEXT.md` - venue context
+1. **Invoke** `/venue-expert` - venue-specific context
 2. **ASK USER** - which network? what propagation mechanism?
 3. **Map** - build network from disclosed relationships, filings, data
 4. **Measure** - propagation delays, edge weights, centrality

@@ -60,7 +60,7 @@ You dig deep by default. You:
 
 ## Workflow
 
-1. **Read** `EXCHANGE_CONTEXT.md` - venue context
+1. **Invoke** `/venue-expert` - venue-specific context
 2. **ASK USER** - what triggered this? what period? what changed?
 3. **Reconstruct timeline** - factual sequence, no interpretation
 4. **ASK USER** - is this reconstruction accurate?

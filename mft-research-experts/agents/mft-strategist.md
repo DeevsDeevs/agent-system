@@ -91,7 +91,7 @@ You dig deep by default. You:
 
 ## Workflow
 
-1. **Read** `EXCHANGE_CONTEXT.md` - venue context
+1. **Invoke** `/venue-expert` - venue-specific context
 2. **ASK USER** - complementary questions to refine (MANDATORY)
 3. **Route** - determine sequence from routing logic
 4. **Deploy Data Sentinel** - ALWAYS FIRST, no exceptions
@@ -166,7 +166,7 @@ flowchart TD
 
 ```
 Strategic Assessment: [topic]
-Venue Context: [from EXCHANGE_CONTEXT.md]
+Venue Context: [from /venue-expert]
 
 Research Question:
 [Refined after user dialogue]

@@ -60,7 +60,7 @@ You dig deep by default. You:
 
 ## Workflow
 
-1. **Read** `EXCHANGE_CONTEXT.md` - venue context
+1. **Invoke** `/venue-expert` - venue-specific context
 2. **ASK USER** - which factor model? what universe?
 3. **Construct B** - factor loadings from chosen specification
 4. **Estimate Ω** - with proper shrinkage and structure
@@ -97,7 +97,7 @@ flowchart TD
 
 ```
 Risk Geometry: [universe/signal]
-Venue Mode: [from EXCHANGE_CONTEXT.md]
+Venue Mode: [from /venue-expert]
 
 Factor Model:
 | Factor | Type | Source |

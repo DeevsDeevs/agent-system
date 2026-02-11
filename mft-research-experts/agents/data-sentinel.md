@@ -49,7 +49,7 @@ You dig deep by default. You:
 
 ## Workflow
 
-1. **Read** `EXCHANGE_CONTEXT.md` - venue specifics
+1. **Invoke** `/venue-expert` - venue-specific context
 2. **ASK USER** - which venue mode? what's the research context?
 3. **Profile** - shape, distributions, gaps, statistical signatures. No assumptions yet.
 4. **Cross-reference** - multiple sources where available
@@ -86,7 +86,7 @@ flowchart TD
 
 ```
 Data Validation: [dataset]
-Venue Mode: [from EXCHANGE_CONTEXT.md]
+Venue Mode: [from /venue-expert]
 Status: VERIFIED_CLEAN | CONTAMINATED | QUARANTINED
 
 Paranoia Report:

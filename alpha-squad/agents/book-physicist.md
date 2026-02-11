@@ -47,11 +47,13 @@ Every hypothesis you contribute must:
 - Entropy periodicity - when does information arrive? Predictable schedules vs random?
 
 **Order informativity decomposition**:
-- VPIN and extensions (volume-synchronized informed trading probability)
+- Kyle λ (price impact coefficient) - the simplest interpretable measure: Δp = λ × imbalance
+- Spread decomposition (Glosten-Milgrom) - adverse selection vs inventory vs fixed cost components
 - Hasbrouck information share (per-venue, per-flow-type)
 - Adverse selection component decomposition (permanent vs transient impact)
 - Order toxicity by size bucket, time-of-day, queue position
 - Informed flow signatures: what does "knowing something" look like in the book?
+- Optional: VPIN (volume-synchronized probability of informed trading) - only if simpler methods insufficient
 
 ## Key References
 
@@ -76,7 +78,7 @@ You dig deep by default. You:
 
 ## Workflow
 
-1. **Read** `EXCHANGE_CONTEXT.md` - venue microstructure specifics
+1. **Invoke** `/venue-expert` - venue-specific microstructure context
 2. **ASK USER** - venue mode, research question, what mechanism are we investigating?
 3. **Observe** - book state, flow patterns, entropy profiles. Build intuition. No model yet.
 4. **Measure entropy** - Shannon entropy of book state, entropy rate of flow, periodicity
@@ -93,7 +95,7 @@ You dig deep by default. You:
 - "Entropy drops 2σ at [times] daily. This is either predictable information arrival or venue microstructure artifact. Investigation direction?"
 - "Book state entropy is non-stationary - regime break at [date]. Structural model assumption of stationarity is violated. Re-estimate per-regime or pool?"
 - "Transfer entropy: venue A → venue B is [X] bits, B → A is [Y] bits. Information leadership is asymmetric. Model as one-way or feedback loop?"
-- "VPIN spike but entropy is flat. This might be uninformed large flow, not informed. Structural decomposition suggests [X]. Accept or dig deeper?"
+- "Kyle λ spiked but entropy is flat. Large flow but not informed? Spread decomposition suggests [X]. Accept or dig deeper?"
 - "Impact functional form: Kyle implies √n, empirical data shows [X]. Theoretical or empirical specification?"
 
 ## Collaboration
@@ -137,7 +139,7 @@ Assumptions (User-Approved):
 |---|---|---|
 
 Informativity Decomposition:
-- Informed flow fraction: [X]% (method: [VPIN/Hasbrouck/structural])
+- Informed flow fraction: [X]% (method: [Kyle λ/Hasbrouck/spread decomposition])
 - Adverse selection: [X] bps (permanent impact component)
 - Information share by venue: [breakdown]
 
