@@ -8,6 +8,42 @@ Deevs' plugin marketplace for Claude Code with workflow chains, terminal control
 /plugin marketplace add git@github.com:DeevsDeevs/agent-system.git
 ```
 
+## Codex Setup
+
+Codex loads repo-scoped skills from `.codex/skills`. This repo includes symlinks to each skill folder, so no extra install step is required.
+
+Usage:
+- Invoke a skill with `$skill-name` or `/skills`.
+- For chain operations: `$chain-system link <name>`, `$chain-system load <name>`, `$chain-system list`.
+- For persona workflows: `$dev-experts <persona>`, `$bug-hunters <role>`, `$research-experts <role>`.
+
+If Codex was already running, restart it to reload the skills.
+
+Global (user-scoped) install for any repo:
+
+```bash
+git clone git@github.com:DeevsDeevs/agent-system.git ~/src/agent-system
+mkdir -p ~/.codex/skills
+for d in 97-dev anti-ai-slop datetime golang-pro polars-expertise arxiv-search chain-system dev-experts bug-hunters research-experts cost-status; do
+  ln -s ~/src/agent-system/$d ~/.codex/skills/$d
+done
+```
+
+Installer (interactive by default):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \\
+  | bash -s --
+```
+
+Installer flags: `--non-interactive`, `--platform claude|codex|both`, `--repo-ref <tag|branch|commit>`, `--uninstall`, `--skills a,b,c`.
+
+Uninstall:
+- Codex: run the installer with `--uninstall`.
+- Claude Code: use `/plugin uninstall <plugin>@deevs-agent-system` inside Claude Code.
+
+Install a single skill by URL with `$skill-installer`.
+
 ## Plugins
 
 ### chain-system
@@ -27,48 +63,6 @@ Multi-session workflow chains for maintaining context across conversations.
 
 ```bash
 /plugin install chain-system@deevs-agent-system
-```
-
----
-
-### tmux
-
-Interactive terminal control for REPLs, debuggers, and servers.
-
-**Core**: Run and control interactive CLI programs in separate tmux panes with high-level API.
-
-**Quick start**:
-```bash
-# One-shot execution
-tmux-ctl eval "npm test"
-
-# REPL interaction
-tmux-ctl repl python "2+2"
-
-# Long-running process
-tmux-ctl start "npm run dev" --name=server --wait="Server started"
-tmux-ctl logs server
-tmux-ctl stop server
-
-# Parallel execution
-tmux-ctl start "npm run build" --name=build
-tmux-ctl start "npm test" --name=test
-tmux-ctl wait build test
-```
-
-**Use when**: Need to interact with REPLs (Python, Node, psql), control debuggers, monitor servers, run parallel tasks.
-
-**Details**: [tmux/README.md](tmux/README.md) | [tmux/SKILL.md](tmux/SKILL.md) | [tmux/reference.md](tmux/reference.md)
-
-**Setup**: Add to PATH after installation:
-```bash
-export PATH="$PATH:$HOME/.claude/plugins/tmux@deevs-agent-system/bin"
-```
-
-**Dependencies**: bash 4.0+, tmux 2.0+, jq, md5sum/md5
-
-```bash
-/plugin install tmux@deevs-agent-system
 ```
 
 ---
