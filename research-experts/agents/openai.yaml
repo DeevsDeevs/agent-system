@@ -1,4 +1,0 @@
-interface:
-  display_name: "Research Experts"
-  short_description: "HFT research personas and workflows"
-  default_prompt: "Use $research-experts to run a structured research workflow."
