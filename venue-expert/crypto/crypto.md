@@ -126,7 +126,8 @@ Algorithmic pricing via bonding curves:
 - Asia: Upbit (Korea), bitFlyer (Japan)
 
 **Major DEX by chain:**
-- Ethereum: Uniswap, Curve, dYdX
+- Ethereum: Uniswap, Curve
+- Cosmos: dYdX (v4, own app-chain via Cosmos SDK)
 - Solana: Jupiter, Raydium
 - Arbitrum: GMX, Camelot
 

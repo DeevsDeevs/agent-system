@@ -15,7 +15,7 @@ Binance operates two futures platforms with different settlement currencies:
 
 ### USDT-Margined (Linear)
 
-- Settled in USDT or BUSD
+- Settled in USDT (BUSD was supported until Dec 2023, now fully delisted)
 - P&L in stablecoin
 - Simpler to calculate positions
 - Most liquid for major pairs
@@ -194,7 +194,7 @@ Funding Basis = Funding Rate × (Time Until Funding / Funding Interval)
 
 For BTCUSDT, index is weighted average from:
 - Binance
-- Huobi
+- HTX (formerly Huobi, rebranded Sep 2023)
 - OKX
 - Bitfinex
 - Coinbase
@@ -221,9 +221,11 @@ Liquidation occurs when:
 Account Margin Balance ≤ Maintenance Margin
 ```
 
+> **Warning:** The isolated formulas above are simplified. Cross-margin liquidation is significantly more complex — it considers total account balance, all open positions, and unrealized PnL across positions. Binance does not publish the exact cross-margin formula. Use `GET /fapi/v3/positionRisk` to get the pre-calculated `liquidationPrice` for each position.
+
 ### Maintenance Margin
 
-**Endpoint:** `GET /fapi/v1/positionRisk`
+**Endpoint:** `GET /fapi/v3/positionRisk` (v1 is retired, v2 deprecated)
 
 **Response includes:**
 ```json

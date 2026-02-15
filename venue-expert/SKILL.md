@@ -30,11 +30,17 @@ Knowledge is organized in an inheritance hierarchy:
 Asset Class (equity, futures, crypto, fx)
     |
     v
-Geography (amer, emea, apac)
-    |
-    v
-Exchange (nasdaq, nyse, cme, binance)
+Geography (amer, emea, apac)        Category (CEX, DEX) for crypto
+    |                                    |
+    v                                    v
+Exchange (nasdaq, nyse, cme)         Exchange (binance, coinbase, uniswap)
+                                         |
+                                         v
+                                     Region-specific (binance.us, binance.jp)
 ```
+
+Note: Crypto exchanges operate globally but differ significantly by jurisdiction
+(available products, leverage limits, KYC requirements, regulatory status).
 
 Each level inherits concepts from its parent. Exchange-level files assume familiarity with geo-level and asset-class-level concepts.
 

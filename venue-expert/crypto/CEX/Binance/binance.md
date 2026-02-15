@@ -32,11 +32,9 @@ WebSocket depth streams support configurable intervals:
 | Stream Suffix | Frequency                          |
 |---------------|------------------------------------|
 | `@100ms`      | 100 milliseconds                   |
-| `@250ms`      | 250 milliseconds (default)         |
-| `@500ms`      | 500 milliseconds                   |
-| `@1000ms`     | 1 second                           |
+| `@1000ms`     | 1 second (default, no suffix)      |
 
-**Note:** `@0ms` theoretically real-time but dynamically degraded under load.
+> **Unofficial/undocumented intervals:** `@0ms`, `@250ms`, `@500ms` are not listed in official Binance API docs. Use at your own risk — behavior may change without notice.
 
 ### Order Book Depth
 
@@ -112,7 +110,7 @@ Each endpoint has an assigned weight. Total weight is limited per time window.
 
 | Limit          | Window     | Weight         |
 |----------------|------------|----------------|
-| Request weight | 1 minute   | 1200 (default) |
+| Request weight | 1 minute   | 6000            |
 | Orders         | 10 seconds | 100            |
 | Orders         | 24 hours   | 200,000        |
 
@@ -181,7 +179,7 @@ Each endpoint has an assigned weight. Total weight is limited per time window.
 
 ### No Built-in Checksum
 
-Unlike some exchanges (Kraken, OKX), Binance does not provide order book checksums.
+Unlike some exchanges (Kraken, OKX, Bitfinex), Binance does not provide order book checksums.
 
 **Validation alternatives:**
 - Periodic REST snapshot comparison
@@ -199,7 +197,7 @@ Unlike some exchanges (Kraken, OKX), Binance does not provide order book checksu
 | Maker | 0.1000% |
 | Taker | 0.1000% |
 
-**BNB discount:** 25% off when paying fees in BNB.
+**BNB discount:** 25% off when paying fees in BNB (subject to change; verify current rate via `GET /api/v3/account/commission`).
 
 **VIP tiers:** Volume-based discounts:
 
@@ -224,7 +222,7 @@ Lower than spot:
 
 ### Dynamic Frequency Degradation
 
-`@0ms` streams may be throttled during high load. 100ms is more reliable.
+`@0ms` is not documented in official Binance API docs (may be unofficial). Even `@100ms` and `@1000ms` (the only official intervals) may be throttled during high load.
 
 ### Symbol Renames
 
@@ -309,7 +307,7 @@ Used for liquidations and unrealized PnL:
 5. **Testnet quality** - Data differs significantly from production
 6. **Delisting window** - Data unreliable 24-48h before removal
 7. **Status 418** - IP banned; must wait `Retry-After` duration
-8. **Symbol case** - API expects uppercase (`BTCUSDT`, not `btcusdt`)
+8. **Symbol case** - REST API expects uppercase (`BTCUSDT`), WebSocket streams expect lowercase (`btcusdt@depth`)
 9. **Timestamp sync** - Required for signed requests; use server time
 10. **Funding settlements** - Predictable flow every 8h
 11. **Stream limits** - 1024 streams max per connection
