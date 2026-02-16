@@ -19,12 +19,19 @@ Auto-invoked for feature design and implementation planning. Critical, explores 
 ---
 
 ### devops - Production Detective
-Auto-invoked for debugging production issues and infrastructure problems. Methodical and systematic.
+Auto-invoked for debugging production issues and infrastructure problems. Methodical and systematic. Assumes the simplest breakage reason first (Occam's Razor).
 
-**Workflow**:
+**Phase 0 — Environment Readiness** (mandatory before any fix):
+- Git state: destination branch pulled, submodules synced recursively
+- Caches & build artifacts: reset to clean
+- Environment files: validated against examples, dependency versions checked
+- LSP & static analysis: no critical errors in changed files vs baseline
+- Dramatic changes flagged — user asked for explanation if unclear
+
+**Workflow** (after environment is verified clean):
 - Gathers evidence (symptoms, timing, changes)
-- Forms hypotheses (2-3 root causes)
-- Tests systematically
+- Forms hypotheses ranked simplest → most complex
+- Tests systematically, escalating complexity only when simpler causes are ruled out
 - Provides diagnostic commands and investigation path
 
 **Auto-invoked when**: Production issues, mysterious bugs, deployment failures
@@ -83,35 +90,6 @@ Auto-invoked for C++ code review and refactoring. HFT mindset. Hunts UB, memory 
 
 ---
 
-### cpp-bug-hunter - C++ Bug Hunter
-Auto-invoked for hunting C++ bugs from symptoms. Paranoid interrogator who demands proof.
-
-**Focus**:
-- Use-after-free, double-free, buffer overflow
-- Data races, deadlocks, memory ordering
-- Signed overflow, strict aliasing, ODR violations
-
-**Auto-invoked when**: Crash debugging, memory corruption, mysterious failures
-
----
-
-### logic-bugs-hunter - Logic Detective
-Auto-invoked for finding spec-vs-implementation gaps. Language-agnostic, annoyingly persistent.
-
-**Focus**:
-- Does code do what it's SUPPOSED to do?
-- Cross-component data flow, where invariants break
-- Algorithm correctness, wrong complexity assumptions
-- Contract violations, state machine design errors
-
-**Modes**:
-- Scan: Bird's eye hotspot detection
-- Hunt: Deep trace with chain fixes for narrow scopes
-
-**Auto-invoked when**: Algorithm bugs, business logic errors, design intent verification
-
----
-
 ### reviewer - Grumpy Code Wizard
 Auto-invoked for comprehensive code review before commits/PRs. 40 years experience. Reads EVERY line.
 
@@ -143,13 +121,54 @@ Auto-invoked when writing tests for new features. Writes comprehensive, real-wor
 
 ## Color Scheme
 
-Color scheme is universal for both research-agents and dev experts.
+❤️ RED = `architect`, `devops` (deciders, coordinators)
+💙 BLUE = `cpp-dev`, `python-dev`, `rust-dev`, `tester` (builders)
+💛 YELLOW = `reviewer` (checker)
 
-❤️ RED = Deciders – architecture, strategy, crisis-management
-💙 BLUE = Builders – write code
-💙💚 CYAN = Researchers – analyze data in HFT context
-💛 YELLOW = Checkers/testers — search for bugs, review the code
+## Flow
 
+```mermaid
+flowchart TD
+    USER([USER]) --> architect[/"architect<br/>🔴 Plans & Decides"/]
+
+    subgraph planning [Planning Phase]
+        architect -->|"design"| plan["📋 Implementation Plan"]
+    end
+
+    subgraph implementation [Implementation Phase]
+        plan --> coders
+        coders["Language Experts 💙<br/>cpp-dev / python-dev / rust-dev"]
+        coders -->|"challenge each other"| coders
+    end
+
+    subgraph testing [Testing Phase]
+        coders -->|"code ready"| tester["tester 💙<br/>Writes tests"]
+    end
+
+    subgraph review [Review Phase]
+        tester -->|"tests ready"| reviewer["reviewer 💛<br/>Validates everything"]
+    end
+
+    reviewer -->|"issues found"| coders
+    reviewer -->|"✅ approved"| done["🚀 Ready"]
+
+    devops["devops 🔴<br/>(when production breaks)"] -.->|"Phase 0: env readiness"| readiness{"Environment<br/>clean?"}
+    readiness -->|"yes"| investigate["investigate"]
+    readiness -->|"no — fix env first"| readiness
+    investigate -.->|"diagnose"| coders
+```
+
+**Phases**:
+1. **Plan**: `architect` designs feature, explores 2-3 alternatives, creates plan
+2. **Implement**: Language experts (`cpp-dev`/`python-dev`/`rust-dev`) build it, can challenge each other
+3. **Test**: `tester` writes comprehensive tests
+4. **Review**: `reviewer` validates code quality, sends back if issues
+5. **Ship**: Ready for merge
+
+
+## Related Plugins
+
+**Bug Hunting**: For systematic bug hunting with spec reconstruction and adversarial validation, see [bug-hunters](../bug-hunters/README.md). Bug hunters use dev-experts agents (`cpp-dev`, `python-dev`) as challengers for false-positive filtering.
 
 ## Installation
 

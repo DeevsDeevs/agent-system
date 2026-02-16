@@ -1,0 +1,4 @@
+interface:
+  display_name: "arXiv Search"
+  short_description: "Search arXiv papers"
+  default_prompt: "Use $arxiv-search to find relevant arXiv papers."

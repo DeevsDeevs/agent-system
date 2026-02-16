@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bug Hunters"
+  short_description: "Spec-first bug hunting workflow"
+  default_prompt: "Use $bug-hunters to run a structured bug hunt."

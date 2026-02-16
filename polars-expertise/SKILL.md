@@ -1,6 +1,5 @@
 ---
 name: polars-expertise
-version: 1.0.0
 description: >
   This skill should be used when the user asks about Polars DataFrame library
   (Apache Arrow) for Python or Rust. Triggers: "polars expressions", "lazy vs eager",

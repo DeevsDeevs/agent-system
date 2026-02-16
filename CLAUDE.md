@@ -63,6 +63,13 @@ Example: `feature/user-authentication`
 - **Avoid over-engineering** - question if complexity is truly necessary
 - **Be concise** - get to the point, focus on solutions
 
+## Venue Context
+
+Use the **venue-expert** skill for exchange-specific context. Invoke it when:
+- Starting any research involving exchange data
+- Debugging trading system issues (feed, order, session problems)
+- Needing venue mechanics: order types, matching rules, session times, data formats, regulatory quirks
+
 ## Testing
 - Tests will be specified when needed
 - Don't assume - ask if testing is required
