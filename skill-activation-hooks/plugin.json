@@ -1,7 +1,0 @@
-{
-  "name": "skill-activation-hooks",
-  "version": "1.0.0",
-  "description": "Prompt-based hooks for skill activation reminders and self-check",
-  "author": "ryzhikok",
-  "hooks": ["./hooks/"]
-}

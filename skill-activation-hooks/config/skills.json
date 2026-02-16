@@ -1,0 +1,181 @@
+{
+  "version": "1.0",
+
+  "skills": {
+    "polars-expertise": {
+      "threshold": 3,
+      "keywords": [
+        {"term": "polars", "w": 5},
+        {"term": "lazyframe", "w": 5},
+        {"term": "scan_parquet", "w": 5},
+        {"term": "group_by_dynamic", "w": 5},
+        {"term": "rolling_mean", "w": 4},
+        {"term": "asof join", "w": 4},
+        {"term": "join_asof", "w": 4},
+        {"term": "map_elements", "w": 3},
+        {"term": "ohlcv", "w": 3},
+        {"term": "dataframe", "w": 1},
+        {"term": "parquet", "w": 2},
+        {"term": "window function", "w": 2},
+        {"term": "lazy evaluation", "w": 3},
+        {"term": "arrow", "w": 1}
+      ],
+      "intentPatterns": [
+        "(convert|migrate|switch|move|rewrite|port).*?(pandas|pyspark|spark|kdb).*?polars",
+        "(convert|migrate|switch|move|rewrite|port).*?polars",
+        "polars.*?(instead of|replace|vs|over).*?(pandas|spark)",
+        "(lazy|eager).*?(evaluat|execut|frame|mode)",
+        "(scan|read|write|load|stream).*?parquet",
+        "(rolling|window|moving).*?(mean|std|sum|average|median)",
+        "time.?series.*?(resample|aggregat|ohlc|bar)"
+      ],
+      "intentWeight": 4,
+      "message": "SKILL AVAILABLE: polars-expertise -- Invoke via Skill tool for Polars DataFrame guidance (expressions, lazy eval, parquet I/O, time series, pandas/spark/kdb migration)."
+    },
+
+    "arxiv-search": {
+      "threshold": 3,
+      "keywords": [
+        {"term": "arxiv", "w": 5},
+        {"term": "preprint", "w": 4},
+        {"term": "research paper", "w": 4},
+        {"term": "academic paper", "w": 4},
+        {"term": "scientific literature", "w": 4},
+        {"term": "paper search", "w": 3},
+        {"term": "find papers", "w": 3},
+        {"term": "recent research", "w": 2},
+        {"term": "state of the art", "w": 2},
+        {"term": "sota", "w": 2}
+      ],
+      "intentPatterns": [
+        "(find|search|look.?up|fetch|get).*?(paper|research|preprint|publication)",
+        "(latest|recent|new).*?(research|paper|work|result).*?(on|about|in|for)",
+        "what does the (literature|research) say",
+        "(state of the art|sota|survey).*?(in|for|on|about)"
+      ],
+      "intentWeight": 4,
+      "message": "SKILL AVAILABLE: arxiv-search -- Invoke via Skill tool to search arXiv for academic papers and preprints."
+    },
+
+    "dev-experts:reviewer": {
+      "threshold": 3,
+      "keywords": [
+        {"term": "code review", "w": 5},
+        {"term": "review my code", "w": 5},
+        {"term": "review this", "w": 3},
+        {"term": "security review", "w": 4},
+        {"term": "before commit", "w": 3},
+        {"term": "before merging", "w": 3},
+        {"term": "before pr", "w": 3},
+        {"term": "race condition", "w": 3},
+        {"term": "memory leak", "w": 3}
+      ],
+      "intentPatterns": [
+        "(review|check|audit|inspect).*?(code|changes|diff|pr|pull request|commit)",
+        "(security|vulnerability|bug).*?(review|check|scan|audit)",
+        "(before|pre).?(commit|merge|push|pr).*?(review|check)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: dev-experts:reviewer -- Launch via Task tool (subagent_type='dev-experts:reviewer') for thorough code review with security, performance, and correctness checks."
+    },
+
+    "dev-experts:tester": {
+      "threshold": 3,
+      "keywords": [
+        {"term": "write tests", "w": 5},
+        {"term": "add tests", "w": 5},
+        {"term": "unit test", "w": 4},
+        {"term": "test coverage", "w": 4},
+        {"term": "integration test", "w": 4},
+        {"term": "edge cases", "w": 2},
+        {"term": "test plan", "w": 3}
+      ],
+      "intentPatterns": [
+        "(write|add|create|generate|implement).*?(test|spec|assertion)",
+        "(need|missing|improve|increase).*?(test|coverage|spec)",
+        "(test|cover).*?(edge case|error|failure|boundary)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: dev-experts:tester -- Launch via Task tool (subagent_type='dev-experts:tester') for comprehensive test writing with edge cases and error conditions."
+    },
+
+    "dev-experts:architect": {
+      "threshold": 4,
+      "keywords": [
+        {"term": "system design", "w": 5},
+        {"term": "software architecture", "w": 5},
+        {"term": "design decision", "w": 4},
+        {"term": "trade-off", "w": 3},
+        {"term": "implementation plan", "w": 4},
+        {"term": "feature design", "w": 4},
+        {"term": "alternatives", "w": 2}
+      ],
+      "intentPatterns": [
+        "(design|architect|plan|structure).*?(feature|system|service|module|component)",
+        "(compare|evaluate|choose|pick).*?(approach|pattern|framework|architecture)",
+        "how.?should.?(i|we).*?(design|structure|implement|build|organize)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: dev-experts:architect -- Launch via Task tool (subagent_type='dev-experts:architect') for feature design with trade-off analysis and implementation planning."
+    },
+
+    "dev-experts:python-dev": {
+      "threshold": 4,
+      "keywords": [
+        {"term": "pythonic", "w": 5},
+        {"term": "python refactor", "w": 5},
+        {"term": "msgspec", "w": 4},
+        {"term": "type hint", "w": 2},
+        {"term": "python review", "w": 4},
+        {"term": "uv pip", "w": 3}
+      ],
+      "intentPatterns": [
+        "(review|refactor|improve|clean).*?python.*?(code|module|file|script)",
+        "(make|rewrite).*?(pythonic|idiomatic).*?python",
+        "python.*?(best practice|pattern|idiom|style)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: dev-experts:python-dev -- Launch via Task tool (subagent_type='dev-experts:python-dev') for Python code review, refactoring, and modern Python patterns."
+    },
+
+    "research-experts:strategist": {
+      "threshold": 4,
+      "keywords": [
+        {"term": "strategy", "w": 3},
+        {"term": "alpha", "w": 3},
+        {"term": "signal", "w": 2},
+        {"term": "backtest", "w": 3},
+        {"term": "pnl", "w": 3},
+        {"term": "hypothesis", "w": 2},
+        {"term": "edge case", "w": 1},
+        {"term": "hft", "w": 4},
+        {"term": "market making", "w": 4},
+        {"term": "microstructure", "w": 4}
+      ],
+      "intentPatterns": [
+        "(research|investigate|analyze|decompose).*?(strategy|signal|alpha|edge)",
+        "(why|how|when).*?(strategy|signal).*?(work|fail|perform|behave)",
+        "(improve|optimize|tune).*?(strategy|signal|execution)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: research-experts:strategist -- Launch via Task tool (subagent_type='research-experts:strategist') for strategy research, hypothesis decomposition, and signal analysis."
+    },
+
+    "97-dev": {
+      "threshold": 3,
+      "keywords": [
+        {"term": "best practice", "w": 3},
+        {"term": "programming wisdom", "w": 4},
+        {"term": "code quality", "w": 2},
+        {"term": "professional development", "w": 3},
+        {"term": "97 things", "w": 5}
+      ],
+      "intentPatterns": [
+        "what.?(should|would).*?(good|experienced|senior).*?(developer|programmer|engineer)",
+        "(principle|wisdom|lesson).*?(programming|software|coding)"
+      ],
+      "intentWeight": 3,
+      "message": "SKILL AVAILABLE: 97-dev -- Invoke via Skill tool for programming wisdom from '97 Things Every Programmer Should Know'."
+    }
+  }
+}

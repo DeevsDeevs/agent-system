@@ -1,27 +1,14 @@
 {
-  "description": "Skill activation hooks - prompt analysis and self-check reminders",
+  "description": "Weighted keyword matching for skill activation on user prompts",
   "hooks": {
     "UserPromptSubmit": [
       {
         "matcher": "*",
         "hooks": [
           {
-            "type": "prompt",
-            "prompt": "You are a skill activation analyzer. Check if the user's prompt matches any skill rules.\n\nUser prompt: $USER_PROMPT\n\nSKILL RULES:\n1. polars-expertise - keywords: polars, dataframe, lazyframe, parquet, scan_parquet, group_by_dynamic, rolling_mean, asof join, OHLCV, window function. Intent patterns: convert/migrate pandas/pyspark/kdb to polars, lazy/eager evaluation, read/write/scan parquet, rolling/window operations, time series resample/aggregate.\n\n2. arxiv-search - keywords: arxiv, preprint, research paper, academic paper, scientific literature, paper search, find papers, ML research, recent research. Intent patterns: find/search/look up paper/research/preprint, latest/recent research/paper/work, what does the literature/research say, state of the art/SOTA.\n\nIf ANY skill matches (keyword found OR intent pattern matches), return:\n{\"ok\": true, \"systemMessage\": \"SKILL ACTIVATION CHECK - Relevant: [skill-name] ([reason])\"}\n\nIf NO skills match, return:\n{\"ok\": true, \"systemMessage\": \"\"}\n\nBe concise. Case-insensitive matching.",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
-
-    "Stop": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "prompt",
-            "prompt": "You are a self-check reminder for code quality. Based on the session context, check if any of these reminders apply:\n\nFor Python files with polars code, check for anti-patterns:\n- map_elements (use native expressions instead)\n- iter_rows (use vectorized operations)\n- apply() (use expressions)\n- pandas imports alongside polars (stick to one)\n\nIf any apply, return:\n{\"ok\": true, \"decision\": \"approve\", \"systemMessage\": \"Self-check: [relevant reminders]\"}\n\nIf nothing applies, return:\n{\"ok\": true, \"decision\": \"approve\", \"systemMessage\": \"\"}\n\nAlways approve. Keep brief.",
-            "timeout": 30
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/activate.sh",
+            "timeout": 5
           }
         ]
       }

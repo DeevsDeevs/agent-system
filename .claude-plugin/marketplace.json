@@ -80,9 +80,8 @@
     },
     {
       "name": "skill-activation-hooks",
-      "description": "Prompt-based hooks for skill activation reminders and self-check",
-      "source": "./skill-activation-hooks",
-      "hooks": ["./hooks/"]
+      "description": "Shell-based keyword matching hooks that inject skill/agent reminders into user prompts",
+      "source": "./skill-activation-hooks"
     }
   ]
 }
