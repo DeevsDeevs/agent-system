@@ -57,6 +57,135 @@
       "message": "SKILL AVAILABLE: arxiv-search -- Invoke via Skill tool to search arXiv for academic papers and preprints."
     },
 
+    "golang-pro": {
+      "threshold": 3,
+      "keywords": [
+        {"term": "golang", "w": 5},
+        {"term": "goroutine", "w": 5},
+        {"term": "goroutines", "w": 5},
+        {"term": "go channel", "w": 5},
+        {"term": "go module", "w": 4},
+        {"term": "go.mod", "w": 4},
+        {"term": "go.sum", "w": 4},
+        {"term": "grpc", "w": 2},
+        {"term": "go test", "w": 3},
+        {"term": "go build", "w": 3},
+        {"term": "go run", "w": 3},
+        {"term": "sync.mutex", "w": 5},
+        {"term": "sync.waitgroup", "w": 5},
+        {"term": "go generics", "w": 4},
+        {"term": "go interface", "w": 3},
+        {"term": "go concurrency", "w": 5}
+      ],
+      "intentPatterns": [
+        "(write|build|create|implement).*?(in|with|using)\\s+go\\b",
+        "\\bgo\\b.*?(concurren|parallel|goroutine|channel|select)",
+        "(table.?driven|benchmark).*?(test|go)",
+        "\\bgo\\b.*?(error handling|interface|struct|method)"
+      ],
+      "intentWeight": 4,
+      "message": "SKILL AVAILABLE: golang-pro -- Invoke via Skill tool for senior Go developer guidance (concurrency, generics, gRPC, performance, testing, GC tuning)."
+    },
+
+    "venue-expert": {
+      "threshold": 3,
+      "keywords": [
+        {"term": "microstructure", "w": 4},
+        {"term": "order book", "w": 4},
+        {"term": "nbbo", "w": 5},
+        {"term": "reg nms", "w": 5},
+        {"term": "maker-taker", "w": 5},
+        {"term": "price-time priority", "w": 5},
+        {"term": "opening cross", "w": 5},
+        {"term": "closing cross", "w": 5},
+        {"term": "noii", "w": 5},
+        {"term": "itch", "w": 3},
+        {"term": "ouch", "w": 3},
+        {"term": "luld", "w": 5},
+        {"term": "sip feed", "w": 5},
+        {"term": "direct feed", "w": 4},
+        {"term": "feed handler", "w": 4},
+        {"term": "ctp", "w": 2},
+        {"term": "shfe", "w": 5},
+        {"term": "dce", "w": 4},
+        {"term": "czce", "w": 5},
+        {"term": "cffex", "w": 5},
+        {"term": "ine", "w": 3},
+        {"term": "trading venue", "w": 4},
+        {"term": "exchange mechanics", "w": 4},
+        {"term": "tick size", "w": 3},
+        {"term": "trade-through", "w": 5},
+        {"term": "best execution", "w": 3},
+        {"term": "auction", "w": 2},
+        {"term": "halt", "w": 1}
+      ],
+      "intentPatterns": [
+        "(how|what|explain|describe).*?(order book|matching engine|auction|exchange)",
+        "(exchange|venue).*?(rule|mechanic|session|schedule|fee)",
+        "(feed|market data).*?(handler|protocol|format|latency)",
+        "(chinese|china).*?(futures|exchange|venue|ctp)"
+      ],
+      "intentWeight": 4,
+      "message": "SKILL AVAILABLE: venue-expert -- Invoke via Skill tool for trading venue mechanics (order books, auctions, Reg NMS, feed handlers, Chinese futures/CTP, execution models)."
+    },
+
+    "datetime": {
+      "threshold": 4,
+      "keywords": [
+        {"term": "current date", "w": 5},
+        {"term": "current time", "w": 5},
+        {"term": "what time", "w": 5},
+        {"term": "what date", "w": 5},
+        {"term": "today's date", "w": 5},
+        {"term": "timestamp", "w": 2},
+        {"term": "iso 8601", "w": 4},
+        {"term": "utc time", "w": 4}
+      ],
+      "intentPatterns": [
+        "what('s|\\s+is)\\s+the\\s+(current|today).*?(date|time)",
+        "(give|get|show|tell).*?(current|now).*?(date|time|timestamp)"
+      ],
+      "intentWeight": 5,
+      "message": "SKILL AVAILABLE: datetime -- Invoke via Skill tool to get current date/time in various formats (ISO 8601, UTC, epoch, etc.)."
+    },
+
+    "anti-ai-slop": {
+      "threshold": 4,
+      "keywords": [
+        {"term": "ai slop", "w": 5},
+        {"term": "ai-slop", "w": 5},
+        {"term": "remove slop", "w": 5},
+        {"term": "clean up slop", "w": 5},
+        {"term": "unnecessary comments", "w": 3},
+        {"term": "comment bloat", "w": 4},
+        {"term": "defensive checks", "w": 2},
+        {"term": "redundant validation", "w": 3}
+      ],
+      "intentPatterns": [
+        "(clean|remove|strip|delete).*?(ai|generated|unnecessary|redundant).*?(comment|check|validation|slop)",
+        "(too many|bloated|excessive).*?(comment|docstring|type annotation|validation)"
+      ],
+      "intentWeight": 4,
+      "message": "SKILL AVAILABLE: anti-ai-slop -- Invoke via Skill tool to clean up AI-generated slop (unnecessary comments, bloated docstrings, redundant checks) from the branch."
+    },
+
+    "97-dev": {
+      "threshold": 3,
+      "keywords": [
+        {"term": "best practice", "w": 3},
+        {"term": "programming wisdom", "w": 4},
+        {"term": "code quality", "w": 2},
+        {"term": "professional development", "w": 3},
+        {"term": "97 things", "w": 5}
+      ],
+      "intentPatterns": [
+        "what.?(should|would).*?(good|experienced|senior).*?(developer|programmer|engineer)",
+        "(principle|wisdom|lesson).*?(programming|software|coding)"
+      ],
+      "intentWeight": 3,
+      "message": "SKILL AVAILABLE: 97-dev -- Invoke via Skill tool for programming wisdom from '97 Things Every Programmer Should Know'."
+    },
+
     "dev-experts:reviewer": {
       "threshold": 3,
       "keywords": [
@@ -138,44 +267,376 @@
       "message": "AGENT AVAILABLE: dev-experts:python-dev -- Launch via Task tool (subagent_type='dev-experts:python-dev') for Python code review, refactoring, and modern Python patterns."
     },
 
-    "research-experts:strategist": {
-      "threshold": 4,
-      "keywords": [
-        {"term": "strategy", "w": 3},
-        {"term": "alpha", "w": 3},
-        {"term": "signal", "w": 2},
-        {"term": "backtest", "w": 3},
-        {"term": "pnl", "w": 3},
-        {"term": "hypothesis", "w": 2},
-        {"term": "edge case", "w": 1},
-        {"term": "hft", "w": 4},
-        {"term": "market making", "w": 4},
-        {"term": "microstructure", "w": 4}
-      ],
-      "intentPatterns": [
-        "(research|investigate|analyze|decompose).*?(strategy|signal|alpha|edge)",
-        "(why|how|when).*?(strategy|signal).*?(work|fail|perform|behave)",
-        "(improve|optimize|tune).*?(strategy|signal|execution)"
-      ],
-      "intentWeight": 4,
-      "message": "AGENT AVAILABLE: research-experts:strategist -- Launch via Task tool (subagent_type='research-experts:strategist') for strategy research, hypothesis decomposition, and signal analysis."
-    },
-
-    "97-dev": {
+    "dev-experts:cpp-dev": {
       "threshold": 3,
       "keywords": [
-        {"term": "best practice", "w": 3},
-        {"term": "programming wisdom", "w": 4},
-        {"term": "code quality", "w": 2},
-        {"term": "professional development", "w": 3},
-        {"term": "97 things", "w": 5}
+        {"term": "c++ review", "w": 5},
+        {"term": "c++20", "w": 5},
+        {"term": "c++23", "w": 5},
+        {"term": "undefined behavior", "w": 3},
+        {"term": "raii", "w": 4},
+        {"term": "move semantics", "w": 4},
+        {"term": "template metaprogramming", "w": 4},
+        {"term": "cache line", "w": 4},
+        {"term": "lock-free", "w": 4},
+        {"term": "constexpr", "w": 4},
+        {"term": "std::span", "w": 5},
+        {"term": "std::optional", "w": 3},
+        {"term": "std::variant", "w": 4}
       ],
       "intentPatterns": [
-        "what.?(should|would).*?(good|experienced|senior).*?(developer|programmer|engineer)",
-        "(principle|wisdom|lesson).*?(programming|software|coding)"
+        "(review|refactor|improve|optimize).*?(c\\+\\+|cpp).*?(code|module|file)",
+        "(c\\+\\+|cpp).*?(best practice|pattern|idiom|modern)",
+        "(latency|performance|cache).*?(c\\+\\+|cpp|hft)"
       ],
-      "intentWeight": 3,
-      "message": "SKILL AVAILABLE: 97-dev -- Invoke via Skill tool for programming wisdom from '97 Things Every Programmer Should Know'."
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: dev-experts:cpp-dev -- Launch via Task tool (subagent_type='dev-experts:cpp-dev') for HFT-grade C++20 review (UB, memory bugs, latency, cache efficiency)."
+    },
+
+    "dev-experts:rust-dev": {
+      "threshold": 3,
+      "keywords": [
+        {"term": "rust review", "w": 5},
+        {"term": "ownership", "w": 2},
+        {"term": "borrowing", "w": 3},
+        {"term": "idiomatic rust", "w": 5},
+        {"term": "unsafe rust", "w": 5},
+        {"term": "cargo", "w": 2},
+        {"term": "async rust", "w": 4},
+        {"term": "tokio", "w": 3},
+        {"term": "zero-cost abstraction", "w": 4},
+        {"term": "lifetime", "w": 2},
+        {"term": "trait", "w": 1},
+        {"term": "unwrap", "w": 2},
+        {"term": "clone", "w": 1}
+      ],
+      "intentPatterns": [
+        "(review|refactor|improve|optimize).*?rust.*?(code|module|crate|file)",
+        "rust.*?(best practice|pattern|idiom|safety)",
+        "(make|rewrite).*?(idiomatic|safe).*?rust"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: dev-experts:rust-dev -- Launch via Task tool (subagent_type='dev-experts:rust-dev') for idiomatic Rust review (ownership, safety, performance, un-Rusty patterns)."
+    },
+
+    "dev-experts:devops": {
+      "threshold": 3,
+      "keywords": [
+        {"term": "production issue", "w": 5},
+        {"term": "production debugging", "w": 5},
+        {"term": "infrastructure problem", "w": 4},
+        {"term": "deployment failure", "w": 4},
+        {"term": "failure investigation", "w": 4},
+        {"term": "service down", "w": 4},
+        {"term": "outage", "w": 4},
+        {"term": "incident", "w": 2},
+        {"term": "diagnostic", "w": 2}
+      ],
+      "intentPatterns": [
+        "(debug|investigate|diagnose|troubleshoot).*?(production|deploy|infra|server|service)",
+        "(service|server|pod|container).*?(down|crash|fail|error|timeout|oom)",
+        "(why|what).?(is|did).*?(fail|crash|break|timeout|hang)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: dev-experts:devops -- Launch via Task tool (subagent_type='dev-experts:devops') for production debugging, failure investigation, and systematic infrastructure diagnostics."
+    },
+
+    "bug-hunters:orchestrator": {
+      "threshold": 3,
+      "keywords": [
+        {"term": "bug hunt", "w": 5},
+        {"term": "find bugs", "w": 5},
+        {"term": "hunt bugs", "w": 5},
+        {"term": "systematic bugs", "w": 4},
+        {"term": "spec reconstruction", "w": 5},
+        {"term": "adversarial validation", "w": 5}
+      ],
+      "intentPatterns": [
+        "(find|hunt|search|look for|detect).*?(bug|defect|issue|flaw).*?(systematic|thorough|comprehensive)",
+        "(systematic|thorough|comprehensive|deep).*?(bug|defect|issue).*?(hunt|search|find|audit)",
+        "are there.*?(bug|issue|flaw|defect).*?(in|across|throughout)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: bug-hunters:orchestrator -- Launch via Task tool (subagent_type='bug-hunters:orchestrator') for systematic bug hunting with spec reconstruction, adversarial validation, and confidence-ranked reports."
+    },
+
+    "bug-hunters:logic-hunter": {
+      "threshold": 4,
+      "keywords": [
+        {"term": "logic bug", "w": 5},
+        {"term": "spec violation", "w": 5},
+        {"term": "algorithm correctness", "w": 5},
+        {"term": "data flow bug", "w": 5},
+        {"term": "invariant", "w": 3},
+        {"term": "state machine", "w": 3},
+        {"term": "contract violation", "w": 4}
+      ],
+      "intentPatterns": [
+        "(logic|algorithm|correctness|specification).*?(bug|error|flaw|violation|gap)",
+        "(spec|requirement).*?(vs|mismatch|gap|diverge).*?(implementation|code)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: bug-hunters:logic-hunter -- Launch via Task tool (subagent_type='bug-hunters:logic-hunter') for language-agnostic logic bug hunting (spec-vs-implementation gaps, data flow, algorithm correctness)."
+    },
+
+    "bug-hunters:cpp-hunter": {
+      "threshold": 4,
+      "keywords": [
+        {"term": "memory corruption", "w": 5},
+        {"term": "use-after-free", "w": 5},
+        {"term": "data race", "w": 5},
+        {"term": "asan", "w": 5},
+        {"term": "tsan", "w": 5},
+        {"term": "ubsan", "w": 5},
+        {"term": "buffer overflow", "w": 5},
+        {"term": "double free", "w": 5},
+        {"term": "dangling pointer", "w": 5}
+      ],
+      "intentPatterns": [
+        "(memory|pointer|buffer).*?(bug|corruption|overflow|leak|error).*?(c\\+\\+|cpp)",
+        "(c\\+\\+|cpp).*?(memory|concurrency|threading).*?(bug|issue|problem)",
+        "(asan|tsan|ubsan|valgrind|sanitizer).*?(report|finding|error)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: bug-hunters:cpp-hunter -- Launch via Task tool (subagent_type='bug-hunters:cpp-hunter') for C++ memory corruption, UB, and concurrency bug hunting."
+    },
+
+    "bug-hunters:python-hunter": {
+      "threshold": 4,
+      "keywords": [
+        {"term": "none propagation", "w": 5},
+        {"term": "mutable default", "w": 5},
+        {"term": "async pitfall", "w": 5},
+        {"term": "type violation", "w": 4},
+        {"term": "import cycle", "w": 5},
+        {"term": "gil issue", "w": 5}
+      ],
+      "intentPatterns": [
+        "python.*?(bug|issue|problem).*?(async|none|type|import|mutable)",
+        "(none|null).*?(propagat|check|error|bug).*?python",
+        "(async|await).*?(pitfall|bug|deadlock|race).*?python"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: bug-hunters:python-hunter -- Launch via Task tool (subagent_type='bug-hunters:python-hunter') for Python bug hunting (async pitfalls, None propagation, mutable defaults, type violations)."
+    },
+
+    "alpha-squad:fundamentalist": {
+      "threshold": 4,
+      "keywords": [
+        {"term": "value investing", "w": 4},
+        {"term": "fundamental analysis", "w": 5},
+        {"term": "earnings quality", "w": 5},
+        {"term": "financial statements", "w": 3},
+        {"term": "10-k", "w": 4},
+        {"term": "10-q", "w": 4},
+        {"term": "accruals", "w": 5},
+        {"term": "cash flow analysis", "w": 3},
+        {"term": "roic", "w": 4},
+        {"term": "intrinsic value", "w": 5},
+        {"term": "capital efficiency", "w": 4}
+      ],
+      "intentPatterns": [
+        "(analyz|decompos|parse).*?(financial|earning|accounting|statement|10-k|10-q)",
+        "(value|fundamental|intrinsic).*?(thesis|analysis|mispricing|opportunity)",
+        "(earnings|accounting).*?(quality|game|manipulation|restatement)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: alpha-squad:fundamentalist -- Launch via Task tool for accounting and intrinsic value analysis (financial statements, earnings quality, capital efficiency, mispricing)."
+    },
+
+    "alpha-squad:vulture": {
+      "threshold": 4,
+      "keywords": [
+        {"term": "forced seller", "w": 5},
+        {"term": "index reconstitution", "w": 5},
+        {"term": "13f", "w": 4},
+        {"term": "short interest", "w": 4},
+        {"term": "borrow rate", "w": 4},
+        {"term": "etf flows", "w": 4},
+        {"term": "liquidation", "w": 3},
+        {"term": "crowding", "w": 4},
+        {"term": "calendar flows", "w": 5}
+      ],
+      "intentPatterns": [
+        "(track|detect|find|analyze).*?(forced|constrained).*?(seller|buyer|liquidation|flow)",
+        "(index|etf).*?(reconstitut|rebalance|flow|add|delete)",
+        "(13f|filing|ownership).*?(crowd|concentrat|overlap)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: alpha-squad:vulture -- Launch via Task tool for flows and constraints analysis (forced sellers, index reconstitution, 13F crowding, liquidation signatures)."
+    },
+
+    "alpha-squad:network-architect": {
+      "threshold": 4,
+      "keywords": [
+        {"term": "customer-supplier", "w": 5},
+        {"term": "lead-lag", "w": 5},
+        {"term": "contagion", "w": 4},
+        {"term": "supply chain", "w": 3},
+        {"term": "spillover", "w": 4},
+        {"term": "cross-asset", "w": 3},
+        {"term": "network analysis", "w": 3},
+        {"term": "propagation", "w": 2}
+      ],
+      "intentPatterns": [
+        "(customer|supplier|upstream|downstream).*?(network|chain|relationship|link|impact)",
+        "(lead|lag|spill|propag|contag).*?(across|between|from|to).*?(sector|stock|asset|market)",
+        "(network|graph).*?(shock|propag|transmit|spread)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: alpha-squad:network-architect -- Launch via Task tool for relationship and propagation analysis (customer-supplier networks, lead-lag, contagion paths, cross-asset spillover)."
+    },
+
+    "alpha-squad:book-physicist": {
+      "threshold": 4,
+      "keywords": [
+        {"term": "order flow", "w": 3},
+        {"term": "kyle model", "w": 5},
+        {"term": "glosten-milgrom", "w": 5},
+        {"term": "hawkes process", "w": 5},
+        {"term": "information asymmetry", "w": 4},
+        {"term": "adverse selection", "w": 4},
+        {"term": "price impact", "w": 3},
+        {"term": "shannon entropy", "w": 5},
+        {"term": "order flow toxicity", "w": 5},
+        {"term": "vpin", "w": 5}
+      ],
+      "intentPatterns": [
+        "(order book|order flow).*?(model|entropy|information|toxicity|impact)",
+        "(kyle|glosten|milgrom|hawkes|vpin).*?(model|estimat|calibrat)",
+        "(information|adverse).*?(asymmetry|selection).*?(measure|detect|quantify)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: alpha-squad:book-physicist -- Launch via Task tool for microstructure and entropy analysis (order book physics, Kyle/Glosten-Milgrom models, order flow informativity, entropy regimes)."
+    },
+
+    "alpha-squad:causal-detective": {
+      "threshold": 4,
+      "keywords": [
+        {"term": "causal inference", "w": 5},
+        {"term": "double ml", "w": 5},
+        {"term": "frisch-waugh", "w": 5},
+        {"term": "orthogonalization", "w": 5},
+        {"term": "instrumental variable", "w": 5},
+        {"term": "placebo test", "w": 5},
+        {"term": "dag", "w": 2},
+        {"term": "confounding", "w": 3},
+        {"term": "causality", "w": 3}
+      ],
+      "intentPatterns": [
+        "(causal|orthogonal|confound).*?(infer|test|identif|estimat|analys)",
+        "(double ml|frisch.?waugh|instrumental variable|placebo)",
+        "(is|does).*?(caus|confound|spurious).*?(or|versus|vs)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: alpha-squad:causal-detective -- Launch via Task tool for causal inference (Frisch-Waugh-Lovell orthogonalization, Double ML, DAGs, placebo tests, confounding analysis)."
+    },
+
+    "mft-research-experts:mft-strategist": {
+      "threshold": 4,
+      "keywords": [
+        {"term": "orchestrate research", "w": 5},
+        {"term": "hypothesis generation", "w": 4},
+        {"term": "research workflow", "w": 4},
+        {"term": "ship or kill", "w": 5},
+        {"term": "alpha research", "w": 3},
+        {"term": "research pipeline", "w": 4}
+      ],
+      "intentPatterns": [
+        "(orchestrat|coordinat|manag).*?(research|hypothesis|validation|squad)",
+        "(ship|kill|iterate).*?(hypothesis|signal|strategy|alpha)",
+        "(end.?to.?end|full).*?(research|validation|pipeline).*?(workflow|process)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: mft-research-experts:mft-strategist -- Launch via Task tool for research orchestration (hypothesis generation/destruction, squad coordination, SHIP/KILL/ITERATE decisions)."
+    },
+
+    "mft-research-experts:data-sentinel": {
+      "threshold": 3,
+      "keywords": [
+        {"term": "data validation", "w": 4},
+        {"term": "data quality", "w": 4},
+        {"term": "survivorship bias", "w": 5},
+        {"term": "look-ahead bias", "w": 5},
+        {"term": "lookahead bias", "w": 5},
+        {"term": "timestamp validation", "w": 5},
+        {"term": "corporate actions", "w": 4},
+        {"term": "data integrity", "w": 3},
+        {"term": "point-in-time", "w": 4}
+      ],
+      "intentPatterns": [
+        "(validat|check|verify|audit).*?(data|timestamp|price|identifier|dataset)",
+        "(survivorship|look.?ahead|point.?in.?time).*?(bias|issue|problem|check)",
+        "(corporate action|split|dividend).*?(adjust|handle|check|miss)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: mft-research-experts:data-sentinel -- INVOKE FIRST on any dataset. Paranoid data gatekeeper for timestamp validation, survivorship bias, look-ahead bias, corporate actions."
+    },
+
+    "mft-research-experts:factor-geometer": {
+      "threshold": 4,
+      "keywords": [
+        {"term": "factor model", "w": 5},
+        {"term": "risk model", "w": 4},
+        {"term": "covariance", "w": 3},
+        {"term": "alpha-orthogonal", "w": 5},
+        {"term": "factor exposure", "w": 5},
+        {"term": "ledoit-wolf", "w": 5},
+        {"term": "gram-schmidt", "w": 5},
+        {"term": "eigenvalue", "w": 3},
+        {"term": "factor loading", "w": 5},
+        {"term": "risk decomposition", "w": 4}
+      ],
+      "intentPatterns": [
+        "(factor|risk).*?(model|loading|exposure|decompos|orthogonal)",
+        "(covariance|correlation).*?(estimat|shrink|ledoit|eigen|clean)",
+        "(alpha|signal).*?(orthogonal|residual|spanned|factor.?neutral)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: mft-research-experts:factor-geometer -- Launch via Task tool for factor/risk geometry (factor loadings, covariance shrinkage, alpha-orthogonal decomposition)."
+    },
+
+    "mft-research-experts:skeptic": {
+      "threshold": 4,
+      "keywords": [
+        {"term": "backtest validation", "w": 5},
+        {"term": "deflated sharpe", "w": 5},
+        {"term": "rademacher", "w": 5},
+        {"term": "walk-forward", "w": 5},
+        {"term": "multiple testing", "w": 5},
+        {"term": "overfitting", "w": 3},
+        {"term": "subsample stability", "w": 5},
+        {"term": "out of sample", "w": 3},
+        {"term": "oos", "w": 2}
+      ],
+      "intentPatterns": [
+        "(validat|verify|test|check).*?(backtest|strategy|signal|hypothesis)",
+        "(overfit|spurious|lucky|multiple testing|data.?min).*?(check|test|correct)",
+        "(deflated|adjusted).*?(sharpe|performance|return)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: mft-research-experts:skeptic -- Launch via Task tool for hypothesis execution and validation (Rademacher haircuts, walk-forward OOS, deflated Sharpe, subsample stability)."
+    },
+
+    "mft-research-experts:forensic-auditor": {
+      "threshold": 4,
+      "keywords": [
+        {"term": "post-mortem", "w": 5},
+        {"term": "postmortem", "w": 5},
+        {"term": "failure analysis", "w": 4},
+        {"term": "assumption audit", "w": 5},
+        {"term": "regime change", "w": 4},
+        {"term": "performance degradation", "w": 4},
+        {"term": "why did it break", "w": 5},
+        {"term": "drawdown analysis", "w": 4}
+      ],
+      "intentPatterns": [
+        "(why|what|when).*?(break|fail|degrade|stop working|underperform|drawdown)",
+        "(post.?mortem|forensic|audit|investigat).*?(strategy|signal|performance|failure)",
+        "(regime|structural).*?(change|shift|break).*?(detect|investigat|explain)"
+      ],
+      "intentWeight": 4,
+      "message": "AGENT AVAILABLE: mft-research-experts:forensic-auditor -- Launch via Task tool for post-mortem investigation (assumption failures, regime changes, performance degradation, drawdown forensics)."
     }
   }
 }
