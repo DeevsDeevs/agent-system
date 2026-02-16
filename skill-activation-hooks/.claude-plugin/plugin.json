@@ -1,0 +1,8 @@
+{
+  "name": "skill-activation-hooks",
+  "version": "2.0.0",
+  "description": "Shell-based keyword matching hooks that inject skill reminders into user prompts",
+  "author": {
+    "name": "ryzhikok"
+  }
+}
