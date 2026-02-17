@@ -351,6 +351,46 @@ For signed requests:
 4. Re-sync periodically (drift occurs)
 ```
 
+## Regime-Changing Events (Backtest Reference)
+
+Events that create structural breaks in Binance data. Any backtest spanning these dates must account for changed market conditions.
+
+### Chronological Timeline
+
+| Date | Event | Impact on Data |
+|------|-------|----------------|
+| 2020-06-28 | Matching engine rewrite (~10x perf) | Fill latency, queue priority, throughput all changed. Microstructure properties differ pre/post |
+| 2021-07-19 | New futures accounts capped at 20x leverage (extended to 60 days on Jul 27) | Liquidation cascades less severe per unit OI. Funding rate dynamics shifted |
+| 2022-05-10 | LUNA/UST crash begins, Terra withdrawals halted | LUNA $80→$0.01 over ~8 days (May 5–13). Spreads 10-50%+. Cascading liquidations across all markets |
+| 2022-05-28 | LUNA renamed to LUNC, new Terra 2.0 LUNA listed May 31 | Ticker continuity broken. LUNA pre-May 28 ≠ LUNA post-May 31 — completely different assets |
+| 2022-07-08 | Zero-fee BTC trading starts (13 pairs) | Volume massively inflated by wash trading. BTC/USDT volume-based signals unreliable |
+| 2022-11-06 | Binance announces FTT liquidation → FTX crisis | BTC ~-10% in first 48h, -25% over ~2 weeks. Extreme volatility ~4 weeks. Funding rates deeply negative. FTX volume permanently redistributed to Binance |
+| 2023-01-26 | STP launched for Spot API (mandatory for all Oct 11) | Post-STP volume is "cleaner" — self-trades rejected. Volume pre/post not comparable |
+| 2023-02-13 | NYDFS orders Paxos to stop BUSD minting | BUSD pairs progressively delisted through 2023. Liquidity migrated to USDT/FDUSD |
+| 2023-03-22 | Zero-fee BTC trading ends (except BTC/TUSD) | BTC volume collapsed to 8-month lows immediately after fees reinstated |
+| 2023-03-24 | Matching engine bug halts spot trading ~2h | 2h gap in all spot data. BTC dropped ~$700 via cross-venue arb during outage |
+| 2023-08-25 | API rate limit 1,200→6,000 weight/min | HFT/MM strategies could poll and execute more aggressively. Backtests modeling API constraints must use correct regime |
+| 2023-09-06 | STP launched for Futures API | Same volume-cleaning effect as spot STP |
+| 2023-09-07 | BTC/TUSD zero taker fee ends | Last zero-fee pair reverts. Market share shifts again |
+| 2023-10-12 | Funding rate changed to 4h for all ≤25x leverage perps | Funding P&L calcs must use 4h intervals. Carry-trade profitability reduced. Historical 8h data must be resampled |
+| 2023-11-21 | CZ guilty plea, $4.3B DOJ settlement, Richard Teng becomes CEO | BTC rallied (uncertainty removed). Post-regulatory era: compliance monitor, geo restrictions, product changes |
+| 2023-12-15 | BUSD support fully ends on Binance | Auto-conversion to FDUSD on Jan 2 2024. All BUSD historical data becomes forward-irrelevant |
+| 2024-04-30 | CZ sentenced to 4 months prison | Market non-event |
+
+### Key Backtest Warnings
+
+1. **Volume discontinuities:** Zero-fee BTC promotion (Jul 2022 – Mar 2023) and STP introduction (Jan 2023+) make volume data non-stationary. Any volume-based signal (VWAP, OBV, volume profile) must account for these regime shifts.
+
+2. **Ticker renames:** LUNA→LUNC (May 2022). Data pipelines that naively merge tickers across rename boundaries conflate different assets.
+
+3. **Fee regime changes:** BNB discount 50%→25% (Jul 2018), zero-fee BTC (Jul 2022 – Mar 2023), STP rejection of self-trades. Net P&L backtests must use correct fee schedule per period.
+
+4. **Funding rate structural break:** 8h→4h transition (Oct 2023). Basis trading strategies calibrated on 8h intervals overestimate returns post-change.
+
+5. **API capability breaks:** Rate limit 1,200→6,000 (Aug 2023), order limit 50→100/10s (Nov 2023). Live execution feasibility differs across periods.
+
+6. **Data gaps:** Matching engine outages (Mar 2023 ~2h, various maintenance windows). Cross-venue arb moved prices during gaps.
+
 ## References
 
 See `references/` directory:
