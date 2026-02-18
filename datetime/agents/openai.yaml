@@ -1,0 +1,4 @@
+interface:
+  display_name: "Datetime"
+  short_description: "Current date/time formats"
+  default_prompt: "Use $datetime to provide the current date/time in the required format."

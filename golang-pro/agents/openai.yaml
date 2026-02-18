@@ -1,0 +1,4 @@
+interface:
+  display_name: "Golang Pro"
+  short_description: "Senior Go patterns and reviews"
+  default_prompt: "Use $golang-pro to design or review Go code idiomatically."

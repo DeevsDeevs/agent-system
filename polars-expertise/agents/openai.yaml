@@ -1,0 +1,4 @@
+interface:
+  display_name: "Polars Expertise"
+  short_description: "Polars performance and patterns"
+  default_prompt: "Use $polars-expertise to solve Polars DataFrame tasks."

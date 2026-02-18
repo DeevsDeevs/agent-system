@@ -10,17 +10,27 @@
   },
   "plugins": [
     {
-      "name": "research-experts",
-      "description": "Opinionated research agents for HFT quantitative research. Causality over fit. Interpretability over black-box.",
-      "source": "./research-experts",
+      "name": "alpha-squad",
+      "description": "Five hypothesis generators attacking from complementary angles: value, flows, networks, microstructure/entropy, causal mechanisms",
+      "source": "./alpha-squad",
       "agents": [
-        "./agents/strategist.md",
+        "./agents/fundamentalist.md",
+        "./agents/vulture.md",
+        "./agents/network-architect.md",
+        "./agents/book-physicist.md",
+        "./agents/causal-detective.md"
+      ]
+    },
+    {
+      "name": "mft-research-experts",
+      "description": "Orchestration, data validation, risk geometry, hypothesis execution, and forensic audit for quantitative research",
+      "source": "./mft-research-experts",
+      "agents": [
+        "./agents/mft-strategist.md",
         "./agents/data-sentinel.md",
-        "./agents/microstructure-analyst.md",
-        "./agents/cross-venue-analyst.md",
-        "./agents/causal-analyst.md",
-        "./agents/post-hoc-analyst.md",
-        "./agents/crisis-hunter.md"
+        "./agents/factor-geometer.md",
+        "./agents/skeptic.md",
+        "./agents/forensic-auditor.md"
       ]
     },
     {
@@ -28,12 +38,6 @@
       "description": "Multi-session workflow chains for maintaining linked context across conversations",
       "source": "./chain-system",
       "commands": ["./commands/"]
-    },
-    {
-      "name": "tmux",
-      "description": "Interactive terminal control for REPLs, debuggers, and servers",
-      "source": "./tmux",
-      "skills": ["./"]
     },
     {
       "name": "dev-experts",
@@ -88,6 +92,18 @@
       "name": "polars-expertise",
       "description": "Fast DataFrame library (Apache Arrow) for Python and Rust: expressions, lazy/streaming, GPU acceleration, time series patterns, pandas/spark/kdb migration",
       "source": "./polars-expertise",
+      "skills": ["./"]
+    },
+    {
+      "name": "golang-pro",
+      "description": "Senior Go developer expertise (Go 1.21+): concurrency, generics, performance optimization, GC tuning, testing, coverage",
+      "source": "./golang-pro",
+      "skills": ["./"]
+    },
+    {
+      "name": "venue-expert",
+      "description": "Hierarchical microstructure knowledge base for trading venues: exchange mechanics, order books, auctions, Reg NMS, Chinese futures (CTP), feed handlers, execution models",
+      "source": "./venue-expert",
       "skills": ["./"]
     }
   ]

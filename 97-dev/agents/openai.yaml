@@ -1,0 +1,4 @@
+interface:
+  display_name: "97 Dev"
+  short_description: "Timeless programming wisdom"
+  default_prompt: "Use $97-dev to apply the 97 Things principles to this task."
