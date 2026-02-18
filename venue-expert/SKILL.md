@@ -35,11 +35,17 @@ Knowledge is organized in an inheritance hierarchy:
 Asset Class (equity, futures, crypto, fx)
     |
     v
-Geography (amer, emea, apac)
-    |
-    v
-Exchange (nasdaq, nyse, cme, binance)
+Geography (amer, emea, apac)        Category (CEX, DEX) for crypto
+    |                                    |
+    v                                    v
+Exchange (nasdaq, nyse, cme)         Exchange (binance, coinbase, uniswap)
+                                         |
+                                         v
+                                     Region-specific (binance.us, binance.jp)
 ```
+
+Note: Crypto exchanges operate globally but differ significantly by jurisdiction
+(available products, leverage limits, KYC requirements, regulatory status).
 
 Each level inherits concepts from its parent. Exchange-level files assume familiarity with geo-level and asset-class-level concepts.
 
@@ -49,6 +55,9 @@ Each level inherits concepts from its parent. Exchange-level files assume famili
 - `equity/` - Equity market fundamentals
 - `equity/amer/` - US equity market structure (Reg NMS, NBBO, SIP, TRF)
 - `equity/amer/nasdaq/` - Nasdaq-specific mechanics (ITCH, OUCH, crosses)
+- `crypto/` - Crypto market fundamentals
+- `crypto/CEX/` - Centralized exchange mechanics
+- `crypto/CEX/Binance/` - Binance-specific mechanics
 - `futures/` - Futures market fundamentals
 - `futures/apac/` - APAC futures overview
 - `futures/apac/china/` - Chinese futures (CTP, 5 exchanges, regulatory)
@@ -62,7 +71,9 @@ Each level inherits concepts from its parent. Exchange-level files assume famili
 - `equity/amer/nyse/` - NYSE mechanics
 - `equity/emea/lse/` - London Stock Exchange
 - `futures/amer/cme/` - CME Group
-- `crypto/binance/` - Binance exchange
+- `crypto/CEX/Bybit/` - Bybit exchange
+- `crypto/CEX/OKX/` - OKX exchange
+- `crypto/DEX/` - Decentralized exchange mechanics
 
 ## Navigation
 
@@ -75,6 +86,9 @@ Route to appropriate depth based on query specificity:
 | Generic equity concepts | `equity/equity.md` |
 | US market structure, Reg NMS, NBBO | `equity/amer/equity_amer.md` |
 | Nasdaq-specific (ITCH, NOII, crosses) | `equity/amer/nasdaq/nasdaq.md` |
+| Generic crypto concepts | `crypto/crypto.md` |
+| CEX mechanics, rate limits, WebSocket | `crypto/CEX/cex.md` |
+| Binance-specific (API, depth, fees) | `crypto/CEX/Binance/binance.md` |
 | Generic futures concepts | `futures/futures.md` |
 | APAC futures overview | `futures/apac/futures_apac.md` |
 | Chinese futures, CTP, 夜盘 | `futures/apac/china/futures_china.md` |
@@ -123,6 +137,11 @@ When debugging trading system issues:
 - `equity/amer/equity_amer.md` - US equity market structure
 - `equity/amer/nasdaq/nasdaq.md` - Nasdaq exchange mechanics
 
+**Crypto:**
+- `crypto/crypto.md` - Crypto market fundamentals
+- `crypto/CEX/cex.md` - Centralized exchange mechanics
+- `crypto/CEX/Binance/binance.md` - Binance exchange mechanics
+
 **Futures:**
 - `futures/futures.md` - Futures market fundamentals
 - `futures/apac/futures_apac.md` - APAC futures overview
@@ -146,6 +165,11 @@ When debugging trading system issues:
 - `equity/amer/nasdaq/references/specs/ouch_protocol.md` - OUCH 4.2/5.0 spec
 - `equity/amer/nasdaq/references/specs/totalview.md` - TotalView product
 - `equity/amer/nasdaq/references/regulatory/nasdaq_rules.md` - Nasdaq rulebook
+**Binance References:**
+- `crypto/CEX/Binance/references/specs/websocket_api.md` - WebSocket API specification
+- `crypto/CEX/Binance/references/specs/rest_api.md` - REST API specification
+- `crypto/CEX/Binance/references/specs/futures_api.md` - Futures API and mechanics
+- `crypto/CEX/Binance/references/regulatory/terms_of_service.md` - Platform rules and compliance
 
 **Futures References:**
 - `futures/references/spreads.md` - Calendar/inter-commodity spread mechanics (CME/ICE)
