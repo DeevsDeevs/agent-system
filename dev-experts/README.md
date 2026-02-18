@@ -83,35 +83,6 @@ Auto-invoked for C++ code review and refactoring. HFT mindset. Hunts UB, memory 
 
 ---
 
-### cpp-bug-hunter - C++ Bug Hunter
-Auto-invoked for hunting C++ bugs from symptoms. Paranoid interrogator who demands proof.
-
-**Focus**:
-- Use-after-free, double-free, buffer overflow
-- Data races, deadlocks, memory ordering
-- Signed overflow, strict aliasing, ODR violations
-
-**Auto-invoked when**: Crash debugging, memory corruption, mysterious failures
-
----
-
-### logic-bugs-hunter - Logic Detective
-Auto-invoked for finding spec-vs-implementation gaps. Language-agnostic, annoyingly persistent.
-
-**Focus**:
-- Does code do what it's SUPPOSED to do?
-- Cross-component data flow, where invariants break
-- Algorithm correctness, wrong complexity assumptions
-- Contract violations, state machine design errors
-
-**Modes**:
-- Scan: Bird's eye hotspot detection
-- Hunt: Deep trace with chain fixes for narrow scopes
-
-**Auto-invoked when**: Algorithm bugs, business logic errors, design intent verification
-
----
-
 ### reviewer - Grumpy Code Wizard
 Auto-invoked for comprehensive code review before commits/PRs. 40 years experience. Reads EVERY line.
 
@@ -138,6 +109,56 @@ Auto-invoked when writing tests for new features. Writes comprehensive, real-wor
 - Writes real tests with actual data
 
 **Auto-invoked when**: Writing tests, improving coverage
+
+---
+
+## Color Scheme
+
+❤️ RED = `architect`, `devops` (deciders, coordinators)
+💙 BLUE = `cpp-dev`, `python-dev`, `rust-dev`, `tester` (builders)
+💛 YELLOW = `reviewer` (checker)
+
+## Flow
+
+```mermaid
+flowchart TD
+    USER([USER]) --> architect[/"architect<br/>🔴 Plans & Decides"/]
+
+    subgraph planning [Planning Phase]
+        architect -->|"design"| plan["📋 Implementation Plan"]
+    end
+
+    subgraph implementation [Implementation Phase]
+        plan --> coders
+        coders["Language Experts 💙<br/>cpp-dev / python-dev / rust-dev"]
+        coders -->|"challenge each other"| coders
+    end
+
+    subgraph testing [Testing Phase]
+        coders -->|"code ready"| tester["tester 💙<br/>Writes tests"]
+    end
+
+    subgraph review [Review Phase]
+        tester -->|"tests ready"| reviewer["reviewer 💛<br/>Validates everything"]
+    end
+
+    reviewer -->|"issues found"| coders
+    reviewer -->|"✅ approved"| done["🚀 Ready"]
+
+    devops["devops 🔴<br/>(when production breaks)"] -.->|"investigate"| coders
+```
+
+**Phases**:
+1. **Plan**: `architect` designs feature, explores 2-3 alternatives, creates plan
+2. **Implement**: Language experts (`cpp-dev`/`python-dev`/`rust-dev`) build it, can challenge each other
+3. **Test**: `tester` writes comprehensive tests
+4. **Review**: `reviewer` validates code quality, sends back if issues
+5. **Ship**: Ready for merge
+
+
+## Related Plugins
+
+**Bug Hunting**: For systematic bug hunting with spec reconstruction and adversarial validation, see [bug-hunters](../bug-hunters/README.md). Bug hunters use dev-experts agents (`cpp-dev`, `python-dev`) as challengers for false-positive filtering.
 
 ## Installation
 

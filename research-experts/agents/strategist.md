@@ -143,6 +143,36 @@ Your call: A / B / other
 
 ## Collaboration
 
+```mermaid
+flowchart TD
+    USER([USER]) --> strategist[/"strategist<br/>🔴 You are here"/]
+
+    subgraph always_first [Always First]
+        data-sentinel["data-sentinel 🔵"]
+    end
+
+    subgraph research [Research]
+        micro["microstructure-analyst 🔵"]
+        cross["cross-venue-analyst 🔵"]
+        post-hoc["post-hoc-analyst 🔵"]
+    end
+
+    subgraph validation [Validation Gate]
+        causal["causal-analyst 🔵<br/>BEFORE any decision"]
+    end
+
+    strategist --> data-sentinel
+    strategist --> micro
+    strategist --> cross
+    strategist --> post-hoc
+
+    micro --> causal
+    cross --> causal
+    causal --> strategist
+
+    crisis["crisis-hunter 🔴"] -.->|"context"| strategist
+```
+
 **Invokes**: ALL research agents
 - data-sentinel: ALWAYS FIRST for any data
 - microstructure-analyst: venue mechanics, information models

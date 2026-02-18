@@ -101,14 +101,6 @@ Critical, opinionated developer personas focused on approach and methodology.
 - UB, memory bugs, latency killers, lock-free correctness
 - Use for: C++ code review, performance optimization
 
-**`/cpp-bug-hunter`** - C++ bug hunter
-- Symptom-driven debugging, hypothesis testing, demands proof
-- Use for: Crash debugging, memory corruption, mysterious failures
-
-**`/logic-bugs-hunter`** - Logic detective
-- Finds spec-vs-implementation gaps, cross-component data flow issues
-- Use for: Algorithm correctness, business logic bugs, design intent verification
-
 **`/reviewer`** - Grumpy code wizard, 40 years experience
 - Security holes, race conditions, performance sins, edge cases
 - Line-by-line analysis with specific fixes
@@ -122,6 +114,42 @@ Critical, opinionated developer personas focused on approach and methodology.
 
 ```bash
 /plugin install dev-experts@deevs-agent-system
+```
+
+---
+
+### bug-hunters
+
+Systematic bug hunting with spec reconstruction, adversarial validation, and confidence-ranked reports.
+
+**Agents**:
+
+**`/orchestrator`** - Central brain (RED)
+- Reconstructs spec from code, spawns hunters, challenges findings
+- Filters false positives via adversarial validation with dev-experts
+- Use for: Starting any bug hunting session
+
+**`/logic-hunter`** - Spec detective (ORANGE)
+- Language-agnostic logic bugs, spec-vs-implementation gaps
+- Scan mode (hotspots) → Hunt mode (deep trace)
+- Use for: Algorithm correctness, data flow issues, design intent verification
+
+**`/cpp-hunter`** - C++ bug hunter (YELLOW)
+- Memory corruption, UB, concurrency issues
+- Hypothesis-driven, demands proof
+- Use for: Crash debugging, memory bugs, mysterious C++ failures
+
+**`/python-hunter`** - Python bug hunter (YELLOW)
+- Async pitfalls, None propagation, type violations
+- Hypothesis-driven, demands proof
+- Use for: Python-specific bugs, type mismatches, async issues
+
+**Flow**: Spec Reconstruction → Hotspot Scan → Hunter Deployment → Adversarial Challenge → Confidence Scoring → Report
+
+**Details**: [bug-hunters/README.md](bug-hunters/README.md)
+
+```bash
+/plugin install bug-hunters@deevs-agent-system
 ```
 
 ---
@@ -181,6 +209,18 @@ arxiv_search "protein folding" --max-papers 5
 ```bash
 /plugin install arxiv-search@deevs-agent-system
 ```
+
+## Agent Color Scheme
+
+Universal color scheme across all agent plugins:
+
+| Color | Role | Examples |
+|-------|------|----------|
+| ❤️ **RED** | Deciders & Orchestrators | `architect`, `strategist`, `orchestrator`, `crisis-hunter`, `devops` |
+| 🧡 **ORANGE** | Hybrid (can lead or challenge) | `logic-hunter` |
+| 💛 **YELLOW** | Checkers & Validators | `reviewer`, `cpp-hunter`, `python-hunter` |
+| 💙 **BLUE** | Builders & Implementers | `cpp-dev`, `python-dev`, `rust-dev`, `tester` |
+| 💚 **CYAN** | Researchers & Analysts | `data-sentinel`, `microstructure-analyst`, `causal-analyst` |
 
 ## Credits
 

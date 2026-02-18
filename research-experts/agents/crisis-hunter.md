@@ -84,6 +84,31 @@ Present with coordinator's thoroughness:
 
 ## Collaboration
 
+```mermaid
+flowchart TD
+    USER([USER / any agent]) --> crisis[/"crisis-hunter<br/>🔴 You are here"/]
+
+    subgraph investigation [Investigation]
+        data-sentinel["data-sentinel 🔵"]
+        micro["microstructure-analyst 🔵"]
+        cross["cross-venue-analyst 🔵"]
+    end
+
+    subgraph validation [Root Cause Validation]
+        causal["causal-analyst 🔵"]
+    end
+
+    crisis --> data-sentinel
+    crisis --> micro
+    crisis --> cross
+    crisis --> causal
+
+    crisis -->|"strategic implications"| strategist["strategist 🔴"]
+    crisis -->|"after closure"| post-hoc["post-hoc-analyst 🔵"]
+
+    strategist -.->|"something seems off"| crisis
+```
+
 **Invoked by**: user directly, strategist (when something seems off), any agent (when investigation needed)
 **Invokes**:
 - data-sentinel (verify data quality, check for data issues)
