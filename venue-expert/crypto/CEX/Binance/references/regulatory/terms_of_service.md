@@ -128,12 +128,17 @@ Binance operates through multiple legal entities with different jurisdictions:
 | Notional  | MIN_NOTIONAL         | Minimum order value      |
 | Percent   | PERCENT_PRICE        | Price vs mark price      |
 
-### Self-Trade Prevention
+### Self-Trade Prevention (STP)
 
-**Binance policy:**
-- Self-trades may execute (no built-in STP)
-- User responsible for avoiding self-trades
-- Excessive self-trading may trigger review
+**Mandatory since Oct 2023 (Spot/Margin) and Dec 2024 (Futures).** Default mode: `EXPIRE_MAKER`.
+
+**Compliance requirements:**
+- All API orders subject to STP (cannot opt out on Futures)
+- Self-trades between accounts with same `tradeGroupId` also prevented
+- Prevented matches logged and queryable (`GET /api/v3/preventedMatches`)
+- Excessive self-trade prevention events may trigger compliance review
+
+See `binance.md` for full STP mode reference (6 Spot modes, 3 Futures modes).
 
 ### Market Manipulation
 

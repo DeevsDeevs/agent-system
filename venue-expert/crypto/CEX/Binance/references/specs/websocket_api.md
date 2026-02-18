@@ -266,11 +266,13 @@ Incremental order book updates.
 
 **Stream name:** `<symbol>@depth` or `<symbol>@depth@100ms`
 
-**Update frequencies:**
-- `@depth` - 1000ms (default)
-- `@depth@100ms` - 100ms
-- `@depth@250ms` - 250ms (available on some symbols)
-- `@depth@500ms` - 500ms
+**Update frequencies (official):**
+- `@depth` — 1000ms **(default, no suffix needed)**
+- `@depth@100ms` — 100ms
+
+Both frequencies are available on all symbols. No per-symbol restrictions documented.
+
+> `@0ms`, `@250ms`, `@500ms` are **not in official Binance API docs**. They may exist unofficially but behavior can change without notice.
 
 **Payload:**
 ```json
@@ -343,29 +345,38 @@ Must perform full resync when:
 
 ## User Data Streams
 
+**Security type:** `USER_STREAM` — requires API Key in header, **no signature required**.
+
+**Connection:** `wss://stream.binance.com:9443/ws/<listenKey>`
+
+**Limits:** Connection valid for max **24 hours**, then auto-disconnected.
+
 ### Listen Key Management
 
-**Create listen key:**
-```
-POST /api/v3/userDataStream
-Response: {"listenKey": "pqia91ma19a5s61cv6a81va65sdf19v8a65a1a5s61cv6a81va65sdf19v8a65a1"}
-```
+| Operation | Method | Endpoint |
+|-----------|--------|----------|
+| Create | POST | `/api/v3/userDataStream` |
+| Keepalive | PUT | `/api/v3/userDataStream?listenKey=<key>` |
+| Close | DELETE | `/api/v3/userDataStream?listenKey=<key>` |
 
-**Keepalive (every 30 minutes):**
-```
-PUT /api/v3/userDataStream?listenKey=<key>
-```
+- **Expiry:** 60 minutes without keepalive (silent — no error sent, connection just drops)
+- **Keepalive recommendation:** every 30 minutes
+- POST on account with active key: returns existing key and extends validity by 60 minutes
 
-**Delete:**
-```
-DELETE /api/v3/userDataStream?listenKey=<key>
-```
+### Event Types (Spot)
 
-**Listen key expiry:** 60 minutes without keepalive
+| Event Type | Trigger |
+|------------|---------|
+| `outboundAccountPosition` | Any balance change (trade, deposit, withdrawal) |
+| `balanceUpdate` | Deposits, withdrawals, inter-account transfers |
+| `executionReport` | Order lifecycle (new, fill, cancel, expire, STP) |
+| `listStatus` | OCO / order list status changes |
+| `eventStreamTerminated` | Listen key expired, logout, or unsubscribe |
+| `externalLockUpdate` | Balance lock/unlock by external systems (margin collateral) |
 
-### Account Update
+### Account Update (`outboundAccountPosition`)
 
-Triggered by balance changes.
+Triggered by any balance change.
 
 ```json
 {
@@ -382,15 +393,35 @@ Triggered by balance changes.
 }
 ```
 
-| Field | Description                              |
-|-------|------------------------------------------|
-| u     | Time of last account update              |
-| B     | Balances array                           |
-| a     | Asset                                    |
-| f     | Free balance                             |
-| l     | Locked balance                           |
+| Field | Description |
+|-------|-------------|
+| `u` | Time of last account update |
+| `B` | Balances array |
+| `a` | Asset |
+| `f` | Free balance |
+| `l` | Locked balance |
 
-### Order Update
+### Balance Update (`balanceUpdate`)
+
+Triggered by deposits, withdrawals, and transfers — NOT by trades (use `outboundAccountPosition` for trades).
+
+```json
+{
+  "e": "balanceUpdate",
+  "E": 1672515782136,
+  "a": "BTC",
+  "d": "0.50000000",
+  "T": 1672515782136
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `a` | Asset |
+| `d` | Balance delta (positive = deposit, negative = withdrawal) |
+| `T` | Clear time |
+
+### Order Update (`executionReport`)
 
 ```json
 {
@@ -429,43 +460,76 @@ Triggered by balance changes.
 }
 ```
 
-| Field | Description                              |
-|-------|------------------------------------------|
-| c     | Client order ID                          |
-| S     | Side (BUY/SELL)                          |
-| o     | Order type                               |
-| f     | Time in force                            |
-| q     | Order quantity                           |
-| p     | Order price                              |
-| x     | Current execution type                   |
-| X     | Current order status                     |
-| r     | Order reject reason                      |
-| i     | Order ID                                 |
-| l     | Last executed quantity                   |
-| z     | Cumulative filled quantity               |
-| L     | Last executed price                      |
-| n     | Commission amount                        |
-| N     | Commission asset                         |
-| T     | Transaction time                         |
-| t     | Trade ID                                 |
-| m     | Is this trade the maker side?            |
+**Core fields:**
 
-**Execution types (x):**
-- NEW
-- CANCELED
-- REPLACED
-- REJECTED
-- TRADE
-- EXPIRED
+| Field | Description |
+|-------|-------------|
+| `c` | Client order ID |
+| `S` | Side (BUY/SELL) |
+| `o` | Order type |
+| `f` | Time in force |
+| `q` | Order quantity |
+| `p` | Order price |
+| `x` | Current execution type |
+| `X` | Current order status |
+| `r` | Order reject reason |
+| `i` | Order ID |
+| `l` | Last executed quantity |
+| `z` | Cumulative filled quantity |
+| `L` | Last executed price |
+| `n` | Commission amount |
+| `N` | Commission asset |
+| `T` | Transaction time |
+| `t` | Trade ID |
+| `m` | Is this trade the maker side? |
+| `w` | Is the order on the book? |
+| `O` | Order creation time |
+| `Z` | Cumulative quote asset transacted quantity |
+| `Y` | Last quote asset transacted quantity |
 
-**Order statuses (X):**
-- NEW
-- PARTIALLY_FILLED
-- FILLED
-- CANCELED
-- PENDING_CANCEL
-- REJECTED
-- EXPIRED
+**Conditional fields (present only when applicable):**
+
+| Field | Description |
+|-------|-------------|
+| `d` / `D` | Trailing stop: trailing delta / status |
+| `v` | Prevented Match ID (STP-expired orders) |
+| `j` / `J` | Strategy ID / type |
+| `W` | Working time (when order was placed on the book) |
+
+**Execution types (`x`):**
+
+| Value | Meaning |
+|-------|---------|
+| `NEW` | Order accepted |
+| `CANCELED` | Order canceled |
+| `REPLACED` | Order replaced (cancel-replace) |
+| `REJECTED` | Order rejected |
+| `TRADE` | Partial or full fill |
+| `EXPIRED` | Order expired (TTL, IOC, FOK) |
+| `TRADE_PREVENTION` | Order expired due to STP |
+
+**Order reject reasons (`r`):**
+`NONE`, `INSUFFICIENT_BALANCE`, `STOP_PRICE_WOULD_TRIGGER_IMMEDIATELY`, `WOULD_MATCH_IMMEDIATELY`, `OCO_BAD_PRICES`
+
+**Order statuses (`X`):**
+`NEW`, `PARTIALLY_FILLED`, `FILLED`, `CANCELED`, `PENDING_CANCEL`, `REJECTED`, `EXPIRED`, `EXPIRED_IN_MATCH`
+
+> **Ordering:** Events may arrive out of order. Use `E` (event time) field to establish correct sequence.
+
+### Futures User Data Differences
+
+Futures uses different event types and endpoints.
+
+**Listen key:** `POST /fapi/v1/listenKey` (base: `fapi.binance.com`)
+
+| Spot Event | Futures Equivalent | Key Difference |
+|------------|-------------------|----------------|
+| `outboundAccountPosition` | `ACCOUNT_UPDATE` | Includes position updates + balance |
+| `executionReport` | `ORDER_TRADE_UPDATE` | Different field naming |
+| `eventStreamTerminated` | `listenKeyExpired` | Explicit event name |
+| — | `MARGIN_CALL` | No Spot equivalent |
+| — | `ACCOUNT_CONFIG_UPDATE` | Leverage/mode changes |
+| — | `TRADE_LITE` | Lightweight fill event |
 
 ## Futures-Specific Streams
 

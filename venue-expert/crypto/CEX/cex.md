@@ -79,40 +79,15 @@ Most CEX use standard price-time:
 
 **IP vs Account:** Limits may apply per IP, per account, or both.
 
-### Enforcement
-
-| Violation Level | Typical Response                     |
-|-----------------|--------------------------------------|
-| Soft limit      | 429 response, backoff required       |
-| Hard limit      | Temporary IP ban (minutes to hours)  |
-| Repeated abuse  | Extended ban (days)                  |
+Enforcement varies by exchange (429 → temporary ban → extended ban). See exchange-specific files for exact limits and escalation policies.
 
 ## Data Quality Issues
 
 ### WebSocket Reliability
 
-**Disconnection handling:**
-1. Heartbeat timeout detection (typically 30s)
-2. Exponential backoff reconnection
-3. Full snapshot on reconnect
-4. Sequence validation before resuming
+CEX WebSocket feeds require local order book reconstruction from incremental updates. Core pattern: heartbeat monitoring → exponential backoff reconnect → full snapshot resync → sequence validation.
 
-**Stale data indicators:**
-- No updates for >3× expected frequency
-- Cross-venue price divergence >0.5%
-- Sequence gaps
-
-### Book Reconstruction
-
-**Challenges:**
-- Missed updates corrupt entire book
-- No built-in checksum (most exchanges)
-- Snapshot latency during reconnect
-
-**Validation approaches:**
-- Periodic REST snapshot comparison
-- Cross-venue price sanity checks
-- Top-of-book vs expected spread
+Missed updates corrupt the local book state. Checksum support varies by exchange (OKX, Kraken: CRC32; Binance: none). See exchange-specific files for reconstruction protocols and validation approaches.
 
 ## Trading Hours
 
