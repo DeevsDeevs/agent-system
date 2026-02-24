@@ -87,12 +87,13 @@ No leg risk on any path. Spread price guaranteed per fill.
 
 ### CME SPAN Methodology
 
-SPAN calculates spread margin via:
+SPAN calculates margin via:
 ```
-Net Margin = max(Long Scan Risk, Short Scan Risk) 
-           - Intra-Commodity Spread Credit 
-           - Inter-Commodity Spread Credit 
-           + Delivery Month Charge
+Total = Scanning Risk (max loss across 16 scenarios)
+      + Intra-Commodity Spread Charge (basis risk between months)
+      - Inter-Commodity Spread Credit (correlated offset)
+      + Delivery Month Charge
+      + max(Short Option Minimum - above, 0)
 ```
 
 **Spread credit is NOT a fixed percentage.** It's a dollar amount based on spread volatility vs outright volatility.
@@ -226,7 +227,7 @@ Detailed coverage in `apac/china/references/`. Key differences:
 
 **Cross-exchange (e.g., i-j-rb steel chain):** NO margin offset.
 
-**Index futures (CFFEX):** Intraday close fee = 100x base rate. Day trading spreads cost-prohibitive; use T+1.
+**Index futures (CFFEX):** Intraday close fee = 10x base rate (万分之2.3 vs 万分之0.23, as of Mar 2023). Day trading spreads cost-elevated; consider T+1.
 
 ## Common Gotchas
 

@@ -231,20 +231,3 @@ OI-price aligned? --> YES --> POTENTIALLY INFORMATIVE (verify no news, check COT
 
 6. **Evolving patterns.** Roll front-running, session characteristics adapt as participants learn.
 
----
-
-## Quick Reference Checklist
-
-**Informative flow requires ALL:**
-- [ ] Not in roll window
-- [ ] Spread ratio <15%
-- [ ] >15 days to expiry
-- [ ] Persistence >60 min
-- [ ] Multi-session accumulation
-- [ ] OI-price aligned
-- [ ] No OpEx gamma
-- [ ] No visible paired activity
-
-**When all boxes checked:** Investigate further.
-
-**When any box fails:** Default non-directional.
