@@ -49,35 +49,35 @@ description: >
 ## Context Detection
 
 | Query Pattern | L1 Card | L2 Matrix | L3 Deep Doc |
-|---------------|---------|-----------|-------------|
-| US equity overview, venues, fees | `cards/us_equity.md` | — | [[equity/amer/equity_amer.md|equity_amer.md]] |
-| Nasdaq ITCH, OUCH, crosses | `cards/us_equity.md` | `matrices/data_characteristics.md` | [[equity/amer/nasdaq/nasdaq.md|nasdaq.md]] |
-| NYSE, DMM, parity, XDP | `cards/us_equity.md` | `matrices/matching_algorithms.md` | [[equity/amer/nyse/nyse.md|nyse.md]] |
-| Chinese futures, CTP, 夜盘 | `cards/chinese_futures.md` | — | [[futures/apac/china/futures_china.md|futures_china.md]] |
-| SHFE metals, CloseToday | `cards/chinese_futures.md` | — | [[futures/apac/china/shfe.md|shfe.md]] |
-| DCE iron ore, stop orders | `cards/chinese_futures.md` | — | [[futures/apac/china/dce.md|dce.md]] |
-| CZCE 3-digit codes, UpdateMillisec=0 | `cards/chinese_futures.md` | `matrices/data_characteristics.md` | [[futures/apac/china/czce.md|czce.md]] |
-| CFFEX index futures, restrictions | `cards/chinese_futures.md` | — | [[futures/apac/china/cffex.md|cffex.md]] |
-| INE crude oil, foreign access | `cards/chinese_futures.md` | — | [[futures/apac/china/ine.md|ine.md]] |
-| GFEX silicon, lithium, palladium | `cards/chinese_futures.md` / `cards/global_venues.md` | — | [[futures/apac/china/gfex.md|gfex.md]] |
-| CME overview, MDP 3.0, SPAN | `cards/cme.md` | — | [[futures/amer/cme.md|cme.md]] |
-| CME matching, FIFO vs Pro-Rata | `cards/cme.md` | `matrices/matching_algorithms.md` | [[futures/amer/cme.md|cme.md]] |
-| CME settlement, VWAP window | `cards/cme.md` | — | [[futures/amer/cme.md|cme.md]] |
-| ICE Brent, Basildon | `cards/global_venues.md` | `matrices/latency.md` | [[futures/emea/ice.md|ice.md]] |
-| Eurex, EOBI, FGBL, FESX | `cards/global_venues.md` | `matrices/matching_algorithms.md` | [[futures/emea/eurex.md|eurex.md]] |
-| SGX iron ore, TITAN, ITCH | `cards/global_venues.md` | `matrices/latency.md` | [[futures/apac/sgx.md|sgx.md]] |
-| HKEX broker queue, OMD-C | `cards/global_venues.md` | `matrices/data_characteristics.md` | [[equity/apac/hkex.md|hkex.md]] |
+|-------|---------|-----------|-------------|
+| US equity overview, venues, fees | `cards/us_equity.md` | — | [[equity/amer/equity_amer.md\|equity_amer.md]] |
+| Nasdaq ITCH, OUCH, crosses | `cards/us_equity.md` | `matrices/data_characteristics.md` | [[equity/amer/nasdaq/nasdaq.md\|nasdaq.md]] |
+| NYSE, DMM, parity, XDP | `cards/us_equity.md` | `matrices/matching_algorithms.md` | [[equity/amer/nyse/nyse.md\|nyse.md]] |
+| Chinese futures, CTP, 夜盘 | `cards/chinese_futures.md` | — | [[futures/apac/china/futures_china.md\|futures_china.md]] |
+| SHFE metals, CloseToday | `cards/chinese_futures.md` | — | [[futures/apac/china/shfe.md\|shfe.md]] |
+| DCE iron ore, stop orders | `cards/chinese_futures.md` | — | [[futures/apac/china/dce.md\|dce.md]] |
+| CZCE 3-digit codes, UpdateMillisec=0 | `cards/chinese_futures.md` | `matrices/data_characteristics.md` | [[futures/apac/china/czce.md\|czce.md]] |
+| CFFEX index futures, restrictions | `cards/chinese_futures.md` | — | [[futures/apac/china/cffex.md\|cffex.md]] |
+| INE crude oil, foreign access | `cards/chinese_futures.md` | — | [[futures/apac/china/ine.md\|ine.md]] |
+| GFEX silicon, lithium, palladium | `cards/chinese_futures.md` / `cards/global_venues.md` | — | [[futures/apac/china/gfex.md\|gfex.md]] |
+| CME overview, MDP 3.0, SPAN | `cards/cme.md` | — | [[futures/amer/cme.md\|cme.md]] |
+| CME matching, FIFO vs Pro-Rata | `cards/cme.md` | `matrices/matching_algorithms.md` | [[futures/amer/cme.md\|cme.md]] |
+| CME settlement, VWAP window | `cards/cme.md` | — | [[futures/amer/cme.md\|cme.md]] |
+| ICE Brent, Basildon | `cards/global_venues.md` | `matrices/latency.md` | [[futures/emea/ice.md\|ice.md]] |
+| Eurex, EOBI, FGBL, FESX | `cards/global_venues.md` | `matrices/matching_algorithms.md` | [[futures/emea/eurex.md\|eurex.md]] |
+| SGX iron ore, TITAN, ITCH | `cards/global_venues.md` | `matrices/latency.md` | [[futures/apac/sgx.md\|sgx.md]] |
+| HKEX broker queue, OMD-C | `cards/global_venues.md` | `matrices/data_characteristics.md` | [[equity/apac/hkex.md\|hkex.md]] |
 | Matching algorithm comparison | — | `matrices/matching_algorithms.md` | — |
 | Latency, microwave, fiber | — | `matrices/latency.md` | — |
 | Session overlaps, trading hours | — | `matrices/session_overlaps.md` | — |
 | Spread, tcost, market impact | — | `matrices/tcost_comparison.md` | — |
 | Data feed, protocol, quirks | — | `matrices/data_characteristics.md` | — |
-| Queue position, fill rate | — | `matrices/tcost_comparison.md` | [[futures/apac/china/references/models/queue_position.md|queue_position.md]] |
-| Regime changes, regulatory | `cards/chinese_futures.md` / `cards/us_equity.md` | — | [[futures/apac/china/references/regime_changes.md|regime_changes.md]] |
-| Generic futures concepts | — | — | [[futures/futures.md|futures.md]] |
-| Generic equity concepts | — | — | [[equity/equity.md|equity.md]] |
-| Spread execution, calendar spreads | — | — | [[futures/references/spreads.md|spreads.md]] |
-| Flow interpretation, OI patterns | — | — | [[futures/references/flow_interpretation.md|flow_interpretation.md]] |
+| Queue position, fill rate | — | `matrices/tcost_comparison.md` | [[futures/apac/china/references/models/queue_position.md\|queue_position.md]] |
+| Regime changes, regulatory | `cards/chinese_futures.md` / `cards/us_equity.md` | — | [[futures/apac/china/references/regime_changes.md\|regime_changes.md]] |
+| Generic futures concepts | — | — | [[futures/futures.md\|futures.md]] |
+| Generic equity concepts | — | — | [[equity/equity.md\|equity.md]] |
+| Spread execution, calendar spreads | — | — | [[futures/references/spreads.md\|spreads.md]] |
+| Flow interpretation, OI patterns | — | — | [[futures/references/flow_interpretation.md\|flow_interpretation.md]] |
 
 ## L3 File Index
 
@@ -85,51 +85,51 @@ description: >
 
 | Path | Description |
 |------|-------------|
-| [[equity/equity.md|equity.md]] | Equity market fundamentals (CLOB, order types, sessions) |
-| [[equity/amer/equity_amer.md|equity_amer.md]] | US equity market structure (Reg NMS, NBBO, SIP, TRF) |
-| [[equity/amer/nasdaq/nasdaq.md|nasdaq.md]] | Nasdaq exchange mechanics (ITCH, OUCH, crosses) |
-| [[equity/amer/nasdaq/references/specs/itch_protocol.md|itch_protocol.md]] | ITCH 5.0 protocol specification |
-| [[equity/amer/nasdaq/references/specs/ouch_protocol.md|ouch_protocol.md]] | OUCH 4.2/5.0 order entry spec |
-| [[equity/amer/nasdaq/references/specs/totalview.md|totalview.md]] | TotalView product details |
-| [[equity/amer/nasdaq/references/regulatory/nasdaq_rules.md|nasdaq_rules.md]] | Nasdaq rulebook highlights |
-| [[equity/amer/references/regulatory/sec_reg_nms.md|sec_reg_nms.md]] | Reg NMS overview |
-| [[equity/amer/references/regulatory/finra_rules.md|finra_rules.md]] | FINRA rules reference |
-| [[equity/amer/references/regulatory/rule_605_606.md|rule_605_606.md]] | Disclosure rules (605/606) |
-| [[equity/amer/references/specs/sip_specs.md|sip_specs.md]] | SIP specifications |
-| [[equity/amer/nyse/nyse.md|nyse.md]] | NYSE mechanics (DMM, parity, XDP, auctions) |
-| [[equity/apac/hkex.md|hkex.md]] | HKEX equity mechanics (broker queue, OMD-C, Stock Connect) |
+| [[equity/equity.md\|equity.md]] | Equity market fundamentals (CLOB, order types, sessions) |
+| [[equity/amer/equity_amer.md\|equity_amer.md]] | US equity market structure (Reg NMS, NBBO, SIP, TRF) |
+| [[equity/amer/nasdaq/nasdaq.md\|nasdaq.md]] | Nasdaq exchange mechanics (ITCH, OUCH, crosses) |
+| [[equity/amer/nasdaq/references/specs/itch_protocol.md\|itch_protocol.md]] | ITCH 5.0 protocol specification |
+| [[equity/amer/nasdaq/references/specs/ouch_protocol.md\|ouch_protocol.md]] | OUCH 4.2/5.0 order entry spec |
+| [[equity/amer/nasdaq/references/specs/totalview.md\|totalview.md]] | TotalView product details |
+| [[equity/amer/nasdaq/references/regulatory/nasdaq_rules.md\|nasdaq_rules.md]] | Nasdaq rulebook highlights |
+| [[equity/amer/references/regulatory/sec_reg_nms.md\|sec_reg_nms.md]] | Reg NMS overview |
+| [[equity/amer/references/regulatory/finra_rules.md\|finra_rules.md]] | FINRA rules reference |
+| [[equity/amer/references/regulatory/rule_605_606.md\|rule_605_606.md]] | Disclosure rules (605/606) |
+| [[equity/amer/references/specs/sip_specs.md\|sip_specs.md]] | SIP specifications |
+| [[equity/amer/nyse/nyse.md\|nyse.md]] | NYSE mechanics (DMM, parity, XDP, auctions) |
+| [[equity/apac/hkex.md\|hkex.md]] | HKEX equity mechanics (broker queue, OMD-C, Stock Connect) |
 | `equity/emea/lse/` | London Stock Exchange — planned |
 
 ### Futures
 
-| Path | Description |
-|------|-------------|
-| [[futures/futures.md|futures.md]] | Futures market fundamentals (margin, settlement, rolls) |
-| [[futures/references/spreads.md|spreads.md]] | Calendar/inter-commodity spread mechanics (CME/ICE) |
-| [[futures/references/flow_interpretation.md|flow_interpretation.md]] | Flow analysis framework |
-| [[futures/apac/futures_apac.md|futures_apac.md]] | APAC futures overview |
-| [[futures/apac/china/futures_china.md|futures_china.md]] | Chinese futures main doc (CTP, 6 exchanges, regulatory) |
-| [[futures/apac/china/shfe.md|shfe.md]] | SHFE specifics (metals, CloseToday) |
-| [[futures/apac/china/dce.md|dce.md]] | DCE specifics (iron ore, stop orders) |
-| [[futures/apac/china/czce.md|czce.md]] | CZCE specifics (3-digit codes, UpdateMillisec=0) |
-| [[futures/apac/china/cffex.md|cffex.md]] | CFFEX specifics (index futures, restrictions) |
-| [[futures/apac/china/ine.md|ine.md]] | INE specifics (crude oil, foreign access) |
-| [[futures/apac/china/gfex.md|gfex.md]] | GFEX specifics (silicon, lithium, palladium, mixed ownership) |
-| [[futures/apac/china/references/specs/ctp_market_data.md|ctp_market_data.md]] | CTP struct specification |
-| [[futures/apac/china/references/specs/data_quality_checklist.md|data_quality_checklist.md]] | Validation checklist |
-| [[futures/apac/china/references/specs/ctp_versions.md|ctp_versions.md]] | CTP SDK version history and breaking changes |
-| [[futures/apac/china/references/specs/failure_modes.md|failure_modes.md]] | Failure mode catalog |
-| [[futures/apac/china/references/models/queue_position.md|queue_position.md]] | Queue estimation models |
-| [[futures/apac/china/references/models/trade_direction.md|trade_direction.md]] | Trade direction inference |
-| [[futures/apac/china/references/models/causal_analysis.md|causal_analysis.md]] | Causal identification framework |
-| [[futures/apac/china/references/models/cross_product_analysis.md|cross_product_analysis.md]] | Cross-product patterns |
-| [[futures/apac/china/references/models/spreads.md|spreads.md]] | Chinese spread execution (CTP, legging risk) |
-| [[futures/apac/china/references/regime_changes.md|regime_changes.md]] | Regime change database |
-| [[futures/amer/cme.md|cme.md]] | CME Group mechanics (MDP 3.0, matching, SPAN, settlement) |
-| [[futures/emea/ice.md|ice.md]] | ICE Futures Europe mechanics (Brent, iMpact, Basildon) |
-| [[futures/emea/eurex.md|eurex.md]] | Eurex mechanics (EOBI, T7, volatility interruptions) |
-| [[futures/apac/sgx.md|sgx.md]] | SGX mechanics (iron ore, TITAN, ITCH) |
-| `futures/apac/hkex/` | HKEX derivatives — planned |
+| Path                                                                                          | Description                                                   |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| [[futures/futures.md\|futures.md]]                                                            | Futures market fundamentals (margin, settlement, rolls)       |
+| [[futures/references/spreads.md\|spreads.md]]                                                 | Calendar/inter-commodity spread mechanics (CME/ICE)           |
+| [[futures/references/flow_interpretation.md\|flow_interpretation.md]]                         | Flow analysis framework                                       |
+| [[futures/apac/futures_apac.md\|futures_apac.md]]                                             | APAC futures overview                                         |
+| [[futures/apac/china/futures_china.md\|futures_china.md]]                                     | Chinese futures main doc (CTP, 6 exchanges, regulatory)       |
+| [[futures/apac/china/shfe.md\|shfe.md]]                                                       | SHFE specifics (metals, CloseToday)                           |
+| [[futures/apac/china/dce.md\|dce.md]]                                                         | DCE specifics (iron ore, stop orders)                         |
+| [[futures/apac/china/czce.md\|czce.md]]                                                       | CZCE specifics (3-digit codes, UpdateMillisec=0)              |
+| [[futures/apac/china/cffex.md\|cffex.md]]                                                     | CFFEX specifics (index futures, restrictions)                 |
+| [[futures/apac/china/ine.md\|ine.md]]                                                         | INE specifics (crude oil, foreign access)                     |
+| [[futures/apac/china/gfex.md\|gfex.md]]                                                       | GFEX specifics (silicon, lithium, palladium, mixed ownership) |
+| [[futures/apac/china/references/specs/ctp_market_data.md\|ctp_market_data.md]]                | CTP struct specification                                      |
+| [[futures/apac/china/references/specs/data_quality_checklist.md\|data_quality_checklist.md]]  | Validation checklist                                          |
+| [[futures/apac/china/references/specs/ctp_versions.md\|ctp_versions.md]]                      | CTP SDK version history and breaking changes                  |
+| [[futures/apac/china/references/specs/failure_modes.md\|failure_modes.md]]                    | Failure mode catalog                                          |
+| [[futures/apac/china/references/models/queue_position.md\|queue_position.md]]                 | Queue estimation models                                       |
+| [[futures/apac/china/references/models/trade_direction.md\|trade_direction.md]]               | Trade direction inference                                     |
+| [[futures/apac/china/references/models/causal_analysis.md\|causal_analysis.md]]               | Causal identification framework                               |
+| [[futures/apac/china/references/models/cross_product_analysis.md\|cross_product_analysis.md]] | Cross-product patterns                                        |
+| [[futures/apac/china/references/models/spreads.md\|spreads.md]]                               | Chinese spread execution (CTP, legging risk)                  |
+| [[futures/apac/china/references/regime_changes.md\|regime_changes.md]]                        | Regime change database                                        |
+| [[futures/amer/cme.md\|cme.md]]                                                               | CME Group mechanics (MDP 3.0, matching, SPAN, settlement)     |
+| [[futures/emea/ice.md\|ice.md]]                                                               | ICE Futures Europe mechanics (Brent, iMpact, Basildon)        |
+| [[futures/emea/eurex.md\|eurex.md]]                                                           | Eurex mechanics (EOBI, T7, volatility interruptions)          |
+| [[futures/apac/sgx.md\|sgx.md]]                                                               | SGX mechanics (iron ore, TITAN, ITCH)                         |
+| `futures/apac/hkex/`                                                                          | HKEX derivatives — planned                                    |
 
 ## Debugging Checklist
 
