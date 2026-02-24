@@ -13,7 +13,7 @@ Chinese futures differ fundamentally from US equities (16+ venues, NBBO arbitrag
 | Copper CU | SHFE | None domestic |
 | Crude Oil SC | INE | International Brent/WTI (time zone, currency barriers) |
 | Iron Ore I | DCE | None domestic |
-| Stock Index IF | CFFEX | None (no ETF arbitrage due to T+1 stocks) |
+| Stock Index IF | CFFEX | Impaired (T+1 underlying stocks, position limits, 10x intraday fees) |
 
 **Implications for Research**:
 1. No venue fragmentation = no SIP/direct feed latency arb
@@ -48,7 +48,7 @@ Economic mechanism: [why this relationship exists]
 | SC (INE crude) ↔ Brent/WTI | Global crude price discovery | Brent leads SC (time zone) | Yes |
 | BC (INE bonded copper) ↔ CU (SHFE domestic) | Same underlying, different tax treatment | Cointegrated, basis = tariff + logistics | Yes |
 | RB (rebar) ↔ I (iron ore) + J (coke) | Production cost relationship | Iron ore/coke lead rebar | Yes |
-| IF (index futures) ↔ CSI 300 constituent stocks | Arbitrage relationship | Futures should lead (T+0 vs T+1) | Yes, but friction |
+| IF (index futures) ↔ CSI 300 ETF (510300/159919) | Impaired arbitrage (T+1 stocks, position limits, fees) | Futures lead (lower costs, leverage, no short-sale constraint) | Yes, but friction |
 | Night session ↔ Day session | Information accumulation | Night first 30min predicts | Ma et al. (2022) |
 
 ### Statistical Methodology for Basis Trading
@@ -156,7 +156,7 @@ Structural breaks: Test at known regulatory change dates
 
 ### Lead-Lag with Friction
 
-Standard lead-lag tests (Granger causality) assume frictionless trading.
+Economic interpretation of lead-lag tests (Granger causality) as information leadership assumes frictionless arbitrage.
 With T+1 stocks and T+0 futures:
 
 ```
@@ -358,85 +358,7 @@ Requirement: OOS Sharpe > 2.8 to claim real edge
 
 ---
 
-## Escalation Protocol
-
-### When to Invoke Causal Analyst
-
-Statistical relationship found → STOP → Escalate before claiming tradeable.
-
-```
-REQUIRED BEFORE TRADING CLAIM:
-
-1. Statistical validation (this document):
-   - Pre-registered hypothesis
-   - Multiple testing correction applied
-   - OOS validation passed
-   - Effect size above minimum threshold
-
-2. Causal validation (causal-analyst):
-   - Mechanism identified
-   - Alternative explanations ruled out
-   - Persistence argument made
-   - Regime change risk assessed
-
-Only after BOTH: Claim tradeable to strategist
-```
-
-### Information to Provide Causal Analyst
-
-```
-Statistical Handoff Document:
-
-Relationship: [A] leads [B] by [N] ticks/minutes
-Statistical evidence:
-  - Granger F-stat: X (p = Y, adjusted)
-  - Information share: Z%
-  - OOS R²: W%
-  - Effect magnitude: V bps
-
-NOT ESTABLISHED:
-  - Why this relationship exists
-  - Whether it will persist
-  - Causal direction
-  - Alternative explanations
-
-REQUESTED: Mechanism validation before trading implementation
-```
-
----
-
-## Research Hypotheses Registry
-
-### Template for Pre-Registration
-
-```
-Date: [YYYY-MM-DD]
-Researcher: [name]
-Hypothesis ID: [CHN-FUTURES-001]
-
-Statement:
-[Exact, falsifiable hypothesis]
-
-Specification:
-- Model: [regression/cointegration/Granger]
-- Variables: [list with exact definitions]
-- Sample: [date range, products]
-- Frequency: [500ms/1min/daily]
-
-Statistical Design:
-- α: [0.01/0.05]
-- Correction: [Bonferroni/BH-FDR/Romano-Wolf]
-- OOS method: [time-split/walk-forward/CV]
-- Minimum effect: [X bps]
-
-Power Analysis:
-- Sample size: [N]
-- Detectable effect: [at 80% power]
-
-Registered before data access: [YES/NO]
-```
-
-### Active Hypotheses (Examples)
+## Active Research Hypotheses
 
 | ID | Hypothesis | Status |
 |----|------------|--------|
@@ -462,8 +384,3 @@ Registered before data access: [YES/NO]
 | Night session | 夜盘 | yèpán |
 | Day session | 日盘 | rìpán |
 
----
-
-**Document Version**: 1.0
-**Last Updated**: 2025-01-26
-**Requires Approval**: User sign-off on statistical methodology before execution

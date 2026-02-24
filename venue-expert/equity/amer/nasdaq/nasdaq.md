@@ -24,6 +24,21 @@ Nasdaq is both:
 
 Nasdaq-listed securities trade on all NMS exchanges. Consolidated data via UTP SIP (Tape C).
 
+## Timestamp Provenance
+
+ITCH timestamps: 6-byte unsigned integer, nanoseconds since midnight ET.
+
+| Property | Detail |
+|----------|--------|
+| Clock source | Matching engine clock (GPS-PTP at Carteret DC) |
+| Sync protocol | GPS + PTP (IEEE 1588); High Precision Time (Dec 2014 via Perseus) |
+| Encoding | 6-byte (48-bit) big-endian, ns since midnight |
+| Max representable | ~78.2 hours (2^48 ns) — covers 04:00-20:00 ET |
+| Monotonicity | NOT guaranteed — ties common for batch events (sweeps, crosses) |
+| Tie-breaking | 2-byte Tracking Number field (semantics not publicly documented) |
+| US regulatory mandate | None for nanosecond accuracy (unlike MiFID II RTS 25) |
+| Accuracy guarantee | Not stated in spec; typical GPS-PTP <30 ns to GPS |
+
 ## Order Book Mechanics
 
 ### Price-Time Priority
@@ -98,6 +113,23 @@ Prevents accidental self-trades between a firm's own orders.
 
 **Gotcha:** STP cancellations can affect queue position and fill expectations.
 
+### Cancellation Rate Empirics
+
+~96.8% of US equity orders cancelled before trading (SEC MIDAS 2013). 90% cancelled within 1 second.
+
+| Dimension | Value | Source |
+|-----------|-------|--------|
+| Trade-to-order (corporate stocks) | 2.5-4.2% | SEC MIDAS 2013 |
+| Trade-to-order (ETPs) | 0.17-0.24% (~99.8% cancelled) | SEC MIDAS 2013 |
+| Cancel-to-trade ratio at/inside spread | ~13 | SEC Data Highlight 2014-02 |
+| Cancel-to-trade ratio >50bp from spread | ~117 | SEC Data Highlight 2014-02 |
+| Median cancelled order lifetime (2013) | 847 ms | Nasdaq/MIDAS |
+| Median cancelled order lifetime (2022) | 99.7 ms (88% decline) | Nasdaq/MIDAS |
+| HFT share of cancellations | 54-60% | Hasbrouck & Saar 2013 |
+| Orders revised 25+ times | 4% of Nasdaq orders; max single: 5,217 | Nikolsko-Rzhevska 2020 |
+
+**STP visibility:** STP cancellations NOT distinguishable from genuine cancellations in public ITCH feed. Cancel reason code "Q" (Self Match Prevention) only in OUCH 5.0 and FIX drop copy. Nasdaq Nordic ITCH includes explicit STP Cancel Quantity field — US feed lacks this.
+
 ### Displayed vs Non-Displayed Priority
 
 ```
@@ -107,6 +139,24 @@ Priority Order:
 ```
 
 Reserve order displayed portion has full priority. Hidden portion has lower priority than all displayed at same price.
+
+### Hidden/Reserve Dynamics
+
+| Metric | Value | Source |
+|--------|-------|--------|
+| Hidden depth at L1 (Nasdaq 100) | ~22-25% of dollar depth | Tuttle 2006 |
+| Hidden volume share | ~15% of volume, ~20% of trades | Hautsch & Huang 2012 |
+| Hidden usage by cap | More prevalent in illiquid/smaller-cap | Tuttle, Bessembinder |
+
+**Reserve mechanics:** Minimum display 100 shares. Refresh triggers when displayed falls below 100, receiving new timestamp (back of displayed queue). Hidden portion retains original entry timestamp but has lower priority than all displayed at same price.
+
+**Detection from ITCH:**
+- Execution at empty visible price levels reveals hidden depth
+- Excess execution volume beyond displayed quantity
+- Same Order ID across reserve refreshes reveals iceberg pattern
+- Small IOC pings detect hidden depth post-hoc
+
+**M-ELO:** Not distinctly identifiable in public ITCH — appears as non-displayed midpoint execution. FIX ExecInst "L" identifies M-ELO on entry side. Dynamic M-ELO (Sep 2023): ML adjusts holding period every 30s, 20.3% higher fill rates, 11.4% lower markouts vs static.
 
 ### Modify/Replace Behavior
 
@@ -134,7 +184,7 @@ Reserve order displayed portion has full priority. Hidden portion has lower prio
 
 **NOII (Net Order Imbalance Indicator):**
 
-Disseminated every 5 seconds from 9:25-9:30 AM:
+Disseminated every 5 seconds (9:25-9:28), then every 1 second (9:28-9:30):
 - Indicative clearing price
 - Paired shares (matched volume)
 - Imbalance size and direction
@@ -281,6 +331,29 @@ Lower-cost alternative:
 
 **Gotcha:** Must aggregate direct feeds from all venues for complete picture.
 
+## ITCH Protocol Version History
+
+| Version | Date | Key Changes | Breaking |
+|---------|------|-------------|----------|
+| ITCH 1.00 | Jan 2000 | Session mgmt moved up; Broken Trade; timestamps hundredths of sec | Yes |
+| ITCH 2.00 | Nov 2001 | Price → 6+4 implied digits; timestamps → ms; shares 9→6 digits | Yes |
+| ITCH 2.0a | Feb 2006 | Added attributed Add Order (F); added Halt/Resume | Additive |
+| ITCH 3.00 | Jul 2006 | Separate Seconds/Milliseconds timestamps; Stock Directory, NOII, Type C/D/Q | Yes |
+| ITCH 3.10 | Oct 2008 | Expanded Order Ref/Match ID to 12 bytes; added Replace | Additive |
+| ITCH 4.00 | Oct 2008 | All numerics → binary; timestamps → nanoseconds (split Seconds+ns); SoupBinTCP | Yes |
+| ITCH 4.10 | Jan 2010 | Symbol 6→8 chars; NYSE/MKT/Arca Market Category; Reg SHO (Jul 2010); RPI (Nov 2012) | Yes |
+| ITCH 5.00 | Jul 2013 | Unified 6-byte ns timestamp; Stock Locate (2B) + Tracking Number (2B) all msgs; MWCB/IPO/LULD | Yes |
+
+**Historical data:** ITCH 5.0 files in Nasdaq Data Store from **April 8, 2014**. Version encoded in directory path (`ITCHFiles_v5`) and filename (`SMMDDYY-v#.txt.gz`), not file header. BinaryFILE format is version-agnostic.
+
+**Transport compatibility:**
+
+| Protocol | Used With | Purpose |
+|----------|-----------|---------|
+| MoldUDP64 v1.00 | ITCH 4.0-5.0 | Real-time multicast; REWINDER recovery |
+| SoupBinTCP v3/4 | ITCH 4.0-5.0 | TCP point-to-point; GLIMPSE snapshot |
+| BinaryFILE v1.00 | All versions | Offline file storage |
+
 ## Fee Structure
 
 ### Nasdaq Fee Schedule
@@ -368,7 +441,7 @@ Key rule sections:
 - NOII/EOII terminology formalization
 - Hybrid Closing Cross option
 
-See `references/regulatory/nasdaq_rules.md` for details.
+See `references/regulatory/nasdaq_rules.md` [[equity/amer/nasdaq/references/regulatory/nasdaq_rules.md|nasdaq_rules.md]] for details.
 
 ## Gotchas Checklist
 

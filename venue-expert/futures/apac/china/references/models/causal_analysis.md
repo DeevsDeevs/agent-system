@@ -387,36 +387,9 @@ Every causal claim MUST include:
 | Time period | Rolling window estimates | Structural break detection |
 | Measurement error | Bounds from aggregation uncertainty | [β_min, β_max] |
 
-### Oster (2019) Coefficient Stability
+### Confounder Sensitivity
 
-For any regression Y = αX + βControls + ε:
-
-1. Run restricted regression (no controls): Get β̃, R̃²
-2. Run full regression (with controls): Get β*, R*²
-3. Compute δ: The relative importance of unobservables vs observables needed to explain away β*
-
-```
-δ = (β* - 0) / (β̃ - β*) × (R_max - R*²) / (R*² - R̃²)
-```
-
-**Interpretation**:
-- δ > 1: Unobservables would need to be more important than observables to explain result
-- δ < 1: Moderate unobservables could explain result
-- δ < 0: Selection on unobservables likely opposite to observables (strengthens result)
-
-**Report**: "For the result to be explained by unobserved confounding, unobservables would need to be [δ] times as important as observed controls in explaining variation in [treatment]."
-
-### E-Value for Treatment Effect Bounds
-
-For any estimated effect RR (risk ratio or transformed coefficient):
-
-```
-E-value = RR + sqrt(RR × (RR - 1))
-```
-
-**Interpretation**: An unmeasured confounder would need to be associated with both treatment and outcome by a factor of at least E-value to explain away the observed effect.
-
-**Report**: "An unmeasured confounder would need RR ≥ [E-value] with both [treatment] and [outcome] to reduce the effect to null."
+Apply Oster (2019) δ with R_max = min(1, 1.3 × R*²) and E-value (VanderWeele & Ding, 2017) for both point estimate and CI lower bound. See original papers for formulas.
 
 ### Aggregation-Specific Sensitivity
 
@@ -474,82 +447,6 @@ Return for more work if:
 
 ---
 
-## 8. Common Rejected Claims
-
-### Claim: "Order flow imbalance predicts returns"
-
-**Rejection Reason**: Simultaneity. Order flow and returns are jointly determined by information arrival. Without instrument for order flow, this is correlation, not causation.
-
-```mermaid
-flowchart LR
-    INFO[Information Arrival] --> OFI[Order Flow Imbalance]
-    INFO --> RET[Returns]
-    OFI -.->|"Spurious"| RET
-```
-
-**What Would Change Verdict**: 
-- IV for order flow that is plausibly exogenous to information
-- Natural experiment that shifts order flow without affecting expectations
-
-### Claim: "High-frequency trading improves price discovery"
-
-**Rejection Reason**: Selection. HFT enters when prices are most informative. Confounded by information availability.
-
-```mermaid
-flowchart TD
-    IA[Information Availability] --> HFT[HFT Activity]
-    IA --> PD[Price Discovery]
-    HFT -.->|"Spurious?"| PD
-```
-
-**What Would Change Verdict**:
-- Exogenous shock to HFT presence (technology failure, regulatory change)
-- RDD at speed threshold
-
-### Claim: "Large orders have permanent price impact"
-
-**Rejection Reason**: Aggregation + Information. In 500ms data:
-1. "Large order" is sum of many orders (aggregation masks mechanism)
-2. Large orders correlate with information (confounded)
-3. Cannot distinguish permanent impact from information arrival
-
-```mermaid
-flowchart TD
-    subgraph Unobserved
-        O1[Order 1] 
-        O2[Order 2]
-        On[Order n]
-    end
-    
-    subgraph Observed
-        LO["'Large Order'<br/>(Aggregated)"]
-    end
-    
-    INFO[Information] --> O1
-    INFO --> O2
-    INFO --> On
-    INFO --> PI[Price Impact]
-    
-    O1 --> LO
-    O2 --> LO
-    On --> LO
-    LO -.->|"Spurious"| PI
-```
-
-**What Would Change Verdict**:
-- Message-level data (does not exist in China)
-- Exogenous large order (e.g., forced liquidation at random threshold)
-
-### Claim: "Queue position affects fill probability"
-
-**Rejection Reason**: Cannot observe queue position with snapshot data. Any claim is model-dependent, not identified from data.
-
-**What Would Change Verdict**:
-- Order-by-order data (does not exist in China)
-- Natural experiment that randomizes queue position (implausible)
-
----
-
 ## Appendix: Reference DAGs for Common Analyses
 
 ### A. Price Impact Analysis
@@ -600,10 +497,3 @@ flowchart TD
 
 **Identification Approach**: Foreign price can instrument for domestic price if exclusion holds (foreign doesn't directly affect domestic market conditions beyond price).
 
----
-
-**Last Updated**: 2026-01-26
-
-**Maintained By**: Causal Analyst
-
-**Review Required**: Before any mechanism claim is accepted into production strategy
