@@ -17,23 +17,23 @@ Defaults:
   --platform  codex
   --repo      https://github.com/DeevsDeevs/agent-system.git
   --clone-dir ~/src/agent-system
-  --target    ${CODEX_HOME:-~/.codex}/skills
+  --target    ${AGENTS_HOME:-~/.agents}/skills
   --mode      symlink
 
 Examples:
-  install.sh --platform codex --target ~/.codex/skills
+  install.sh --platform codex --target ~/.agents/skills
   install.sh --platform claude
   install.sh --platform both --skills chain-system,dev-experts
   install.sh --platform codex --repo-ref v1.2.0
   install.sh --platform codex --uninstall --skills chain-system
-  install.sh --non-interactive --platform codex --target ~/.codex/skills
+  install.sh --non-interactive --platform codex --target ~/.agents/skills
 USAGE
 }
 
 PLATFORM="codex"
 REPO_URL="https://github.com/DeevsDeevs/agent-system.git"
 CLONE_DIR="$HOME/src/agent-system"
-TARGET="${CODEX_HOME:-$HOME/.codex}/skills"
+TARGET="${AGENTS_HOME:-$HOME/.agents}/skills"
 MODE="symlink"
 SKILLS_CSV=""
 SKILLS_LIST=()
@@ -187,6 +187,8 @@ collect_skills() {
     done < <(find "$REPO_DIR" \
         -path "$REPO_DIR/.git" -prune -o \
         -path "$REPO_DIR/.codex" -prune -o \
+        -path "$REPO_DIR/.agents" -prune -o \
+        -path "$REPO_DIR/.tmp" -prune -o \
         -path "$REPO_DIR/.github" -prune -o \
         -name SKILL.md -print0)
   fi
@@ -264,7 +266,8 @@ Run the following commands inside Claude Code:
 /plugin install chain-system@deevs-agent-system
 /plugin install dev-experts@deevs-agent-system
 /plugin install bug-hunters@deevs-agent-system
-/plugin install research-experts@deevs-agent-system
+/plugin install alpha-squad@deevs-agent-system
+/plugin install mft-research-experts@deevs-agent-system
 /plugin install cost-status@deevs-agent-system
 /plugin install arxiv-search@deevs-agent-system
 
@@ -279,7 +282,8 @@ Run the following commands inside Claude Code:
 /plugin uninstall chain-system@deevs-agent-system
 /plugin uninstall dev-experts@deevs-agent-system
 /plugin uninstall bug-hunters@deevs-agent-system
-/plugin uninstall research-experts@deevs-agent-system
+/plugin uninstall alpha-squad@deevs-agent-system
+/plugin uninstall mft-research-experts@deevs-agent-system
 /plugin uninstall cost-status@deevs-agent-system
 /plugin uninstall arxiv-search@deevs-agent-system
 
