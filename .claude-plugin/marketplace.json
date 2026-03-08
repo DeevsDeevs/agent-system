@@ -105,6 +105,18 @@
       "description": "Hierarchical microstructure knowledge base for trading venues: exchange mechanics, order books, auctions, Reg NMS, Chinese futures (CTP), feed handlers, execution models",
       "source": "./venue-expert",
       "skills": ["./"]
+    },
+    {
+      "name": "nautilus-trader",
+      "description": "NautilusTrader algorithmic trading platform: strategies, backtesting, live trading, adapters, order types, execution algorithms, data system, order book management",
+      "source": "./nautilus-trader",
+      "skills": ["./"]
+    },
+    {
+      "name": "nautilus-hft-dev",
+      "description": "NautilusTrader adapter development and HFT engineering: custom Python/Rust adapters, OMS internals, order book delta processing, FFI memory contract, build system, exchange integrations, reconciliation, live trading ops",
+      "source": "./nautilus-hft-dev",
+      "skills": ["./"]
     }
   ]
 }
