@@ -1,0 +1,46 @@
+{
+  "venue": "DYDX_V4",
+  "started_at": "2026-03-09T19:21:35.722236",
+  "finished_at": "2026-03-09T19:21:48.773549",
+  "phases": {
+    "credentials": {
+      "status": "OK",
+      "detail": "OK"
+    },
+    "node_build": {
+      "status": "OK",
+      "detail": "OK"
+    },
+    "instruments": {
+      "status": "OK",
+      "detail": "1 loaded, target found"
+    },
+    "data_streaming": {
+      "status": "OK",
+      "detail": "{'order_book_deltas': 5086, 'trade_ticks': 1024, 'quote_ticks': 138, 'bars': 0, 'custom_data': 0}"
+    },
+    "order_lifecycle": {
+      "status": "FAIL",
+      "error": "Rejected: Order submission failed: gRPC error: status: Internal, message: \"Failed to fetch account for sequence init: status: NotFound, message: \\\"account dydx18yd5xhk7yzaejehvqn2d7xmp6hkqwanfcwy2ze not found\\\", details: [], metadata: MetadataMap { headers: {\\\"date\\\": \\\"Mon, 09 Mar 2026 19:21:48 GMT\\\", \\\"content-type\\\": \\\"application/grpc\\\", \\\"x-cosmos-block-height\\\": \\\"79291503\\\", \\\"cf-cache-status\\\": \\\"DYNAMIC\\\", \\\"report-to\\\": \\\"{\\\\\\\"endpoints\\\\\\\":[{\\\\\\\"url\\\\\\\":\\\\\\\"https:\\\\/\\\\/a.nel.cloudflare.com\\\\/report\\\\/v4?s=bxj32AkwQ8jLg8mETmOZqGjVuJOagop9FBN%2FkzN5akjlX5GHwrC542VXrO1asB4t63xyZ7xxXRNrZvHCyDa77fM4%2BFYn%2FARj%2Fv6vcunuZtTBFkxMmiwMDFzbn1PoNiHruGhp%2FNY22fjoODU3RRtM270%3D\\\\\\\"}],\\\\\\\"group\\\\\\\":\\\\\\\"cf-nel\\\\\\\",\\\\\\\"max_age\\\\\\\":604800}\\\", \\\"nel\\\": \\\"{\\\\\\\"success_fraction\\\\\\\":0,\\\\\\\"report_to\\\\\\\":\\\\\\\"cf-nel\\\\\\\",\\\\\\\"max_age\\\\\\\":604800}\\\", \\\"server\\\": \\\"cloudflare\\\", \\\"cf-ray\\\": \\\"9d9c71df1e987141-SOF\\\", \\\"alt-svc\\\": \\\"h3=\\\\\\\":443\\\\\\\"; ma=86400\\\", \\\"server-timing\\\": \\\"cfL4;desc=\\\\\\\"?proto=TCP&rtt=11133&min_rtt=8493&rtt_var=3333&sent=31&recv=26&lost=0&retrans=0&sent_bytes=26428&recv_bytes=2274&delivery_rate=1986946&cwnd=74&unsent_bytes=0&cid=29e132c938d87bb2&ts=11254&x=0\\\\\\\"\\\"} }\", details: [], metadata: MetadataMap { headers: {} }"
+    }
+  },
+  "data_counts": {
+    "order_book_deltas": 5108,
+    "trade_ticks": 1024,
+    "quote_ticks": 143,
+    "bars": 0,
+    "custom_data": 0
+  },
+  "order_events": [
+    "REJECTED:Order submission failed: gRPC error: status: Internal, message: \"Failed to fetch account for sequence init: status: NotFound, message: \\\"account dydx18yd5xhk7yzaejehvqn2d7xmp6hkqwanfcwy2ze not found\\\", details: [], metadata: MetadataMap { headers: {\\\"date\\\": \\\"Mon, 09 Mar 2026 19:21:48 GMT\\\", \\\"content-type\\\": \\\"application/grpc\\\", \\\"x-cosmos-block-height\\\": \\\"79291503\\\", \\\"cf-cache-status\\\": \\\"DYNAMIC\\\", \\\"report-to\\\": \\\"{\\\\\\\"endpoints\\\\\\\":[{\\\\\\\"url\\\\\\\":\\\\\\\"https:\\\\/\\\\/a.nel.cloudflare.com\\\\/report\\\\/v4?s=bxj32AkwQ8jLg8mETmOZqGjVuJOagop9FBN%2FkzN5akjlX5GHwrC542VXrO1asB4t63xyZ7xxXRNrZvHCyDa77fM4%2BFYn%2FARj%2Fv6vcunuZtTBFkxMmiwMDFzbn1PoNiHruGhp%2FNY22fjoODU3RRtM270%3D\\\\\\\"}],\\\\\\\"group\\\\\\\":\\\\\\\"cf-nel\\\\\\\",\\\\\\\"max_age\\\\\\\":604800}\\\", \\\"nel\\\": \\\"{\\\\\\\"success_fraction\\\\\\\":0,\\\\\\\"report_to\\\\\\\":\\\\\\\"cf-nel\\\\\\\",\\\\\\\"max_age\\\\\\\":604800}\\\", \\\"server\\\": \\\"cloudflare\\\", \\\"cf-ray\\\": \\\"9d9c71df1e987141-SOF\\\", \\\"alt-svc\\\": \\\"h3=\\\\\\\":443\\\\\\\"; ma=86400\\\", \\\"server-timing\\\": \\\"cfL4;desc=\\\\\\\"?proto=TCP&rtt=11133&min_rtt=8493&rtt_var=3333&sent=31&recv=26&lost=0&retrans=0&sent_bytes=26428&recv_bytes=2274&delivery_rate=1986946&cwnd=74&unsent_bytes=0&cid=29e132c938d87bb2&ts=11254&x=0\\\\\\\"\\\"} }\", details: [], metadata: MetadataMap { headers: {} }"
+  ],
+  "instruments_loaded": 1,
+  "sample_instruments": [
+    "BTC-USD-PERP.DYDX"
+  ],
+  "balance": "USDC: 0.00000000 USDC",
+  "errors": [
+    "[order_lifecycle] Rejected: Order submission failed: gRPC error: status: Internal, message: \"Failed to fetch account for sequence init: status: NotFound, message: \\\"account dydx18yd5xhk7yzaejehvqn2d7xmp6hkqwanfcwy2ze not found\\\", details: [], metadata: MetadataMap { headers: {\\\"date\\\": \\\"Mon, 09 Mar 2026 19:21:48 GMT\\\", \\\"content-type\\\": \\\"application/grpc\\\", \\\"x-cosmos-block-height\\\": \\\"79291503\\\", \\\"cf-cache-status\\\": \\\"DYNAMIC\\\", \\\"report-to\\\": \\\"{\\\\\\\"endpoints\\\\\\\":[{\\\\\\\"url\\\\\\\":\\\\\\\"https:\\\\/\\\\/a.nel.cloudflare.com\\\\/report\\\\/v4?s=bxj32AkwQ8jLg8mETmOZqGjVuJOagop9FBN%2FkzN5akjlX5GHwrC542VXrO1asB4t63xyZ7xxXRNrZvHCyDa77fM4%2BFYn%2FARj%2Fv6vcunuZtTBFkxMmiwMDFzbn1PoNiHruGhp%2FNY22fjoODU3RRtM270%3D\\\\\\\"}],\\\\\\\"group\\\\\\\":\\\\\\\"cf-nel\\\\\\\",\\\\\\\"max_age\\\\\\\":604800}\\\", \\\"nel\\\": \\\"{\\\\\\\"success_fraction\\\\\\\":0,\\\\\\\"report_to\\\\\\\":\\\\\\\"cf-nel\\\\\\\",\\\\\\\"max_age\\\\\\\":604800}\\\", \\\"server\\\": \\\"cloudflare\\\", \\\"cf-ray\\\": \\\"9d9c71df1e987141-SOF\\\", \\\"alt-svc\\\": \\\"h3=\\\\\\\":443\\\\\\\"; ma=86400\\\", \\\"server-timing\\\": \\\"cfL4;desc=\\\\\\\"?proto=TCP&rtt=11133&min_rtt=8493&rtt_var=3333&sent=31&recv=26&lost=0&retrans=0&sent_bytes=26428&recv_bytes=2274&delivery_rate=1986946&cwnd=74&unsent_bytes=0&cid=29e132c938d87bb2&ts=11254&x=0\\\\\\\"\\\"} }\", details: [], metadata: MetadataMap { headers: {} }"
+  ],
+  "success": false
+}

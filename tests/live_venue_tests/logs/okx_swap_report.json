@@ -1,0 +1,38 @@
+{
+  "venue": "OKX_SWAP",
+  "started_at": "2026-03-09T19:21:59.707281",
+  "finished_at": "2026-03-09T19:22:28.193065",
+  "phases": {
+    "credentials": {
+      "status": "OK",
+      "detail": "Keys loaded (IP-restricted)"
+    },
+    "node_build": {
+      "status": "OK",
+      "detail": "OK"
+    },
+    "instruments": {
+      "status": "OK",
+      "detail": "1 loaded, target found"
+    },
+    "data_streaming": {
+      "status": "OK",
+      "detail": "{'order_book_deltas': 95, 'trade_ticks': 1258, 'quote_ticks': 633, 'bars': 0, 'custom_data': 0}"
+    }
+  },
+  "data_counts": {
+    "order_book_deltas": 245,
+    "trade_ticks": 2478,
+    "quote_ticks": 1639,
+    "bars": 0,
+    "custom_data": 0
+  },
+  "order_events": [],
+  "instruments_loaded": 1,
+  "sample_instruments": [
+    "BTC-USDT-SWAP.OKX"
+  ],
+  "balance": "XRP: 0.463647 XRP, TRX: 1.88171061 TRX, USDT: 0.12845809 USDT, UNI: 0.00803745 UNI, SHIB: 4028.42900000 SHIB, KNC: 0.15437116 KNC, DGB: 3.98246655 DGB, GALA: 2.93909982 GALA, GRT: 0.39240272 GRT, IOST: 3.46773024 IOST, SKL: 0.56123940 SKL, DYDX: 0.02003607 DYDX, ZRX: 0.00082470 ZRX, SNT: 0.00511195 SNT, ADA: 0.000000 ADA",
+  "errors": [],
+  "success": true
+}

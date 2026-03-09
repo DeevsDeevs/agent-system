@@ -1,0 +1,1 @@
+[1m2026-03-09T18:43:31.425989795Z[0m [1;31m[ERROR] TEST-OKX-001.ExecClient-OKX: OKXWebSocketError(code='50114', message='Invalid authorization', conn_id=None, ts_event=1773081811425927388)[0m

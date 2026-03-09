@@ -1,0 +1,52 @@
+{
+  "venue": "MULTI_VENUE",
+  "started_at": "2026-03-09T19:20:34.025549",
+  "finished_at": "2026-03-09T19:20:52.263701",
+  "phases": {
+    "credentials": {
+      "status": "OK",
+      "detail": "Both venues keyed"
+    },
+    "node_build": {
+      "status": "OK",
+      "detail": "Multi-venue node built"
+    },
+    "binance_instrument": {
+      "status": "OK",
+      "detail": "BTCUSDT-PERP.BINANCE found"
+    },
+    "okx_instrument": {
+      "status": "OK",
+      "detail": "BTC-USDT-SWAP.OKX found"
+    },
+    "binance_data": {
+      "status": "OK",
+      "detail": "deltas=268, trades=1670, quotes=11968"
+    },
+    "okx_data": {
+      "status": "OK",
+      "detail": "deltas=147, trades=657, quotes=930"
+    },
+    "cross_venue_books": {
+      "status": "OK",
+      "detail": "BN bid=68689.70, OKX bid=68690.00, diff=0.0bps"
+    }
+  },
+  "data_counts": {
+    "bn_deltas": 268,
+    "bn_trades": 1670,
+    "bn_quotes": 11968,
+    "okx_deltas": 147,
+    "okx_trades": 657,
+    "okx_quotes": 930
+  },
+  "order_events": [],
+  "instruments_loaded": 2,
+  "sample_instruments": [
+    "BTC-USDT-SWAP.OKX",
+    "BTCUSDT-PERP.BINANCE"
+  ],
+  "balance": "",
+  "errors": [],
+  "success": true
+}

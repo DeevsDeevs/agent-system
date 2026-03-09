@@ -1,0 +1,38 @@
+{
+  "venue": "BINANCE_FUTURES",
+  "started_at": "2026-03-09T19:20:57.962305",
+  "finished_at": "2026-03-09T19:21:30.895817",
+  "phases": {
+    "credentials": {
+      "status": "OK",
+      "detail": "OK"
+    },
+    "node_build": {
+      "status": "OK",
+      "detail": "OK"
+    },
+    "instruments": {
+      "status": "OK",
+      "detail": "1 loaded, target found"
+    },
+    "data_streaming": {
+      "status": "OK",
+      "detail": "{'order_book_deltas': 174, 'trade_ticks': 2960, 'quote_ticks': 15513, 'bars': 0, 'custom_data': 0}"
+    }
+  },
+  "data_counts": {
+    "order_book_deltas": 559,
+    "trade_ticks": 9811,
+    "quote_ticks": 51696,
+    "bars": 0,
+    "custom_data": 0
+  },
+  "order_events": [],
+  "instruments_loaded": 1,
+  "sample_instruments": [
+    "BTCUSDT-PERP.BINANCE"
+  ],
+  "balance": "",
+  "errors": [],
+  "success": true
+}
