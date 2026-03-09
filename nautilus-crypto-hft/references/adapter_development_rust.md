@@ -4,10 +4,10 @@ Building production-grade NautilusTrader adapters in Rust with PyO3 bindings.
 
 ## Why Rust Adapters
 
-- WebSocket/HTTP parsing at native speed (critical for HFT tick processing)
+- WebSocket/HTTP parsing at native speed — critical for HFT tick processing
 - Request signing without Python GIL contention
 - Automatic reconnection with backoff (no asyncio complexity)
-- Type-safe message parsing (serde + venue-specific types)
+- Type-safe message parsing via serde
 - Memory-safe concurrent networking
 
 ## Crate Structure
@@ -22,17 +22,17 @@ crates/adapters/myexchange/
 │   │   ├── types.rs        # Venue-specific enums, types
 │   │   ├── urls.rs         # URL resolution (mainnet/testnet)
 │   │   ├── credentials.rs  # API key management
-│   │   └── error.rs        # Error types
+│   │   └── error.rs        # Error types (thiserror)
 │   ├── http/
 │   │   ├── mod.rs
 │   │   ├── client.rs       # HTTP client with signing
-│   │   ├── account.rs      # Account endpoints
+│   │   ├── account.rs      # Account/balance endpoints
 │   │   ├── market.rs       # Market data endpoints
-│   │   └── order.rs        # Order endpoints
+│   │   └── order.rs        # Order submission endpoints
 │   ├── websocket/
 │   │   ├── mod.rs
 │   │   ├── client.rs       # WS client with reconnection
-│   │   ├── handler.rs      # Message routing
+│   │   ├── handler.rs      # Message routing/dispatch
 │   │   └── messages.rs     # WS message types (serde)
 │   ├── parsing/
 │   │   ├── mod.rs
@@ -71,29 +71,21 @@ nautilus-common = { path = "../../common" }
 nautilus-core = { path = "../../core" }
 nautilus-model = { path = "../../model" }
 
-# Networking
 reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
 tokio = { workspace = true, features = ["full"] }
 tokio-tungstenite = { version = "0.24", features = ["rustls-tls-webpki-roots"] }
 futures-util = "0.3"
 
-# Serialization
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 
-# Crypto (for request signing)
 hmac = "0.12"
 sha2 = "0.10"
 hex = "0.4"
 
-# Python bindings
 pyo3 = { workspace = true, optional = true }
-
-# Error handling
 thiserror = { workspace = true }
 anyhow = { workspace = true }
-
-# Logging
 tracing = { workspace = true }
 
 [features]
@@ -101,10 +93,21 @@ default = []
 python = ["pyo3"]
 ```
 
-## HTTP Client Implementation
+## Implementation Roadmap
+
+1. **Phase 1**: Types, config, credentials, URLs, error types
+2. **Phase 2**: HTTP client with signing and rate limiting
+3. **Phase 3**: WebSocket client with reconnection and heartbeat
+4. **Phase 4**: Data parsing (instruments, book deltas, trades, quotes)
+5. **Phase 5**: PyO3 bindings for HTTP and WS clients
+6. **Phase 6**: Python adapter layer (`nautilus_trader/adapters/myexchange/`)
+7. **Phase 7**: Testing (Rust unit + integration, Python integration)
+
+## HTTP Client
+
+Two-layer architecture: inner (raw transport) + outer (business methods).
 
 ```rust
-use nautilus_common::runtime::get_runtime;
 use reqwest::Client;
 use hmac::{Hmac, Mac};
 use sha2::Sha256;
@@ -118,27 +121,20 @@ pub struct MyExchangeHttpClient {
 }
 
 impl MyExchangeHttpClient {
-    pub fn new(
-        api_key: String,
-        api_secret: String,
-        testnet: bool,
-    ) -> Self {
+    pub fn new(api_key: String, api_secret: String, testnet: bool) -> Self {
         let base_url = if testnet {
-            "https://api-testnet.myexchange.com".to_string()
+            "https://api-testnet.myexchange.com"
         } else {
-            "https://api.myexchange.com".to_string()
+            "https://api.myexchange.com"
         };
-
         Self {
             client: Client::builder()
                 .tcp_nodelay(true)  // critical for HFT
                 .pool_max_idle_per_host(10)
                 .build()
                 .expect("Failed to build HTTP client"),
-            base_url,
-            api_key,
-            api_secret,
-            recv_window: 5000,
+            base_url: base_url.to_string(),
+            api_key, api_secret, recv_window: 5000,
         }
     }
 
@@ -154,10 +150,8 @@ impl MyExchangeHttpClient {
         let resp = self.client
             .get(format!("{}/v5/market/instruments-info", self.base_url))
             .query(&[("category", "linear")])
-            .send()
-            .await?
-            .json::<ApiResponse<InstrumentList>>()
-            .await?;
+            .send().await?
+            .json::<ApiResponse<InstrumentList>>().await?;
         Ok(resp.result.list)
     }
 
@@ -165,43 +159,24 @@ impl MyExchangeHttpClient {
         let timestamp = chrono::Utc::now().timestamp_millis() as u64;
         let body = serde_json::to_string(req)?;
         let signature = self.sign(&body, timestamp);
-
         let resp = self.client
             .post(format!("{}/v5/order/create", self.base_url))
             .header("X-API-KEY", &self.api_key)
             .header("X-API-SIGN", &signature)
             .header("X-API-TIMESTAMP", timestamp.to_string())
-            .header("X-API-RECV-WINDOW", self.recv_window.to_string())
-            .json(req)
-            .send()
-            .await?
-            .json::<ApiResponse<OrderResponse>>()
-            .await?;
-
+            .json(req).send().await?
+            .json::<ApiResponse<OrderResponse>>().await?;
         if resp.ret_code != 0 {
             return Err(Error::ApiError(resp.ret_msg));
         }
         Ok(resp.result)
     }
-
-    pub async fn get_order_book(
-        &self,
-        symbol: &str,
-        depth: u32,
-    ) -> Result<OrderBookSnapshot, Error> {
-        let resp = self.client
-            .get(format!("{}/v5/market/orderbook", self.base_url))
-            .query(&[("category", "linear"), ("symbol", symbol), ("limit", &depth.to_string())])
-            .send()
-            .await?
-            .json::<ApiResponse<OrderBookSnapshot>>()
-            .await?;
-        Ok(resp.result)
-    }
 }
 ```
 
-## WebSocket Client Implementation
+**Rate limiting**: Use token-bucket or sliding-window. Track per-endpoint and global limits.
+
+## WebSocket Client
 
 ```rust
 use futures_util::{SinkExt, StreamExt};
@@ -221,13 +196,6 @@ enum WsCommand {
 }
 
 impl MyExchangeWebSocketClient {
-    pub fn new(
-        url: String,
-        handler: Arc<dyn Fn(Vec<u8>) + Send + Sync>,
-    ) -> Self {
-        Self { url, sender: None, handler }
-    }
-
     pub async fn connect(&mut self) -> Result<(), Error> {
         let (ws_stream, _) = connect_async(&self.url).await?;
         let (mut write, mut read) = ws_stream.split();
@@ -235,19 +203,11 @@ impl MyExchangeWebSocketClient {
         let handler = self.handler.clone();
 
         // Read task
-        let read_handle = tokio::spawn(async move {
+        tokio::spawn(async move {
             while let Some(msg) = read.next().await {
                 match msg {
-                    Ok(Message::Text(text)) => {
-                        (handler)(text.into_bytes());
-                    }
-                    Ok(Message::Binary(data)) => {
-                        (handler)(data.to_vec());
-                    }
-                    Ok(Message::Ping(data)) => {
-                        // Pong handled automatically by tungstenite
-                        tracing::trace!("Received ping");
-                    }
+                    Ok(Message::Text(text)) => (handler)(text.into_bytes()),
+                    Ok(Message::Binary(data)) => (handler)(data.to_vec()),
                     Ok(Message::Close(_)) => {
                         tracing::warn!("WebSocket closed by server");
                         break;
@@ -265,28 +225,15 @@ impl MyExchangeWebSocketClient {
         tokio::spawn(async move {
             while let Some(cmd) = cmd_rx.recv().await {
                 match cmd {
-                    WsCommand::Subscribe(channel) => {
-                        let msg = serde_json::json!({
-                            "op": "subscribe",
-                            "args": [channel]
-                        });
-                        if let Err(e) = write.send(Message::Text(msg.to_string().into())).await {
-                            tracing::error!("Failed to send subscribe: {e}");
-                        }
+                    WsCommand::Subscribe(ch) => {
+                        let msg = serde_json::json!({"op": "subscribe", "args": [ch]});
+                        let _ = write.send(Message::Text(msg.to_string().into())).await;
                     }
-                    WsCommand::Unsubscribe(channel) => {
-                        let msg = serde_json::json!({
-                            "op": "unsubscribe",
-                            "args": [channel]
-                        });
-                        if let Err(e) = write.send(Message::Text(msg.to_string().into())).await {
-                            tracing::error!("Failed to send unsubscribe: {e}");
-                        }
+                    WsCommand::Unsubscribe(ch) => {
+                        let msg = serde_json::json!({"op": "unsubscribe", "args": [ch]});
+                        let _ = write.send(Message::Text(msg.to_string().into())).await;
                     }
-                    WsCommand::Close => {
-                        let _ = write.close().await;
-                        break;
-                    }
+                    WsCommand::Close => { let _ = write.close().await; break; }
                 }
             }
         });
@@ -296,45 +243,37 @@ impl MyExchangeWebSocketClient {
     }
 
     pub fn subscribe(&self, channel: &str) -> Result<(), Error> {
-        self.sender
-            .as_ref()
-            .ok_or(Error::NotConnected)?
+        self.sender.as_ref().ok_or(Error::NotConnected)?
             .send(WsCommand::Subscribe(channel.to_string()))
-            .map_err(|_| Error::ChannelClosed)
-    }
-
-    pub fn unsubscribe(&self, channel: &str) -> Result<(), Error> {
-        self.sender
-            .as_ref()
-            .ok_or(Error::NotConnected)?
-            .send(WsCommand::Unsubscribe(channel.to_string()))
             .map_err(|_| Error::ChannelClosed)
     }
 }
 ```
 
-## Parsing: Venue Types → Nautilus Types
+**Reconnection**: Track subscription state. On disconnect → exponential backoff (1s→2s→4s→max 60s) → reconnect → resubscribe all active channels.
+
+**Ping/pong**: Most venues require periodic pings. Spawn background task with interval timer.
+
+## Data Parsing
 
 ```rust
-use nautilus_model::data::{OrderBookDelta, TradeTick, QuoteTick};
-use nautilus_model::enums::{BookAction, OrderSide, RecordFlag, AggressorSide};
+use nautilus_model::data::OrderBookDelta;
+use nautilus_model::enums::{BookAction, OrderSide, RecordFlag};
 use nautilus_model::types::{Price, Quantity};
-use nautilus_model::identifiers::{InstrumentId, TradeId};
 
-// Venue-specific serde types
 #[derive(Debug, serde::Deserialize)]
-pub struct VenueOrderBookUpdate {
-    pub s: String,      // symbol
-    pub b: Vec<[String; 2]>,  // bids [[price, size], ...]
-    pub a: Vec<[String; 2]>,  // asks [[price, size], ...]
-    pub u: u64,         // update id / sequence
+pub struct VenueBookUpdate {
+    pub s: String,
+    pub b: Vec<[String; 2]>,  // [[price, size], ...]
+    pub a: Vec<[String; 2]>,
+    pub u: u64,
     #[serde(rename = "ts")]
-    pub timestamp: u64, // milliseconds
+    pub timestamp: u64,
 }
 
 pub fn parse_order_book_deltas(
     instrument_id: InstrumentId,
-    update: &VenueOrderBookUpdate,
+    update: &VenueBookUpdate,
     ts_init: u64,
 ) -> Vec<OrderBookDelta> {
     let mut deltas = Vec::new();
@@ -347,18 +286,9 @@ pub fn parse_order_book_deltas(
         let flags = if is_last { RecordFlag::F_LAST } else { 0 };
 
         deltas.push(OrderBookDelta::new(
-            instrument_id,
-            action,
-            BookOrder::new(
-                OrderSide::Buy,
-                Price::from_str(&bid[0]),
-                size,
-                0, // order_id for L2
-            ),
-            flags,
-            update.u,
-            millis_to_nanos(update.timestamp),
-            ts_init,
+            instrument_id, action,
+            BookOrder::new(OrderSide::Buy, Price::from_str(&bid[0]), size, 0),
+            flags, update.u, millis_to_nanos(update.timestamp), ts_init,
         ));
     }
 
@@ -369,29 +299,15 @@ pub fn parse_order_book_deltas(
         let flags = if is_last { RecordFlag::F_LAST } else { 0 };
 
         deltas.push(OrderBookDelta::new(
-            instrument_id,
-            action,
-            BookOrder::new(
-                OrderSide::Sell,
-                Price::from_str(&ask[0]),
-                size,
-                0,
-            ),
-            flags,
-            update.u,
-            millis_to_nanos(update.timestamp),
-            ts_init,
+            instrument_id, action,
+            BookOrder::new(OrderSide::Sell, Price::from_str(&ask[0]), size, 0),
+            flags, update.u, millis_to_nanos(update.timestamp), ts_init,
         ));
     }
-
     deltas
 }
 
-pub fn parse_trade(
-    instrument_id: InstrumentId,
-    raw: &VenueTradeMsg,
-    ts_init: u64,
-) -> TradeTick {
+pub fn parse_trade(instrument_id: InstrumentId, raw: &VenueTradeMsg, ts_init: u64) -> TradeTick {
     TradeTick::new(
         instrument_id,
         Price::from_str(&raw.price),
@@ -418,9 +334,7 @@ pub struct MyExchangeHttpClientPy {
 impl MyExchangeHttpClientPy {
     #[new]
     fn new(api_key: String, api_secret: String, testnet: bool) -> Self {
-        Self {
-            inner: Arc::new(MyExchangeHttpClient::new(api_key, api_secret, testnet)),
-        }
+        Self { inner: Arc::new(MyExchangeHttpClient::new(api_key, api_secret, testnet)) }
     }
 
     #[pyo3(name = "get_instruments")]
@@ -429,7 +343,6 @@ impl MyExchangeHttpClientPy {
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let result = client.get_instruments().await
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
-            // Convert Vec<InstrumentResponse> to Python list
             Python::with_gil(|py| {
                 let list = pyo3::types::PyList::empty(py);
                 for inst in result {
@@ -439,96 +352,112 @@ impl MyExchangeHttpClientPy {
             })
         })
     }
-
-    #[pyo3(name = "place_order")]
-    fn py_place_order<'py>(
-        &self,
-        py: Python<'py>,
-        symbol: String,
-        side: String,
-        order_type: String,
-        qty: String,
-        price: Option<String>,
-    ) -> PyResult<Bound<'py, PyAny>> {
-        let client = self.inner.clone();
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let req = OrderRequest { symbol, side, order_type, qty, price };
-            let result = client.place_order(&req).await
-                .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
-            Ok(result.order_id)
-        })
-    }
 }
 
-// Module registration
 pub fn myexchange_module(py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<MyExchangeHttpClientPy>()?;
     m.add_class::<MyExchangeWebSocketClientPy>()?;
-    // Add enums, config types, etc.
     Ok(())
 }
 ```
 
 ## FFI Memory Contract
 
-When passing data across the Rust/Python boundary:
+### CVec (Legacy Cython)
 
-### CVec Lifecycle (for Cython legacy layer)
+```
+1. Rust: Vec<T> → CVec (leaks memory, transfers ownership)
+2. Foreign: Use data, never modify ptr/len/cap
+3. Foreign: Call drop helper EXACTLY ONCE
 
-1. **Rust**: Build `Vec<T>`, convert with `into()` — leaks memory, transfers ownership to foreign code
-2. **Foreign**: Use data while `CVec` is in scope. Never modify `ptr`, `len`, or `cap` fields
-3. **Foreign**: Call type-specific drop helper **exactly once** to free memory
+Violations → UB: forget drop = leak, double drop = crash, modify fields = corruption
+```
 
-Violating these rules = UB (double-free or memory leak).
+### PyO3 (New Code — Always Use This)
 
-### PyO3 (preferred for new code)
+- `PyCapsule::new_with_destructor` for heap values to Python
+- Destructor reconstructs `Box<T>` / `Vec<T>` and drops
+- Panics must NOT cross `extern "C"`:
 
-- Use `PyCapsule::new_with_destructor` for heap-allocated values pushed to Python
-- The destructor reconstructs `Box<T>` or `Vec<T>` and lets it drop
-- Rust panics must NOT unwind across `extern "C"` functions
-- Every exported symbol wrapped in `crate::ffi::abort_on_panic` → calls `process::abort()` on panic
+```rust
+pub fn abort_on_panic<F, R>(f: F) -> R
+where F: FnOnce() -> R {
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)) {
+        Ok(result) => result,
+        Err(_) => std::process::abort(),
+    }
+}
+```
 
-## Recommended Adapter Implementation Sequence
+## Naming Conventions
 
-1. **Phase 1: Rust core infrastructure**
-   - HTTP client with signing, rate limiting, retry logic
-   - WebSocket client with auth, heartbeat, reconnection
-   - Serde types for all venue API responses
-   - Unit tests for parsing
+| Category | Convention | Example |
+|----------|-----------|---------|
+| Channels | Lowercase venue names | `"trades"`, `"orderbook"` |
+| Types | Venue prefix + concept | `BinanceTrade`, `BybitBookDelta` |
+| Fields | Snake case matching venue | `order_id`, `client_order_id` |
+| Crate name | `nautilus-{venue}` | `nautilus-binance` |
 
-2. **Phase 2: Instrument definitions**
-   - Parse venue instrument response → Nautilus `Instrument` types
-   - InstrumentProvider with caching and filtering
-   - PyO3 bindings for InstrumentProvider
+## Instrument Cache
 
-3. **Phase 3: Market data**
-   - OrderBookDelta parsing (snapshots + incremental)
-   - TradeTick, QuoteTick parsing
-   - LiveMarketDataClient (Python) using Rust WS client
-   - Integration tests with venue testnet
+Dual-tier for performance:
 
-4. **Phase 4: Execution**
-   - Order submission/cancellation/modification
-   - Fill and execution event parsing
-   - LiveExecutionClient (Python) using Rust HTTP + WS
-   - Reconciliation reports
-   - Integration tests with venue testnet
+| Tier | Type | Purpose |
+|------|------|---------|
+| Hot | `DashMap<InstrumentId, InstrumentAny>` | Concurrent read/write during live |
+| Cold | `AHashMap<InstrumentId, InstrumentAny>` | Fast read-only after initial load |
+
+Provider loads via HTTP → populates both. WS updates modify hot. Strategy lookups hit hot first.
+
+## Credential Management
+
+```rust
+use zeroize::Zeroize;
+
+#[derive(Zeroize)]
+#[zeroize(drop)]
+pub struct Credentials {
+    api_key: String,
+    api_secret: String,
+}
+```
+
+Load from env vars. Never log credentials. `zeroize` clears memory on drop.
 
 ## Testing
 
 ```bash
-# Rust unit tests (fast, isolated per test)
+# Rust unit tests
 cargo nextest run -p nautilus-myexchange
 
-# Run specific test
+# Specific test
 cargo nextest run -p nautilus-myexchange parse_order_book_deltas
 
-# Python integration tests
+# Python integration
 pytest tests/integration_tests/adapters/myexchange/
 ```
 
+### Mock Server Pattern
+
+```rust
+#[tokio::test]
+async fn test_fetch_instruments() {
+    let mock_server = axum::Router::new()
+        .route("/api/instruments", get(|| async { Json(mock_instruments()) }));
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(axum::serve(listener, mock_server).into_future());
+
+    let client = MyExchangeHttpClient::new(
+        "key".into(), "secret".into(), false,
+    );
+    let instruments = client.fetch_instruments().await.unwrap();
+    assert_eq!(instruments.len(), 2);
+}
+```
+
 Test patterns:
-- Parse known venue JSON responses → assert correct Nautilus types
-- Snapshot → incremental update sequence → verify book state
+- Parse known venue JSON → assert correct Nautilus types
+- Snapshot → incremental update → verify book state
 - Order lifecycle: submit → accept → fill → verify events
 - Reconnection: disconnect → reconnect → verify subscription recovery

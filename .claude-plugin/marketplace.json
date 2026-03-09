@@ -107,15 +107,9 @@
       "skills": ["./"]
     },
     {
-      "name": "nautilus-trader",
-      "description": "NautilusTrader algorithmic trading platform: strategies, backtesting, live trading, adapters, order types, execution algorithms, data system, order book management",
-      "source": "./nautilus-trader",
-      "skills": ["./"]
-    },
-    {
-      "name": "nautilus-hft-dev",
-      "description": "NautilusTrader adapter development and HFT engineering: custom Python/Rust adapters, OMS internals, order book delta processing, FFI memory contract, build system, exchange integrations, reconciliation, live trading ops",
-      "source": "./nautilus-hft-dev",
+      "name": "nautilus-crypto-hft",
+      "description": "NautilusTrader for crypto HFT: market making, order book strategies, adapter development (Python/Rust), microstructure analysis, backtesting, live trading — Binance, Bybit, dYdX, OKX",
+      "source": "./nautilus-crypto-hft",
       "skills": ["./"]
     }
   ]
