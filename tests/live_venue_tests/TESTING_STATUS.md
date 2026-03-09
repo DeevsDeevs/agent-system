@@ -59,6 +59,25 @@
 
 **TOTAL: 152/153 OK** (1 failure is missing bar CSV test data, not a skill bug)
 
+## Live Data Collection (Binance Futures, 10 perps, 30s)
+
+| Data Type | Status | Rate | Notes |
+|-----------|--------|------|-------|
+| Trade ticks | **WORKS** | ~100/s | All 10 instruments |
+| Quote ticks | **WORKS** | ~600/s | BBO (bookTicker) — highest volume |
+| Book deltas | **WORKS** | ~113/s | L2 incremental + snapshot rebuild |
+| Mark prices | **WORKS** | ~9/s | ~1 update/3s per instrument |
+| Bars (1m) | **WORKS** | 1/min/inst | EXTERNAL kline stream |
+| Book depth | **NOT IMPL** | - | NotImplementedError on Binance adapter |
+| Funding rates | **NOT IMPL** | - | NotImplementedError — use REST instead |
+| Index prices | **NOT IMPL** | - | NotImplementedError |
+| Instrument status | **NOT IMPL** | - | NotImplementedError |
+
+**Total**: 24,500 events/30s (~817/s). Catalog save: instruments + trade/quote ticks (sorted by ts_init).
+
+**REST endpoints verified**: OI, funding rate history, mark/index price, long/short ratio, 24h ticker.
+Liquidations endpoint (`/fapi/v1/allForceOrders`) deprecated — returns 400.
+
 ## Coverage Map
 
 ### Tested & Confirmed Working
