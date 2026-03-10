@@ -1,8 +1,8 @@
 # NautilusTrader Live Testing Status
 
-**Date**: 2026-03-09
+**Date**: 2026-03-10
 **Version**: nautilus_trader 1.224.0, Python 3.14.3
-**Test suite**: `tests/live_venue_tests/`
+**Test suite**: `tests/live_venue_tests/` + `nautilus-crypto-hft/examples/`
 
 ## Skill Fixes Applied
 
@@ -22,6 +22,13 @@
 | `Actor` from `nautilus_trader.trading.actor` → `nautilus_trader.common.actor` | SKILL.md | ModuleNotFoundError |
 | Indicators from submodules like `.ema` → top-level `nautilus_trader.indicators` | SKILL.md | ModuleNotFoundError |
 | `subscribe_data()` needs `client_id` or `instrument_id` | SKILL.md | Silent error, no data received |
+| `order.order_side` → `order.side` (events use `event.order_side`) | SKILL.md | AttributeError on MarketOrder |
+| `OrderList.is_bracket` as property → `is_bracket()` is method | SKILL.md | TypeError |
+| Manual OrderList for brackets → `order_factory.bracket()` | SKILL.md, execution_and_oms.md | Built-in factory method |
+| `request_bars(bar_type)` one arg → needs `start=` param | SKILL.md | TypeError: takes at least 2 positional arguments |
+| Indicator values before init are 0/NaN → partial values (wrong) | SKILL.md | SMA(20) after 5 bars = avg of 5 |
+| Subscribe to missing data raises error → silent 0 data | SKILL.md | ERROR log only, no exception |
+| Native signal API undocumented: `publish_signal`/`subscribe_signal`/`on_signal` | SKILL.md, actors_and_signals.md | Tested: 698 signals end-to-end |
 | `ParquetDataCatalog.data_types()` → `.list_data_types()` | SKILL.md, backtesting_and_simulation.md | AttributeError |
 | `BacktestNode.get_engine()` before `build()` → must call `build()` first | SKILL.md, backtesting_and_simulation.md | Returns None |
 | `engine.trader.cache` → `engine.cache` for BacktestEngine | backtesting_and_simulation.md | AttributeError: Trader has no cache |
@@ -56,8 +63,13 @@
 | Order Types + OMS | test_order_types_oms.py | **27/27 OK** | All 5 order types, NETTING flip LONG→SHORT, HEDGING 2 positions, cache queries, reports |
 | Order Book API | test_order_book_api.py | **26/26 OK** | Instrument properties, cache methods, account balances, trade ticks in cache |
 | Derivatives API | test_derivatives_api.py | **28/28 OK** | Perp properties, PnL tracking, portfolio access, BarType variants, position close |
+| EMA Crossover Example | ema_crossover_backtest.py | **OK** | 12 orders, 6 positions, EMA(10)/EMA(30) crossover on ETHUSDT |
+| Bracket Order Example | bracket_order_backtest.py | **OK** | order_factory.bracket() → entry FILLED, SL+TP set, OTO/OUO contingency |
+| Signal Pipeline Example | signal_pipeline_backtest.py | **OK** | Actor→Strategy: 1396 signals, 612 orders, 306 positions |
+| Market Maker Example | market_maker_backtest.py | **OK** | L2 book MM with inventory skew |
 
-**TOTAL: 152/153 OK** (1 failure is missing bar CSV test data, not a skill bug)
+**TOTAL: 152/153 OK** (1 failure is missing bar CSV test data — nautilus issue, not ours)
+**Examples: 4/4 OK**
 
 ## Live Data Collection (Binance Futures, 10 perps, 30s)
 
@@ -119,6 +131,16 @@ Liquidations endpoint (`/fapi/v1/allForceOrders`) deprecated — returns 400.
 - **Cache queries**: instruments, orders, orders_open, positions, accounts, trade_ticks, quote_ticks
 - **Account balances**: balance_total/free/locked per currency
 - **market_maker_backtest.py example**: runs without errors (fixed imports + data loading)
+- **ema_crossover_backtest.py example**: EMA crossover strategy with indicator registration + bar subscription
+- **bracket_order_backtest.py example**: `order_factory.bracket()` with OTO entry → OUO SL/TP
+- **signal_pipeline_backtest.py example**: Actor `publish_signal` → Strategy `subscribe_signal`/`on_signal`
+- **Native signal API**: `publish_signal(name, value, ts_event)` → auto-generates `Signal{Name}` class
+- **Signal filtering**: `subscribe_signal(name='specific')` vs `subscribe_signal()` for all
+- **Subscription ordering**: cache instrument → register indicators → subscribe data (verified silent failures)
+- **Indicator partial values**: SMA/EMA produce wrong (not NaN) values before `initialized` — guard required
+- **Order attribute**: `order.side` (not `order.order_side`), events use `event.order_side`
+- **Bracket factory**: `order_factory.bracket()` tags: `['ENTRY']`, `['STOP_LOSS']`, `['TAKE_PROFIT']`
+- **Clock API**: `utc_now()` → pandas Timestamp, `timestamp_ns()` → int, `set_time_alert(override=)`
 
 ### Partially Tested
 
@@ -150,7 +172,7 @@ Liquidations endpoint (`/fapi/v1/allForceOrders`) deprecated — returns 400.
 #### LOW Priority
 | Area | What to test | Prerequisites |
 |------|-------------|---------------|
-| Contingent orders | OTO/OCO/OUO bracket orders | Working order lifecycle |
+| Contingent orders (LIVE) | OTO/OCO/OUO bracket orders on real venue | Working order lifecycle (backtest verified ✅) |
 | Redis/Postgres persistence | State recovery, audit trail | Redis/Postgres running |
 | MessageBus streaming | External event consumption via Redis streams | Redis running |
 | Memory purge | Long-running session memory management | Long test run |
@@ -187,3 +209,11 @@ Liquidations endpoint (`/fapi/v1/allForceOrders`) deprecated — returns 400.
 - `TestDataProvider` pulls from GitHub — rate limits apply, copy to `tests/test_data/` for local cache
 - `FillModel` only has `prob_fill_on_limit` and `prob_slippage` — `prob_fill_on_stop` doesn't exist
 - `catalog.query_first_timestamp(TradeTick)` returns None — must pass `identifier=instrument_id_str`
+- `order.side` not `order.order_side` (events use `event.order_side`) — mixing causes AttributeError
+- `OrderList.is_bracket()` is a method, not a property — calling without `()` returns bound method
+- `publish_signal(name='foo')` creates `SignalFoo` class — use `type(signal).__name__` to route in `on_signal`
+- `subscribe_signal()` with no name subscribes to ALL signals; `subscribe_signal(name='foo')` filters
+- Subscribing to data that doesn't exist (wrong type, missing instrument) → silent 0 data, ERROR log only
+- Indicator values before `.initialized` are PARTIAL (e.g. SMA(20) after 5 bars = avg of 5) — not NaN
+- `request_bars(bar_type)` without `start=` param → TypeError: takes at least 2 positional arguments
+- `order_factory.bracket()` is the correct way to create brackets — avoid manual OrderList construction
