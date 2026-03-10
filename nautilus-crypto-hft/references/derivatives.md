@@ -83,24 +83,31 @@ Perpetual contracts use funding to keep price aligned with spot index.
 
 ### Subscription
 
-```python
-# NOTE: subscribe_funding_rates() is NOT IMPLEMENTED on Binance adapter (v1.224.0).
-# Use subscribe_mark_prices() instead — mark price updates include funding info.
-# For historical funding, use REST: /fapi/v1/fundingRate (see exchange_adapters.md)
+`subscribe_funding_rates()` raises `NotImplementedError` on Binance (v1.224.0).
+The adapter does NOT construct `FundingRateUpdate` objects. However, funding data IS available
+in the mark price WebSocket stream (`@markPrice`) — the adapter emits it as `BinanceFuturesMarkPriceUpdate`.
 
-from nautilus_trader.model.data import MarkPriceUpdate
+```python
+from nautilus_trader.adapters.binance.futures.types import BinanceFuturesMarkPriceUpdate
+from nautilus_trader.model.data import DataType
 
 def on_start(self) -> None:
-    # Mark price stream includes funding rate data on Binance
-    self.subscribe_mark_prices(self.config.instrument_id)
+    self.subscribe_data(
+        data_type=DataType(BinanceFuturesMarkPriceUpdate, metadata={"instrument_id": self.config.instrument_id}),
+    )
 
-def on_mark_price(self, update: MarkPriceUpdate) -> None:
-    # MarkPriceUpdate fires ~every 3s per instrument
-    pass
-
-# For explicit funding rate history, use REST via BinanceHttpClient:
-# See exchange_adapters.md → "REST Data (OI, Funding, Long/Short)"
+def on_data(self, data) -> None:
+    if isinstance(data, BinanceFuturesMarkPriceUpdate):
+        data.mark            # Price — mark price
+        data.index           # Price — index price
+        data.funding_rate    # Decimal — current funding rate
+        data.next_funding_ns # int — next funding timestamp (nanoseconds)
 ```
+
+The adapter handles all WebSocket lifecycle (connect, reconnect, ping/pong). No manual socket management needed.
+
+> For an example of extracting funding rates into standard `FundingRateUpdate` objects via
+> an Actor (custom data type pattern), see `examples/binance_enrichment_actor.py`.
 
 ### Mechanics
 
@@ -139,7 +146,7 @@ class FundingArbitrageConfig(StrategyConfig, frozen=True):
 class FundingArbitrage(Strategy):
     def on_data(self, data) -> None:
         if isinstance(data, FundingRateUpdate):
-            if data.value > self.config.min_rate:
+            if data.rate > self.config.min_rate:
                 # Short perp (receive funding), long spot (hedge)
                 if self.portfolio.is_flat(self.config.perp_id):
                     self._short_perp()
@@ -151,6 +158,45 @@ class FundingArbitrage(Strategy):
 Trade futures vs spot, expecting convergence at expiry:
 - **Contango** (futures > spot): Short futures, long spot
 - **Backwardation** (futures < spot): Long futures, short spot
+
+## Open Interest
+
+Open Interest (OI) = total outstanding contracts. Key signal for:
+- Trend strength (rising OI + rising price = strong uptrend)
+- Leverage buildup (rising OI + flat price = squeeze risk)
+- Position unwind (falling OI + falling price = long liquidation cascade)
+
+### Binance OI — REST Only (No WebSocket)
+
+Binance does NOT provide an OI WebSocket stream. Must poll REST:
+- Endpoint: `GET /fapi/v1/openInterest`
+- Params: `symbol` (e.g. "BTCUSDT")
+- Returns: `{"symbol":"BTCUSDT","openInterest":"82973.316","time":1773155253559}`
+- Rate limit: 1200 req/min (shared with other REST endpoints)
+
+### Custom Data Example: OpenInterestData
+
+```python
+from nautilus_trader.core.data import Data
+
+class OpenInterestData(Data):
+    def __init__(self, instrument_id, open_interest: float, ts_event: int, ts_init: int):
+        self.instrument_id = instrument_id
+        self.open_interest = open_interest
+        self._ts_event = ts_event
+        self._ts_init = ts_init
+
+    @property
+    def ts_event(self) -> int:
+        return self._ts_event
+
+    @property
+    def ts_init(self) -> int:
+        return self._ts_init
+```
+
+> See `examples/binance_enrichment_actor.py` for a complete example of custom data types with
+> timer-based REST polling and WebSocket data extraction via Actor.
 
 ## Liquidation Mechanics
 

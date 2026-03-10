@@ -70,7 +70,7 @@ The simplest way to pass data between components. No custom class needed.
 # In Actor or Strategy
 self.publish_signal(
     name="momentum",     # str — becomes class name Signal{Name} (e.g. SignalMomentum)
-    value=42.5,          # any serializable value (float, dict, list, etc.)
+    value=42.5,          # int, float, or str ONLY (dict/list cause KeyError)
     ts_event=tick.ts_event,  # int — nanosecond epoch (optional, default 0)
 )
 ```
@@ -198,11 +198,11 @@ def on_data(self, data) -> None:
 
 | Aspect | `publish_signal` | `publish_data` |
 |--------|-----------------|----------------|
-| Value type | Single value (any) | Custom Data subclass |
+| Value type | int, float, or str only | Custom Data subclass |
 | Setup | Zero — no class needed | Define class + DataType |
 | Handler | `on_signal(signal)` | `on_data(data)` |
 | Filtering | `subscribe_signal(name=...)` | `isinstance()` in handler |
-| Multi-field | Pack into dict/tuple | Native named fields |
+| Multi-field | Not supported (single scalar) | Native named fields |
 | Use when | Simple numeric signals | Structured multi-field data |
 
 **Recommendation**: Start with `publish_signal` for simple signals. Only use custom Data when you need multiple typed fields.
@@ -257,18 +257,23 @@ class ComboStrategy(Strategy):
 
 ## Actor for External Data (Live)
 
-Poll REST APIs on a timer and publish results as signals:
+Poll REST APIs on a timer and publish results as custom data:
 
 ```python
-class FundingActor(Actor):
-    def on_start(self):
-        self.clock.set_timer(
-            "poll_funding", interval=timedelta(minutes=1),
-            callback=self._poll,
-        )
+from nautilus_trader.core.nautilus_pyo3 import HttpClient
 
-    def _poll(self, event):
-        # In live: use asyncio or cached HTTP client
-        # Publish result as signal
-        self.publish_signal(name="funding_rate", value=rate, ts_event=self.clock.timestamp_ns())
+class RestPollerActor(Actor):
+    def on_start(self):
+        self._http = HttpClient()
+        self.clock.set_timer("poll", interval=timedelta(seconds=5), callback=self._on_timer)
+
+    def _on_timer(self, event):
+        self.queue_for_executor(self._fetch)  # schedule async from sync callback
+
+    async def _fetch(self):
+        resp = await self._http.get("https://api.example.com/data", params={"key": "val"})
+        # parse resp.body, create custom Data, publish_data(...)
 ```
+
+> For a full working example with `OpenInterestData` and `FundingRateUpdate`,
+> see `examples/binance_enrichment_actor.py`.

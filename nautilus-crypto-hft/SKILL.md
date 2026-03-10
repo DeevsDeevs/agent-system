@@ -20,7 +20,10 @@ description: >
   "OrderList", "submit_order_list", "ContingencyType", "bracket order",
   "set_timer", "set_time_alert", "clock", "timer", "Actor", "ActorConfig",
   "publish_signal", "subscribe_signal", "on_signal", "publish_data",
-  "order_factory.bracket", "trailing_stop", "on_market_exit".
+  "order_factory.bracket", "trailing_stop", "on_market_exit",
+  "open interest", "OpenInterest", "BinanceEnrichmentActor", "OpenInterestData",
+  "FundingRateUpdate", "BinanceFuturesMarkPriceUpdate", "HttpClient nautilus",
+  "queue_for_executor", "enrichment actor".
 ---
 
 # NautilusTrader — Crypto HFT
@@ -431,6 +434,15 @@ class EmaActor(Actor):
 # Registration: engine.add_actor(actor) for backtest, node.trader.add_actor(actor) for live
 ```
 
+### Custom Data Types via Actor (Example)
+
+See `examples/binance_enrichment_actor.py` for a complete example demonstrating:
+- Custom `Data` subclass (`OpenInterestData`) with `ts_event`/`ts_init` properties
+- `publish_data`/`subscribe_data` with `DataType` + metadata for structured data
+- `queue_for_executor(coroutine)` for async HTTP from sync timer callbacks
+- `HttpClient` from `nautilus_trader.core.nautilus_pyo3` for REST polling
+- Subscribing to adapter-emitted custom data (`BinanceFuturesMarkPriceUpdate`)
+
 See [actors_and_signals.md](references/actors_and_signals.md) for full reference.
 
 ## ParquetDataCatalog (Verified)
@@ -530,7 +542,9 @@ These are common hallucinations. None exist in v1.224.0:
 | `BollingerBands(20)` | `BollingerBands(20, 2.0)` — k is mandatory |
 | `MACD(12, 26, 9)` | 3rd param is `MovingAverageType`, not signal_period |
 | `TestDataProvider.audusd_ticks()` | `dp.read_csv_ticks("binance/ethusdt-trades.csv")` |
-| `subscribe_funding_rates()` on Binance | NotImplementedError — use `subscribe_mark_prices()` or REST |
+| `subscribe_funding_rates()` on Binance | NotImplementedError — use BinanceEnrichmentActor pattern |
+| OI WebSocket stream on Binance | Does not exist — must poll REST `/fapi/v1/openInterest` on timer |
+| `publish_signal(value=dict(...))` | KeyError — signal values must be int, float, or str only |
 | `subscribe_order_book_depth()` on Binance | NotImplementedError — use `subscribe_order_book_deltas()` |
 | `subscribe_instrument_status()` on Binance | NotImplementedError |
 | `on_timer()` as Strategy callback | Use `clock.set_timer(callback=handler)` |
@@ -583,4 +597,6 @@ These are common hallucinations. None exist in v1.224.0:
 | EMA Crossover | [ema_crossover_backtest.py](examples/ema_crossover_backtest.py) | Signal-based strategy with EMA indicators |
 | Bracket Orders | [bracket_order_backtest.py](examples/bracket_order_backtest.py) | OTO bracket (entry + SL + TP) with order_factory.bracket() |
 | Signal Pipeline | [signal_pipeline_backtest.py](examples/signal_pipeline_backtest.py) | Actor→Strategy signal flow with publish_signal/on_signal |
+| Binance Enrichment | [binance_enrichment_actor.py](examples/binance_enrichment_actor.py) | Funding rates (WS) + Open Interest (REST) enrichment actor |
+| Enrichment Test | [test_enrichment_actor_backtest.py](examples/test_enrichment_actor_backtest.py) | Backtest validation: mock adapter → enrichment → strategy |
 | Data Collection | tests/live_venue_tests/test_binance_data_collection.py | 10-instrument data collector with catalog save |
