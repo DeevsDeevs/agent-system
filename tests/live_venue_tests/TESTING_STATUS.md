@@ -170,44 +170,89 @@ Liquidations endpoint (`/fapi/v1/allForceOrders`) deprecated — returns 400.
 - **Reconciliation**: disabled for speed, never tested startup reconciliation
 - **Bars**: subscribed but 0 received in short tests (1-MINUTE-LAST-EXTERNAL needs >60s run)
 
-### Not Tested — Needs Work
+### Not Tested — TODOs
 
-#### HIGH Priority
-| Area | What to test | Prerequisites |
-|------|-------------|---------------|
-| Full order lifecycle (LIVE) | submit→accept→modify→cancel on real venue | Funded Binance Spot account (key has trading perms) |
-| Bar aggregation (live) | Subscribe bars, verify on_bar fires in live mode | Longer test run (>2 min) |
+#### OFFLINE — No API keys needed (BacktestEngine)
 
-#### MEDIUM Priority
-| Area | What to test | Prerequisites |
-|------|-------------|---------------|
-| Risk engine | Pre-trade checks, max notional, HALTED/REDUCING states | Working order lifecycle |
-| SimulatedExchange queue position | `queue_position=True` with TradeTick data | BacktestEngine working ✅, needs OrderBookDelta + TradeTick data |
-| ExecAlgorithms | TWAP built-in, custom iceberg, spawn/child orders | Working order lifecycle |
-| OrderEmulator | Local stop/trailing stop, trigger monitoring | Data streaming + order lifecycle |
-| Custom data types | MarkPriceUpdate, FundingRateUpdate subscriptions | Existing venue connections |
-| Multiple backtest runs | engine.reset() + re-run with different strategy | None |
-| Data wranglers | QuoteTickDataWrangler, OrderBookDeltaDataWrangler, BarDataWrangler | None |
+| TODO | What to test | Skill file | Test to write |
+|------|-------------|------------|---------------|
+| Risk engine denial | Submit order exceeding `max_notional` → `on_order_denied` fires | execution_and_oms.md | test_risk_engine.py |
+| Trading state HALTED | `risk_engine.set_trading_state(HALTED)` → orders rejected | execution_and_oms.md | test_risk_engine.py |
+| TWAP exec algorithm | `submit_order(exec_algorithm_id="TWAP")` → child orders spawn | execution_and_oms.md | test_exec_algorithms.py |
+| OrderEmulator stop | STOP_MARKET with `emulation_trigger=LAST_PRICE` → fills when price crosses | execution_and_oms.md | test_order_emulator.py |
+| OrderEmulator trailing | TRAILING_STOP_MARKET emulated locally | execution_and_oms.md | test_order_emulator.py |
+| OCO contingency | `ContingencyType.OCO` — one fills, other cancels | execution_and_oms.md | test_order_types_oms.py (extend) |
+| `request_bars()` historical | `request_bars(bar_type, start=datetime(...))` → `on_historical_data` fires | SKILL.md | test_backtest_engine.py (extend) |
+| Own order book | `cache.own_order_book()` → filter own orders from book levels | order_book.md | test_order_book_api.py (extend) |
+| Drawdown circuit breaker | Monitor `portfolio.unrealized_pnls()`, halt when drawdown > threshold | operational_patterns.md | test_operational_patterns.py |
+| Stale order cleanup | Timer fires → cancel orders older than threshold | operational_patterns.md | test_operational_patterns.py |
+| `on_resume()` / `on_reset()` | Strategy lifecycle after engine reset | SKILL.md | test_backtest_engine.py (extend) |
+| A-S optimal quoting | Avellaneda-Stoikov reservation price + optimal spread in backtest | market_making.md | test_mm_strategies.py |
+| VPIN calculation | Volume-synchronized informed trading probability from trade ticks | microstructure.md | test_microstructure.py |
+| Anti-fingerprinting | Size randomization ±5%, timer jitter, asymmetric spreads | microstructure.md | test_microstructure.py |
+| Queue position fill model | `queue_position=True` on SimulatedExchange with OrderBookDelta data | backtesting_and_simulation.md | test_simulated_exchange.py (extend) |
+| Timer `fire_immediately` | `set_timer(fire_immediately=True)` → callback fires on creation | clock_and_timers.md | test_backtest_engine.py (extend) |
+| Timer `start_time`/`stop_time` | Bounded timer windows | clock_and_timers.md | test_backtest_engine.py (extend) |
+| QuoteTickDataWrangler | DataFrame → QuoteTick conversion | backtesting_and_simulation.md | test_data_wranglers.py (extend) |
+| OrderBookDeltaDataWrangler | DataFrame → OrderBookDelta conversion | backtesting_and_simulation.md | test_data_wranglers.py (extend) |
+| BarDataWrangler | DataFrame → Bar conversion | backtesting_and_simulation.md | test_data_wranglers.py (extend) |
+| Position margin calc | `position.quantity * avg_px_open * perp.margin_init` | derivatives.md | test_derivatives_api.py (extend) |
 
-#### LOW Priority
-| Area | What to test | Prerequisites |
-|------|-------------|---------------|
-| Contingent orders (LIVE) | OTO/OCO/OUO bracket orders on real venue | Working order lifecycle (backtest verified ✅) |
-| Redis/Postgres persistence | State recovery, audit trail | Redis/Postgres running |
-| MessageBus streaming | External event consumption via Redis streams | Redis running |
-| Memory purge | Long-running session memory management | Long test run |
-| WS reconnection | Disconnect handling, re-subscribe, book resync | Network manipulation |
-| Custom adapter dev | LiveDataClient/LiveExecutionClient from scratch | Deep understanding |
-| SyntheticInstrument | Cross-venue spread instrument | Multi-venue backtest |
+#### LIVE-READ — Needs exchange connection, reads only (no funds at risk)
 
-## Recommended Next Steps
+| TODO | What to test | API key needed | Permissions |
+|------|-------------|----------------|-------------|
+| `BinanceFuturesMarkPriceUpdate` subscription | Subscribe custom data → `on_data` fires with mark/index/funding | `BINANCE_LINEAR_API_KEY` | Read-only (existing key works) |
+| Bar aggregation (>60s run) | Subscribe 1-MINUTE-LAST-EXTERNAL bars → `on_bar` fires | `BINANCE_LINEAR_API_KEY` | Read-only (existing key works) |
+| Mark price via `subscribe_mark_prices()` | Standard `on_mark_price` handler fires | `BINANCE_LINEAR_API_KEY` | Read-only (existing key works) |
+| OKX funding rate | `subscribe_data(BinanceFuturesMarkPriceUpdate)` equivalent on OKX | `OKX_API_KEY` | Read-only (existing key works) |
 
-1. **Fund Binance Spot** — the SPOT key has trading permissions, deposit small USDT → full order lifecycle
-2. **SimulatedExchange test** — BacktestEngine works, test fill/fee/latency models with queue_position
-3. **Longer live run** — 2+ minute test to verify bar aggregation fires in live mode
-4. **MarkPriceUpdate + FundingRateUpdate** — add subscriptions to existing dYdX/OKX tests
-5. **Fix Binance Spot exec timeout** — increase `timeout_connection` to 45s or debug why exec client takes >20s
-6. **Data wrangler tests** — QuoteTick, OrderBookDelta, Bar wranglers for data pipeline validation
+#### LIVE-TRADE — Needs funded account with trading permissions
+
+| TODO | What to test | API key needed | Permissions needed | Min deposit |
+|------|-------------|----------------|-------------------|-------------|
+| Full order lifecycle | submit→accept→fill on real venue | `BINANCE_SPOT_API_KEY` | **Enable Spot Trading** in API settings | ~$20 USDT |
+| Modify order (live) | Place limit → modify price/qty | `BINANCE_SPOT_API_KEY` | Spot Trading enabled | ~$20 USDT |
+| Cancel order (live) | Place limit far from market → cancel | `BINANCE_SPOT_API_KEY` | Spot Trading enabled | ~$20 USDT |
+| Bracket on live | `order_factory.bracket()` on futures | `BINANCE_LINEAR_API_KEY` | **Enable Futures Trading** + **Enable Futures API** | ~$50 USDT |
+| Reconciliation | `reconciliation=True`, restart node, verify state recovery | `BINANCE_SPOT_API_KEY` | Spot Trading enabled | ~$20 USDT |
+| Binance Spot exec timeout | Debug why exec client takes >20s to connect | `BINANCE_SPOT_API_KEY` | Spot Trading enabled | $0 (debug only) |
+| Bybit connectivity | Unblock IP or add test machine IP to whitelist | `BYBIT_PERP_API_KEY` | **Add current IP to whitelist** in Bybit API settings | $0 |
+
+#### INFRASTRUCTURE — Needs local services running
+
+| TODO | What to test | Service needed | Setup command |
+|------|-------------|----------------|---------------|
+| Redis state persistence | `CacheConfig(database=DatabaseConfig(type="redis"))` | Redis 7+ | `docker run -d -p 6379:6379 redis:7` |
+| MessageBus streaming | `MessageBusConfig(database=DatabaseConfig(type="redis"))` → external consumer | Redis 7+ | same |
+| PostgreSQL audit trail | `DatabaseConfig(type="postgres")` for trade log persistence | PostgreSQL 15+ | `docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=nautilus postgres:15` |
+| Memory purge (long run) | `purge_closed_orders_interval_mins`, `purge_closed_positions_interval_mins` | None (just time) | Run node for >30 min |
+
+## Action Items (Ordered by Unlock Value)
+
+### 1. Fund Binance Spot — unlocks 6 live-trade tests
+- Deposit ~$20 USDT to Binance Spot wallet
+- In API Management: verify `BINANCE_SPOT_API_KEY` has **Spot Trading** enabled
+- The key already has read permissions (data collection works)
+- Test: buy 0.001 ETH market → verify `on_order_filled` fires
+
+### 2. Fix Bybit IP restriction — unlocks 1 venue
+- Log into Bybit → API Management → edit `BYBIT_PERP_API_KEY`
+- Add current machine's IP (or set to unrestricted if testnet)
+- Current IP blocked: only `87.121.50.19` whitelisted
+
+### 3. Enable Binance Futures trading — unlocks bracket orders live
+- In Binance API settings for `BINANCE_LINEAR_API_KEY`: enable **Futures Trading**
+- Transfer ~$50 USDT to Futures wallet
+- Required for bracket/contingent order live testing
+
+### 4. Start Redis — unlocks 2 infra tests
+- `docker run -d --name nautilus-redis -p 6379:6379 redis:7`
+- No config changes needed; NautilusTrader auto-connects to localhost:6379
+
+### 5. Write offline tests — no prerequisites, highest volume
+- 21 tests can be written immediately with BacktestEngine
+- Start with: risk engine denial, TWAP, OrderEmulator, OCO
 
 ## Key Debugging Mental Model
 
