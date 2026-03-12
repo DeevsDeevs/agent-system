@@ -1,7 +1,7 @@
 ---
-name: nautilus-crypto-hft
+name: nautilus-trader
 description: >
-  NautilusTrader for crypto HFT and market making. Triggers: "nautilus_trader",
+  NautilusTrader for crypto trading. Triggers: "nautilus_trader",
   "NautilusTrader", "BacktestEngine", "BacktestNode", "TradingNode",
   "SimulatedExchange", "StrategyConfig", "ExecAlgorithm", "OrderEmulator",
   "DataEngine", "ExecutionEngine", "RiskEngine", "MessageBus", "NautilusKernel",
@@ -26,7 +26,7 @@ description: >
   "queue_for_executor", "enrichment actor".
 ---
 
-# NautilusTrader — Crypto HFT
+# NautilusTrader
 
 High-performance algorithmic trading platform. Hybrid Python/Rust/Cython architecture for backtesting and live deployment. Single-threaded event-driven kernel for determinism.
 

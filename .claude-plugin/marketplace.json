@@ -107,9 +107,9 @@
       "skills": ["./"]
     },
     {
-      "name": "nautilus-crypto-hft",
+      "name": "nautilus-trader",
       "description": "NautilusTrader for crypto HFT: market making, order book strategies, adapter development (Python/Rust), microstructure analysis, backtesting, live trading — Binance, Bybit, dYdX, OKX",
-      "source": "./nautilus-crypto-hft",
+      "source": "./nautilus-trader",
       "skills": ["./"]
     }
   ]

@@ -2,7 +2,7 @@
 
 **Date**: 2026-03-12
 **Version**: nautilus_trader 1.224.0, Python 3.14.3
-**Test suite**: `tests/live_venue_tests/` + `nautilus-crypto-hft/examples/`
+**Test suite**: `tests/live_venue_tests/` + `nautilus-trader/examples/`
 
 ## Skill Fixes Applied
 
