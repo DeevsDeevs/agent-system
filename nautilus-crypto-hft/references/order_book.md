@@ -141,6 +141,8 @@ def _process_snapshot(self, instrument_id, snapshot_data):
 
 ## Venue-Specific Resync Protocols
 
+> **Note**: These protocols are handled internally by the NautilusTrader adapter — strategy developers do not need to implement them. This section is for understanding/debugging book synchronization issues, and for custom adapter development.
+
 ### Binance: lastUpdateId Protocol
 
 Binance order book synchronization requires careful sequence handling:

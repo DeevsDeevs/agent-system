@@ -1,6 +1,6 @@
 # Market Making
 
-Market making patterns for NautilusTrader: inventory skew, spread methods, Avellaneda-Stoikov, fee-aware quoting, and anti-fingerprinting.
+Market making patterns for NautilusTrader: inventory skew, spread methods, Avellaneda-Stoikov, and fee-aware quoting.
 
 ## Core Pattern: modify_order as Primary
 
@@ -117,7 +117,7 @@ skew = -(signed_qty / max_size) * skew_factor
 
 ```python
 half_spread = Decimal("0.0005")  # 5 bps each side = 10 bps total
-# Verify: total spread (10 bps) > breakeven (7 bps for Binance VIP0)
+# Verify: total spread > breakeven (maker_fee + taker_fee)
 ```
 
 ### ATR-Based / Volatility Spread
@@ -210,12 +210,12 @@ def _avellaneda_quotes(self, mid: float, inventory: float) -> tuple[float, float
 
 ## Breakeven Spread and Fee Awareness
 
-| Venue | Maker (bps) | Taker (bps) | Breakeven (bps) |
-|-------|-------------|-------------|-----------------|
-| Binance VIP0 | 2.0 | 5.0 | 7.0 |
-| Bybit VIP0 | 2.0 | 5.5 | 7.5 |
-| dYdX | 2.0 | 5.0 | 7.0 |
-| OKX VIP0 | 2.0 | 5.0 | 7.0 |
+Fee tiers differ by exchange, VIP level, and volume. Access at runtime:
+
+```python
+maker_fee = float(instrument.maker_fee)
+taker_fee = float(instrument.taker_fee)
+```
 
 **When adverse selection forces a taker fill**: `breakeven = maker_fee + taker_fee`
 
@@ -225,32 +225,17 @@ Always verify: `config.half_spread * 2 > breakeven`. A strategy that quotes insi
 
 ## Order Sizing
 
-- Never exceed 5-10% of best level depth — larger orders leak information
-- Reduce size as position approaches max (inventory-weighted)
 - Always use `instrument.make_qty()` for lot size compliance
+- Size relative to available book depth — use `book.best_bid_size()` / `book.best_ask_size()`
 
 ```python
-import random
-
 def _safe_size(self) -> Quantity:
     book = self.cache.order_book(self.config.instrument_id)
     min_depth = min(float(book.best_bid_size() or 0), float(book.best_ask_size() or 0))
     max_frac = Decimal(str(min_depth * 0.05))
     base = min(self.config.trade_size, max_frac) if min_depth > 0 else self.config.trade_size
-    # Randomize ±5% for anti-fingerprinting
-    jitter = Decimal(str(random.uniform(0.95, 1.05)))
-    return self.instrument.make_qty(max(base * jitter, self.instrument.min_quantity))
+    return self.instrument.make_qty(max(base, self.instrument.min_quantity))
 ```
-
-## Anti-Fingerprinting
-
-| Pattern to Avoid | Mitigation |
-|-----------------|------------|
-| Fixed order sizes | Randomize ±5% with `random.uniform` |
-| Regular requote intervals | Jitter timer by ±20% |
-| Symmetric quotes | Inventory skew creates natural asymmetry |
-| Cancel+replace pairs | Use `modify_order` (single message) |
-| Round-number sizes | `instrument.make_qty()` with jittered Decimal |
 
 ## Cross-Venue Spread Capture
 

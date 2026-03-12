@@ -45,7 +45,9 @@ future.activation         # When contract becomes tradeable
 
 Mark price is used for **liquidation** and **unrealized PnL**, not for order matching.
 
-### Formula (FIXED)
+### Formula
+
+Mark price calculation **varies by exchange**. One common approach (e.g. Binance):
 
 ```
 mark_price = median(price_1, price_2, price_3)
@@ -55,7 +57,7 @@ where:
   price_3 = index_price
 ```
 
-> Note: `price_1 = (best_bid + best_ask) / 2` — parentheses are critical. Without them, operator precedence yields `best_bid + (best_ask / 2)` which is wrong.
+Other exchanges may use different formulas (weighted averages, EMA-smoothed index, etc.). **Always check your exchange's documentation** for the exact mark price methodology — it directly affects liquidation prices.
 
 ### Subscription
 
@@ -83,9 +85,9 @@ Perpetual contracts use funding to keep price aligned with spot index.
 
 ### Subscription
 
-`subscribe_funding_rates()` raises `NotImplementedError` on Binance (v1.224.0).
-The adapter does NOT construct `FundingRateUpdate` objects. However, funding data IS available
-in the mark price WebSocket stream (`@markPrice`) — the adapter emits it as `BinanceFuturesMarkPriceUpdate`.
+`subscribe_funding_rates()` is not implemented on all adapters. Funding data may be available through other channels depending on the exchange:
+
+**Binance example**: Funding data is embedded in the mark price WebSocket stream (`@markPrice`). The adapter emits `BinanceFuturesMarkPriceUpdate`:
 
 ```python
 from nautilus_trader.adapters.binance.futures.types import BinanceFuturesMarkPriceUpdate
@@ -104,23 +106,27 @@ def on_data(self, data) -> None:
         data.next_funding_ns # int — next funding timestamp (nanoseconds)
 ```
 
-The adapter handles all WebSocket lifecycle (connect, reconnect, ping/pong). No manual socket management needed.
+**Other adapters** may provide funding through different data types or require REST polling. Check each adapter's available custom data types.
 
 > For an example of extracting funding rates into standard `FundingRateUpdate` objects via
 > an Actor (custom data type pattern), see `examples/binance_enrichment_actor.py`.
 
 ### Mechanics
 
-| Parameter | Typical Value |
-|-----------|---------------|
-| Payment interval | Every 8 hours (00:00, 08:00, 16:00 UTC) |
-| Rate range | -0.75% to +0.75% per period |
-| Direction | Positive: longs pay shorts. Negative: shorts pay longs. |
+Funding parameters **vary by exchange and instrument**:
+
+| Parameter | Common Values | Notes |
+|-----------|--------------|-------|
+| Payment interval | 8h, 4h, 1h | Binance/Bybit default 8h, dYdX uses 1h, some instruments differ |
+| Rate range | Exchange-specific | Capped differently per venue |
+| Direction | Positive: longs pay shorts. Negative: shorts pay longs. | Universal |
 
 ```
 funding_payment = position_notional * funding_rate
 position_notional = abs(position_size) * mark_price
 ```
+
+**Always verify** your exchange's funding schedule for each instrument — some exchanges allow variable intervals per pair.
 
 ### Funding as Inventory Carrying Cost
 
@@ -166,13 +172,13 @@ Open Interest (OI) = total outstanding contracts. Key signal for:
 - Leverage buildup (rising OI + flat price = squeeze risk)
 - Position unwind (falling OI + falling price = long liquidation cascade)
 
-### Binance OI — REST Only (No WebSocket)
+### Open Interest Access
 
-Binance does NOT provide an OI WebSocket stream. Must poll REST:
-- Endpoint: `GET /fapi/v1/openInterest`
-- Params: `symbol` (e.g. "BTCUSDT")
-- Returns: `{"symbol":"BTCUSDT","openInterest":"82973.316","time":1773155253559}`
-- Rate limit: 1200 req/min (shared with other REST endpoints)
+OI availability varies by exchange — some provide WebSocket streams, others are REST-only. Poll via timer-based REST requests when WS is unavailable.
+
+**Example (Binance REST)**: `GET /fapi/v1/openInterest` with `symbol` param.
+
+Check [exchange_adapters.md](exchange_adapters.md) for per-venue REST endpoints and rate limits.
 
 ### Custom Data Example: OpenInterestData
 

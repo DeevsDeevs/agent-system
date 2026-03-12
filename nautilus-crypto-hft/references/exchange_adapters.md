@@ -2,6 +2,32 @@
 
 Venue-specific configuration, data types, rate limits, and resync protocols for crypto adapters in NautilusTrader.
 
+## Key Differences Across Adapters
+
+Every exchange adapter has its own configuration, authentication, data availability, and quirks. **Always check the adapter source or NautilusTrader docs for your specific exchange.**
+
+| Aspect | What Varies |
+|--------|-------------|
+| Symbology | Different suffixes, delimiters, contract naming per venue |
+| Authentication | Ed25519, HMAC, wallet keys, passphrases — check adapter config |
+| Data subscriptions | Not all subscription types implemented on all adapters |
+| `modify_order` | Supported on most — **not dYdX** (cancel+replace only) |
+| Rate limits | Weight-based (Binance), per-endpoint (Bybit), per-block (dYdX) |
+| Order book resync | Different sequence protocols per venue (lastUpdateId, crossSequence, etc.) |
+| REST data endpoints | Different paths, response formats, and available data types |
+| Instrument loading | Different config classes and account type enums |
+
+### Symbology
+
+| Venue | Spot | Perpetual | Future |
+|-------|------|-----------|--------|
+| Binance | `BTCUSDT.BINANCE` | `BTCUSDT-PERP.BINANCE` | `BTCUSDT-250328.BINANCE` |
+| Bybit | `BTCUSDT.BYBIT` | `BTCUSDT-LINEAR.BYBIT` | — |
+| OKX | `BTC-USDT.OKX` | `BTC-USDT-SWAP.OKX` | `BTC-USDT-240329.OKX` |
+| dYdX | — | `BTC-USD-PERP.DYDX` | — |
+
+Symbology is critical — using the wrong format produces silent failures (instrument not found, no data). The `-PERP` suffix is mandatory for Binance perpetuals to distinguish from spot.
+
 ## Binance
 
 **Venue ID**: `BINANCE` | **Products**: Spot, USDT-M Futures, Coin-M Futures | **Rust crate**: `crates/adapters/binance/`
@@ -30,15 +56,13 @@ exec_config = BinanceExecClientConfig(
 )
 ```
 
-### Key Type Requirements (Verified with Real Trades)
+### Authentication
 
-**Ed25519 keys are mandatory** for the exec client WS API. `session.logon` rejects HMAC-SHA-256.
+Ed25519 is the recommended key type for Binance. See [NautilusTrader Binance docs](https://nautilustrader.io/docs/nightly/integrations/binance/).
 
-- Futures + HMAC: adapter falls back to REST listenKey (works but no WS order API)
-- Spot + HMAC: NO fallback — exec client never connects
-- Ed25519: works on both Spot and Futures (verified with real money)
 - `BinanceKeyType` enum: `HMAC`, `RSA`, `ED25519` from `nautilus_trader.adapters.binance.common.enums`
-- Private key must be **unencrypted** PKCS#8 (48 bytes base64). Encrypted keys → `-1022 invalid signature`
+- Ed25519 private key must be **unencrypted** PKCS#8 format. Encrypted keys fail at signing
+- HMAC may fall back to REST-based auth on some account types, with reduced functionality
 
 ### Data Types — What Actually Works (v1.224.0 tested)
 
@@ -316,7 +340,7 @@ deltas = wrangler.process(df)
 | dYdX | **No** | Cancel + replace only |
 | OKX | Yes | Cancel + replace |
 
-For MM strategies: prefer modify_order. On dYdX, cancel+replace is the only option — budget for higher message count and fingerprinting exposure.
+For MM strategies: prefer modify_order where supported. On dYdX, cancel+replace is the only option.
 
 ## Common Patterns
 
@@ -329,10 +353,29 @@ config = SomeExchangeConfig(testnet=True)  # routes to testnet URLs
 
 ### Rate Limiting
 
-- Track request counts per endpoint
-- Backoff at 80% of limit
-- Queue requests when limit hit
-- Log warnings at threshold
+Rate limit structures differ significantly across exchanges:
+
+| Exchange | REST Limits | Order Limits | WS Limits |
+|----------|------------|-------------|-----------|
+| Binance | 2400 weight/min (endpoints cost 1-20 weight) | 10 orders/sec, 100K/day | 5 connections/sec per IP |
+| Bybit | 120 req/min per endpoint | 10 orders/sec | Per-subscription limits |
+| dYdX | Per-block (~1s for long-term orders) | 100 short-term per 10s | Indexer WS limits |
+| OKX | Per-endpoint tiered | 60 orders/2s | Connection-based |
+
+**NautilusTrader handling**:
+- Adapters internally manage rate limits for standard data subscriptions and order operations
+- `RiskEngineConfig` provides order-level rate protection:
+  ```python
+  RiskEngineConfig(
+      max_order_submit_rate="100/00:00:01",   # max 100 submits per second
+      max_order_modify_rate="100/00:00:01",   # max 100 modifies per second
+  )
+  ```
+
+**Strategy-level REST polling**: When using the HTTP client directly (e.g., OI polling via timer), calculate your request rate:
+- `requests_per_min = (instruments × polls_per_min)`
+- Stay well under the exchange limit — budget 50% headroom for other operations
+- Different endpoints may share or have separate rate limit pools
 
 ### Reconnection Protocol
 
@@ -342,13 +385,3 @@ config = SomeExchangeConfig(testnet=True)  # routes to testnet URLs
 4. Re-subscribe all active subscriptions
 5. Request snapshot for order books
 
-### Symbology
-
-| Venue | Spot | Perpetual | Future |
-|-------|------|-----------|--------|
-| Binance | `BTCUSDT.BINANCE` | `BTCUSDT-PERP.BINANCE` | `BTCUSDT-250328.BINANCE` |
-| Bybit | `BTCUSDT.BYBIT` | `BTCUSDT-LINEAR.BYBIT` | — |
-| OKX | `BTC-USDT.OKX` | `BTC-USDT-SWAP.OKX` | `BTC-USDT-240329.OKX` |
-| dYdX | — | `BTC-USD-PERP.DYDX` | — |
-
-The `-PERP` suffix is mandatory for Binance perpetuals to distinguish from spot.

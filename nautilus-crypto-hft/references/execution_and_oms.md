@@ -4,66 +4,66 @@ Order lifecycle, state machine, risk engine, execution algorithms, reconciliatio
 
 ## Full Execution Flow
 
-```
-Strategy.submit_order(order)
-  │
-  ├─ OrderInitialized event → Cache stores order → MessageBus publishes
-  │
-  ▼
-OrderEmulator (if order.emulation_trigger != NO_TRIGGER)
-  │ Holds order locally, monitors market data
-  │ On trigger → OrderReleased → transforms to MARKET/LIMIT
-  │
-  ▼
-ExecAlgorithm (if order.exec_algorithm_id set)
-  │ e.g., TWAP splits into child orders
-  │ Child IDs: {exec_spawn_id}-E{spawn_sequence}
-  │
-  ▼
-RiskEngine (MANDATORY — always runs)
-  │ Pre-trade checks: precision, positive price, quantity bounds,
-  │ max notional, reduce_only, trading state
-  │ On failure → OrderDenied (terminal)
-  │
-  ▼
-ExecutionEngine
-  │ Routes to correct ExecutionClient by venue
-  │ Handles OMS type reconciliation (strategy vs venue)
-  │ Assigns/overrides position_id on fills
-  │
-  ▼
-ExecutionClient._submit_order(command)
-  │ Translates to venue API call
-  │
-  ▼ (Venue Response)
-  ├─ ACK → generate_order_accepted()
-  ├─ FILL → generate_order_filled()
-  ├─ REJECT → generate_order_rejected()
-  └─ ERROR → generate_order_rejected()
+```mermaid
+flowchart TD
+    A["Strategy.submit_order(order)"] --> B["OrderInitialized → Cache stores → MessageBus publishes"]
+    B --> C{"OrderEmulator<br/>(emulation_trigger set?)"}
+    C -->|Yes| D["Holds locally, monitors data"]
+    D -->|Triggered| E["OrderReleased → MARKET/LIMIT"]
+    C -->|No| F{"ExecAlgorithm<br/>(exec_algorithm_id set?)"}
+    E --> F
+    F -->|Yes| G["Split into child orders<br/>IDs: spawn_id-E{seq}"]
+    F -->|No| H["RiskEngine (MANDATORY)"]
+    G --> H
+    H -->|Checks pass| I["ExecutionEngine<br/>Routes by venue, reconciles OMS"]
+    H -->|Checks fail| J["OrderDenied (terminal)"]
+    I --> K["ExecutionClient._submit_order"]
+    K --> L{"Venue Response"}
+    L -->|ACK| M["OrderAccepted"]
+    L -->|FILL| N["OrderFilled"]
+    L -->|REJECT| O["OrderRejected"]
 ```
 
 ## Order State Machine
 
-```
-INITIALIZED ──┬──→ DENIED (terminal: risk check failed)
-              ├──→ EMULATED (held by OrderEmulator)
-              │       ├──→ RELEASED → SUBMITTED
-              │       └──→ CANCELED (terminal)
-              └──→ SUBMITTED ──→ REJECTED (terminal: venue rejected)
-                       │
-                       └──→ ACCEPTED ──┬──→ CANCELED (terminal)
-                                       ├──→ EXPIRED (terminal: GTD)
-                                       ├──→ TRIGGERED (stop price hit)
-                                       │       └──→ same states as ACCEPTED
-                                       ├──→ PENDING_UPDATE
-                                       │       ├──→ ACCEPTED (update confirmed)
-                                       │       └──→ OrderModifyRejected
-                                       ├──→ PENDING_CANCEL
-                                       │       ├──→ CANCELED (terminal)
-                                       │       └──→ OrderCancelRejected
-                                       ├──→ PARTIALLY_FILLED
-                                       │       └──→ same states as ACCEPTED
-                                       └──→ FILLED (terminal)
+```mermaid
+stateDiagram-v2
+    [*] --> INITIALIZED
+    INITIALIZED --> DENIED: risk check failed
+    INITIALIZED --> EMULATED: OrderEmulator holds
+    INITIALIZED --> SUBMITTED: direct to venue
+
+    EMULATED --> SUBMITTED: RELEASED
+    EMULATED --> CANCELED
+
+    SUBMITTED --> REJECTED: venue rejected
+    SUBMITTED --> ACCEPTED
+
+    ACCEPTED --> CANCELED
+    ACCEPTED --> EXPIRED: GTD
+    ACCEPTED --> TRIGGERED: stop price hit
+    ACCEPTED --> PENDING_UPDATE: modify_order
+    ACCEPTED --> PENDING_CANCEL: cancel_order
+    ACCEPTED --> PARTIALLY_FILLED
+    ACCEPTED --> FILLED
+
+    TRIGGERED --> ACCEPTED
+    TRIGGERED --> CANCELED
+    TRIGGERED --> FILLED
+
+    PENDING_UPDATE --> ACCEPTED: update confirmed
+    PENDING_CANCEL --> CANCELED
+
+    PARTIALLY_FILLED --> CANCELED
+    PARTIALLY_FILLED --> FILLED
+    PARTIALLY_FILLED --> PENDING_UPDATE
+    PARTIALLY_FILLED --> PENDING_CANCEL
+
+    DENIED --> [*]
+    REJECTED --> [*]
+    CANCELED --> [*]
+    EXPIRED --> [*]
+    FILLED --> [*]
 ```
 
 **Terminal states**: DENIED, REJECTED, CANCELED, EXPIRED, FILLED
@@ -264,13 +264,18 @@ Exact duplicates → skipped with warning. Noisy duplicates (same trade_id, diff
 
 ### Lifecycle
 
-```
-OPENING → (first fill)
-OPEN → (fills adjust qty/avg_price)
-  ├─ LONG (positive net qty)
-  └─ SHORT (negative net qty)
-CLOSING → (net qty approaching zero)
-CLOSED → (net qty == 0, realized PnL computed)
+```mermaid
+stateDiagram-v2
+    [*] --> OPENING: first fill
+    OPENING --> OPEN
+    OPEN --> LONG: positive net qty
+    OPEN --> SHORT: negative net qty
+    LONG --> CLOSING: reducing fills
+    SHORT --> CLOSING: reducing fills
+    LONG --> SHORT: flip through zero
+    SHORT --> LONG: flip through zero
+    CLOSING --> CLOSED: net qty == 0
+    CLOSED --> [*]
 ```
 
 ### PnL Tracking

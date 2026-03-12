@@ -14,7 +14,7 @@ description: >
   "maturin nautilus", "RecordFlag F_LAST", "OMS internals", "reconciliation",
   "order book delta processing", "L2 L3 order book", "market making nautilus",
   "HFT order book strategy", "microprice", "adverse selection", "VPIN",
-  "breakeven spread", "anti-fingerprinting", "CryptoPerpetual", "CryptoFuture",
+  "breakeven spread", "CryptoPerpetual", "CryptoFuture",
   "funding rate", "mark price", "liquidation", "fill model", "fee model",
   "latency model", "queue position", "custom adapter crypto",
   "OrderList", "submit_order_list", "ContingencyType", "bracket order",
@@ -189,26 +189,24 @@ SMA/EMA/RSI produce **partial values** before warmup — not NaN, not zero, just
 
 ## Data Subscriptions — What Actually Works
 
-Subscriptions are adapter-dependent. Strategy has the methods, but not all adapters implement them.
+Subscriptions are adapter-dependent. Strategy has the methods, but not all adapters implement them. Availability varies — check [exchange_adapters.md](references/exchange_adapters.md) for per-venue support.
 
-| Subscription | Binance | Callback | Notes |
+| Subscription | Typical | Callback | Notes |
 |-------------|---------|----------|-------|
-| `subscribe_trade_ticks` | **YES** | `on_trade_tick` | ~100/s per 10 perps |
-| `subscribe_quote_ticks` | **YES** | `on_quote_tick` | ~600/s — BBO bookTicker, highest volume |
-| `subscribe_order_book_deltas` | **YES** | `on_order_book_deltas` | ~113/s — L2 incremental + snapshot rebuild |
-| `subscribe_mark_prices` | **YES** | `on_mark_price` | ~9/s — includes funding info |
+| `subscribe_trade_ticks` | **YES** | `on_trade_tick` | aggTrade / publicTrade stream |
+| `subscribe_quote_ticks` | **YES** | `on_quote_tick` | BBO bookTicker — highest volume |
+| `subscribe_order_book_deltas` | **YES** | `on_order_book_deltas` | L2 incremental + snapshot rebuild |
+| `subscribe_mark_prices` | **YES** | `on_mark_price` | includes funding info on some adapters |
 | `subscribe_bars` | **YES** | `on_bar` | EXTERNAL kline stream, 1/min/instrument |
-| `subscribe_order_book_depth` | **NO** | `on_order_book_depth` | NotImplementedError — use deltas instead |
-| `subscribe_funding_rates` | **NO** | `on_funding_rate` | NotImplementedError — use mark prices or REST |
-| `subscribe_index_prices` | **NO** | `on_index_price` | NotImplementedError |
-| `subscribe_instrument_status` | **NO** | `on_instrument_status` | NotImplementedError |
+| `subscribe_order_book_depth` | **SOME** | `on_order_book_depth` | Not on all adapters — use deltas as fallback |
+| `subscribe_funding_rates` | **SOME** | `on_funding_rate` | Not on all adapters — use mark prices or REST |
+| `subscribe_index_prices` | **SOME** | `on_index_price` | Not on all adapters |
+| `subscribe_instrument_status` | **SOME** | `on_instrument_status` | Not on all adapters |
 | `subscribe_data` | **YES** | `on_data` | Custom data via MessageBus (actors, signals) |
-
-**Total throughput**: ~24,500 events/30s (~817/s) across 10 Binance Futures instruments.
 
 ### REST-Only Data (OI, Funding, Long/Short)
 
-Not available via subscription — use `BinanceHttpClient` directly. See [exchange_adapters.md](references/exchange_adapters.md) for code examples. Endpoints: `/fapi/v1/openInterest`, `/fapi/v1/fundingRate`, `/fapi/v1/premiumIndex`, `/futures/data/topLongShortPositionRatio`. Liquidations endpoint deprecated (returns 400).
+Some data types are not available via subscription on any adapter — use the adapter's HTTP client directly. See [exchange_adapters.md](references/exchange_adapters.md) for per-venue code examples and endpoints.
 
 ## Execution Methods
 
@@ -363,8 +361,6 @@ def on_bar(self, bar: Bar) -> None:
         return  # warmup period (e.g. 20 bars for SMA(20))
 ```
 
-**RSI range**: `[0.0, 1.0]`, not `[0, 100]`. Multiply by 100 if needed.
-
 ## Signals (Native API)
 
 `publish_signal(name="momentum", value=42.5, ts_event=tick.ts_event)` → auto-generates `SignalMomentum` class. Subscribe: `subscribe_signal(name="momentum")` or `subscribe_signal()` for all. Handler: `on_signal(self, signal)` — `signal.value` is the value, `type(signal).__name__` for routing. Values must be int/float/str only (dict → KeyError). For structured data, use `Data` subclass + `publish_data` (see [actors_and_signals.md](references/actors_and_signals.md)).
@@ -395,22 +391,9 @@ trades.sort(key=lambda x: x.ts_init)
 catalog.write_data(trades)
 ```
 
-## Crypto HFT Essentials
-
-**Breakeven spread**: `breakeven = taker_fee + maker_fee`. You must quote wider than this.
-
-| Venue | Maker | Taker | Breakeven (bps) |
-|-------|-------|-------|-----------------|
-| Binance VIP0 | 2.0 bps | 5.0 bps | 7.0 |
-| Bybit VIP0 | 2.0 bps | 5.5 bps | 7.5 |
-| dYdX | 2.0 bps | 5.0 bps | 7.0 |
-| OKX VIP0 | 2.0 bps | 5.0 bps | 7.0 |
-
-**Order sizing**: Never exceed 5–10% of best level depth. Larger orders leak information.
-
-**Anti-fingerprinting**: Randomize sizes (±5%), vary requote intervals, use `modify_order` (not cancel+replace).
-
 ## Live TradingNode
+
+Each exchange adapter has its own config classes, factory, and auth requirements. Example (Binance):
 
 ```python
 from nautilus_trader.adapters.binance import (
@@ -419,8 +402,6 @@ from nautilus_trader.adapters.binance import (
 )
 from nautilus_trader.adapters.binance.common.enums import BinanceKeyType
 
-# key_type=BinanceKeyType.ED25519 REQUIRED on both data and exec configs
-# HMAC rejected by exec WS API session.logon — Ed25519 only
 node = TradingNode(config=TradingNodeConfig(
     timeout_connection=30,
     data_clients={BINANCE: BinanceDataClientConfig(
@@ -442,7 +423,7 @@ node.build()
 node.run()  # blocks until SIGINT
 ```
 
-Ed25519 key must be unencrypted PKCS#8 (encrypted → `-1022`). ETHUSDT min notional: Spot=5, Futures=20 USDT. See [live_trading.md](references/live_trading.md).
+Auth varies by exchange (Binance=Ed25519, Bybit/OKX=HMAC, dYdX=wallet keys). Min notional/qty constraints loaded at runtime via InstrumentProvider — check `instrument.min_notional`. See [exchange_adapters.md](references/exchange_adapters.md) for per-venue config and [live_trading.md](references/live_trading.md) for full setup.
 
 ## Mental Model — How It Actually Works
 
@@ -450,9 +431,9 @@ Ed25519 key must be unencrypted PKCS#8 (encrypted → `-1022`). ETHUSDT min noti
 
 **Clock**: `self.clock.set_timer("name", interval=timedelta(seconds=10), callback=handler)` for recurring, `self.clock.set_time_alert("name", alert_time, callback=handler)` for one-shot. `cancel_timer("name")` to stop. `utc_now()` returns pandas Timestamp, `timestamp_ns()` returns int. No `on_timer()` method exists. See [clock_and_timers.md](references/clock_and_timers.md).
 
-**Instruments**: `load_ids=frozenset({...})` for 3s startup. `load_all=True` takes 5+ minutes. Use enum `BinanceAccountType.USDT_FUTURES` (string "USDT_FUTURES" causes AttributeError).
+**Instruments**: `load_ids=frozenset({...})` for fast startup. `load_all=True` takes minutes. Use adapter-specific enums for account types (e.g. `BinanceAccountType.USDT_FUTURES`) — strings cause AttributeError.
 
-**Books**: Only populated if you subscribe to book data. `cache.order_book()` returns None otherwise. Book rebuilds via REST snapshot + incremental deltas. BTC spread ~0.01bps, ETH ~0.05bps on Binance.
+**Books**: Only populated if you subscribe to book data. `cache.order_book()` returns None otherwise. Book rebuilds via REST snapshot + incremental deltas. Spreads vary by instrument and venue.
 
 **Fills**: `fills > orders` is normal — single order can produce multiple partial fills. CASH account + `frozen_account=False` silently produces 0 fills if balance insufficient. Use `AccountType.MARGIN` for derivatives.
 
@@ -488,13 +469,13 @@ These are common hallucinations. None exist in v1.224.0:
 | `BollingerBands(20)` | `BollingerBands(20, 2.0)` — k is mandatory |
 | `MACD(12, 26, 9)` | 3rd param is `MovingAverageType`, not signal_period |
 | `TestDataProvider.audusd_ticks()` | `dp.read_csv_ticks("binance/ethusdt-trades.csv")` |
-| `subscribe_funding_rates()` on Binance | NotImplementedError — use BinanceEnrichmentActor pattern |
-| OI WebSocket stream on Binance | Does not exist — must poll REST `/fapi/v1/openInterest` on timer |
+| `subscribe_funding_rates()` on some adapters | NotImplementedError — use enrichment Actor pattern with REST polling |
+| OI WebSocket stream on some exchanges | May not exist — poll REST on timer, check per-venue availability |
 | `publish_signal(value=dict(...))` | KeyError — signal values must be int, float, or str only |
-| HMAC keys for Binance exec WS API | `session.logon` rejects HMAC — use `BinanceKeyType.ED25519` |
-| Encrypted Ed25519 private key | `-1022 invalid signature` — must be unencrypted PKCS#8 |
-| `subscribe_order_book_depth()` on Binance | NotImplementedError — use `subscribe_order_book_deltas()` |
-| `subscribe_instrument_status()` on Binance | NotImplementedError |
+| HMAC keys for exec WS API (some exchanges) | Rejected — check adapter docs for required auth method |
+| Encrypted Ed25519 private key | Fails — must be unencrypted PKCS#8 |
+| `subscribe_order_book_depth()` on some adapters | NotImplementedError — use `subscribe_order_book_deltas()` |
+| `subscribe_instrument_status()` on some adapters | NotImplementedError — monitor via REST or external feeds |
 | `on_timer()` as Strategy callback | Use `clock.set_timer(callback=handler)` |
 | `order.order_side` | `order.side` — events use `event.order_side`, orders use `order.side` |
 | `is_bracket` as property | `bracket.is_bracket()` is a method, not property |

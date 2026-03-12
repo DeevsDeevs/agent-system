@@ -42,12 +42,12 @@ python -c "import nautilus_trader; print(nautilus_trader.__version__)"
 
 ### Pipeline
 
-```
-build.py (orchestrator)
-  ├── cargo build (Rust crates → native libraries)
-  ├── maturin develop (Rust → Python extension module)
-  │   └── Produces: nautilus_trader/_libnautilus.so
-  └── Python package assembly
+```mermaid
+flowchart LR
+    A["build.py<br/>(orchestrator)"] --> B["cargo build<br/>Rust crates → native libs"]
+    A --> C["maturin develop<br/>Rust → Python extension"]
+    C --> D["nautilus_trader/_libnautilus.so"]
+    A --> E["Python package assembly"]
 ```
 
 ### Makefile Targets

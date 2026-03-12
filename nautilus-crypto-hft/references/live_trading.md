@@ -274,63 +274,42 @@ External systems consume Nautilus events via Redis streams.
 
 For detailed error recovery, circuit breakers, reconnection handling, and production monitoring patterns, see [operational_patterns.md](operational_patterns.md).
 
-## Binance Key Type Requirements (Verified with Real Trades)
+## Exchange Authentication
 
-**Ed25519 keys are REQUIRED** for the Binance exec client WS API (`/ws-api/v3`). The `session.logon` endpoint rejects HMAC-SHA-256 keys.
+Authentication method and key type vary by exchange. Check the adapter's config class for required parameters.
 
-| Key Type | Data Client | Exec Client (Spot) | Exec Client (Futures) |
-|----------|-------------|--------------------|-----------------------|
-| HMAC | Works | **FAILS** — `session.logon` rejects | Works (REST listenKey fallback) |
-| Ed25519 | Works | **Works** | **Works** |
+| Exchange | Auth Method | Config Parameter | Notes |
+|----------|-------------|-----------------|-------|
+| Binance | Ed25519 (recommended) | `key_type=BinanceKeyType.ED25519` | HMAC may not work for exec WS API |
+| Bybit | HMAC | `api_key`, `api_secret` | Standard HMAC-SHA256 |
+| OKX | HMAC + passphrase | `api_key`, `api_secret`, `passphrase` | Requires passphrase |
+| dYdX | Cosmos wallet | `wallet_address`, `private_key` | On-chain transactions |
 
-```python
-from nautilus_trader.adapters.binance.common.enums import BinanceKeyType
-# BinanceKeyType.HMAC, BinanceKeyType.RSA, BinanceKeyType.ED25519
+**How to check for your exchange**:
+1. Look at the adapter's `*ExecClientConfig` class for auth-related fields
+2. Check the NautilusTrader docs for your adapter: `https://nautilustrader.io/docs/nightly/integrations/<exchange>/`
+3. Some exchanges require encrypted key formats, others reject them — test on testnet first
 
-# MUST set key_type on BOTH data and exec configs:
-BinanceDataClientConfig(api_key=key, api_secret=secret, key_type=BinanceKeyType.ED25519, ...)
-BinanceExecClientConfig(api_key=key, api_secret=secret, key_type=BinanceKeyType.ED25519, ...)
-```
+**General rule**: If an adapter has a `key_type` field, set it explicitly. Ed25519 private keys must be unencrypted PKCS#8 format. Encrypted keys typically fail at signing.
 
-**Ed25519 key format**: The private key MUST be unencrypted PKCS#8 (48 bytes base64, starts with `MC4CAQAw`). Encrypted (PBES2) keys fail with `-1022 invalid signature`. Decrypt with: `openssl pkey -in encrypted.pem -out decrypted.pem`
+## Instrument Constraints
 
-### HMAC Fallback Behavior
-
-The adapter's `_use_rest_listen_key` property returns `True` for futures + non-Ed25519. This means:
-- **Futures + HMAC**: adapter skips WS API entirely, uses REST `POST /fapi/v1/listenKey` — data works, but no WS order API
-- **Spot + HMAC**: NO fallback — `session.logon` fails, exec client never connects, orders fail with "no execution client found"
-
-## Min Notional Requirements (Verified)
-
-| Pair | Market | Min Notional | Min Qty | Step | Example |
-|------|--------|-------------|---------|------|---------|
-| ETHUSDT | Spot | 5 USDT | 0.0001 ETH | 0.0001 | 0.005 ETH × $2075 = $10.38 ✓ |
-| ETHUSDT | Futures | **20 USDT** | 0.001 ETH | 0.001 | 0.010 ETH × $2075 = $20.75 ✓ |
-
-RiskEngine also checks `NOTIONAL_EXCEEDS_FREE_BALANCE` for spot — limit order notional must be ≤ free balance.
-
-### Futures Leverage
-
-New Binance Futures accounts default to **1x leverage**. Must set via API before trading:
+Instrument constraints (min notional, min quantity, step size, leverage limits) are loaded from the exchange at startup via InstrumentProvider. Access at runtime:
 
 ```python
-# POST /fapi/v1/leverage
-# Returns: {"symbol": "ETHUSDT", "leverage": 10, "maxNotionalValue": "150000000"}
+instrument = self.cache.instrument(instrument_id)
+instrument.min_notional    # minimum order value
+instrument.min_quantity    # minimum order size
+instrument.min_price       # minimum tick price
+instrument.maker_fee       # maker fee rate
+instrument.taker_fee       # taker fee rate
 ```
 
-At 10x leverage, 0.010 ETH ($20.75) requires only ~$2.08 margin.
+Configure leverage and internal transfers via each exchange's own REST API — these are not managed by NautilusTrader.
 
-### Internal Transfers
+## Order Lifecycle
 
-```python
-# Spot → USDT-M Futures: POST /sapi/v1/asset/transfer
-# type=MAIN_UMFUTURE, asset=USDT, amount=15
-```
+**Market order**: submit → OrderSubmitted → OrderAccepted → OrderFilled (possibly multiple partial fills)
+**Limit order**: submit → Submitted → Accepted → (modify) → PendingUpdate → Updated → (cancel) → PendingCancel → Canceled
 
-## Order Lifecycle (Verified with Real Trades)
-
-**Market order (Spot)**: submit → OrderSubmitted → OrderAccepted → OrderFilled
-**Market order (Futures)**: submit → OrderSubmitted → OrderFilled (possibly multiple partial fills)
-**Limit order (Futures)**: submit → Submitted → Accepted → (modify) → PendingUpdate → Updated → (cancel) → PendingCancel → Canceled
-
-Partial fills are normal: a 0.010 ETH market order on futures produced 2 fills (0.003 + 0.007). Position events: PositionOpened → PositionChanged (on second fill) → PositionClosed (on close).
+Partial fills are normal — a single order can produce multiple fills. Position events: PositionOpened → PositionChanged (on subsequent fills) → PositionClosed (on close).

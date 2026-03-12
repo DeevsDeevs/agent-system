@@ -191,19 +191,18 @@ For pure MM where both sides fill as maker:
 breakeven_spread = 2 * maker_fee
 ```
 
-### Venue Fee Tiers
+### Venue Fees at Runtime
 
-| Venue | Tier | Maker (bps) | Taker (bps) | Breakeven (bps) |
-|-------|------|-------------|-------------|-----------------|
-| Binance | VIP0 | 2.0 | 5.0 | 7.0 |
-| Binance | VIP3 | 1.4 | 3.5 | 4.9 |
-| Bybit | VIP0 | 2.0 | 5.5 | 7.5 |
-| Bybit | VIP3 | 1.0 | 3.5 | 4.5 |
-| dYdX | Default | 2.0 | 5.0 | 7.0 |
-| OKX | VIP0 | 2.0 | 5.0 | 7.0 |
-| OKX | VIP3 | 1.4 | 3.2 | 4.6 |
+Fee tiers differ by exchange, VIP level, volume, and token discounts. Access fees loaded from the exchange at runtime:
 
-Token discounts (BNB on Binance: 10% off) shift breakeven. Factor into strategy config.
+```python
+instrument = self.cache.instrument(instrument_id)
+maker_fee = float(instrument.maker_fee)
+taker_fee = float(instrument.taker_fee)
+breakeven = maker_fee + taker_fee
+```
+
+**FeeModel is backtest-only** — live trading uses actual fees from exchange fill reports. For realistic backtesting, configure a custom `FeeModel` that matches your actual fee tier (see below).
 
 ### Custom FeeModel in Backtest
 
@@ -212,12 +211,18 @@ from nautilus_trader.backtest.models import FeeModel
 from nautilus_trader.model.objects import Money
 
 class TieredCryptoFeeModel(FeeModel):
+    def __init__(self, maker_rate: float = 0.0002, taker_rate: float = 0.0005):
+        self._maker_rate = maker_rate
+        self._taker_rate = taker_rate
+
     def get_commission(self, order, fill_qty, fill_px, instrument) -> Money:
         notional = float(fill_qty) * float(fill_px)
-        rate = 0.0002 if order.is_passive else 0.0005  # maker/taker
+        rate = self._maker_rate if order.is_passive else self._taker_rate
         fee = notional * rate
         return Money(fee, instrument.quote_currency)
 ```
+
+Configure `maker_rate` and `taker_rate` to match your actual exchange tier. Check your exchange's fee schedule — rates vary by VIP level, volume, and token discount programs.
 
 ## Naive Fill Model Bias
 
@@ -248,14 +253,9 @@ Even with queue position enabled, adverse selection is not modeled. The fill-whe
 
 For MM strategies, expect 30-50% of backtest PnL in live. If a backtest shows 100 bps/day, budget for 30-50 bps/day live. If the strategy isn't profitable with a 50% haircut, it won't work live.
 
-## Order Sizing
+## Order Sizing via Book Depth API
 
-### Size Relative to Book Depth
-
-Never exceed 5-10% of best level depth. Larger orders:
-- Signal your presence to other participants
-- Increase adverse selection (informed traders target visible size)
-- Create market impact on your own fills
+NautilusTrader provides full book depth access for sizing decisions:
 
 ```python
 def _compute_safe_size(self) -> Decimal:
@@ -263,53 +263,10 @@ def _compute_safe_size(self) -> Decimal:
     best_bid_size = float(book.best_bid_size()) if book.best_bid_size() else 0
     best_ask_size = float(book.best_ask_size()) if book.best_ask_size() else 0
     min_depth = min(best_bid_size, best_ask_size)
-    max_frac = min_depth * 0.05  # 5% of thinner side
+    # Size relative to available liquidity — tune fraction per your strategy
+    max_frac = min_depth * 0.05
     size = min(float(self.config.trade_size), max_frac)
     return self.instrument.make_qty(Decimal(str(max(size, float(self.instrument.min_quantity)))))
 ```
 
-### Inventory-Weighted Sizing
-
-Reduce size as position grows toward maximum:
-
-```python
-def _inventory_adjusted_size(self) -> Decimal:
-    positions = self.cache.positions_open(instrument_id=self.config.instrument_id)
-    pos = positions[0] if positions else None
-    utilization = abs(pos.signed_qty / float(self.config.max_size)) if pos else 0
-    scale = max(0.2, 1.0 - utilization)  # minimum 20% of base size
-    return self.instrument.make_qty(self.config.trade_size * Decimal(str(scale)))
-```
-
-## Information Leakage and Anti-Fingerprinting
-
-### Detectable Patterns
-
-Other participants (including exchange surveillance) can detect and exploit:
-- **Fixed sizes**: Always quoting 0.1 BTC → trivial to identify your orders
-- **Regular intervals**: Requoting every 100ms on the dot
-- **Symmetric quotes**: Bid and ask always equidistant from mid
-- **Cancel+replace sequences**: Cancel both sides → resubmit both sides within microseconds
-
-### Mitigations
-
-```python
-import random
-
-def _randomize_size(self, base_size: Decimal) -> Decimal:
-    jitter = Decimal(str(random.uniform(0.95, 1.05)))
-    return self.instrument.make_qty(base_size * jitter)
-
-def _jittered_timer(self, base_ms: int = 100) -> None:
-    jitter_ms = random.randint(-20, 20)
-    self.clock.set_timer(
-        name="requote",
-        interval=timedelta(milliseconds=base_ms + jitter_ms),
-    )
-```
-
-**modify_order over cancel+replace**: `self.modify_order()` sends a single amend message. Cancel+replace sends two messages that are trivially linked. Use modify as primary; fall back to cancel+replace only when modify is rejected or unsupported (dYdX).
-
-**Asymmetric spreads**: Instead of symmetric `mid ± half_spread`, use inventory skew to create naturally asymmetric quotes. This looks like organic market making rather than algorithmic symmetry.
-
-**Avoid round numbers**: 0.1000 BTC is suspicious. 0.0973 BTC is not. The randomization above handles this, but verify with `instrument.make_qty()` that the result respects lot size.
+Always use `instrument.make_qty()` for lot size compliance.
