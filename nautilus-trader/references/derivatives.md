@@ -2,6 +2,8 @@
 
 CryptoPerpetual, CryptoFuture, mark price, funding rates, liquidation, and circuit breakers in NautilusTrader.
 
+> **Options**: For CryptoOption, OptionContract, OptionSpread, BinaryOption, greeks calculation, and Black-Scholes functions, see [options_and_greeks.md](options_and_greeks.md).
+
 ## Instrument Types
 
 ### CryptoPerpetual
@@ -32,14 +34,57 @@ future.expiration         # Expiration datetime
 future.activation         # When contract becomes tradeable
 ```
 
+### PerpetualContract
+
+General-purpose perpetual for **any asset class** — FX, equities, commodities, indexes, crypto. Unlike `CryptoPerpetual` (crypto-specific), `underlying` is a `str` and `asset_class` is configurable.
+
+```python
+from nautilus_trader.model.instruments import PerpetualContract
+from nautilus_trader.model.enums import AssetClass
+
+perp = PerpetualContract(
+    instrument_id=InstrumentId.from_str("EURUSD-PERP.VENUE"),
+    raw_symbol=Symbol("EURUSD-PERP"),
+    underlying="EURUSD",                       # str, not Currency
+    asset_class=AssetClass.FX,                 # any asset class
+    quote_currency=Currency.from_str("USD"),
+    settlement_currency=Currency.from_str("USD"),
+    is_inverse=False,
+    price_precision=5,
+    size_precision=0,
+    price_increment=Price.from_str("0.00001"),
+    size_increment=Quantity.from_int(1),
+    ts_event=0,
+    ts_init=0,
+)
+
+perp.underlying              # "EURUSD"
+perp.asset_class             # AssetClass.FX
+```
+
+Use `CryptoPerpetual` for crypto venues (Binance, Bybit, etc.). Use `PerpetualContract` when the underlying is non-crypto or when the adapter provides it.
+
+### CryptoOption
+
+Crypto options (Deribit, Bybit). Settlement in crypto. See [options_and_greeks.md](options_and_greeks.md) for full details.
+
+```python
+from nautilus_trader.model.instruments import CryptoOption
+# CryptoOption(instrument_id, raw_symbol, underlying=Currency, quote_currency, settlement_currency,
+#              is_inverse, option_kind, strike_price, activation_ns, expiration_ns, ...)
+```
+
+Key fields: `underlying` (Currency), `settlement_currency`, `option_kind` (OptionKind.CALL/PUT), `strike_price`, `is_inverse`.
+
 ### Comparison
 
-| Feature | CryptoPerpetual | CryptoFuture |
-|---------|----------------|--------------|
-| Expiry | None | Fixed settlement date |
-| Funding | Every 8h (typically) | None |
-| Price anchor | Funding rate | Convergence at expiry |
-| Basis | Funding premium | Contango/backwardation |
+| Feature | CryptoPerpetual | CryptoFuture | CryptoOption |
+|---------|----------------|--------------|-------------|
+| Expiry | None | Fixed settlement | Fixed expiry |
+| Funding | Every 8h (typically) | None | None |
+| Price anchor | Funding rate | Convergence at expiry | Black-Scholes |
+| Basis | Funding premium | Contango/backwardation | Time value + vol |
+| Greeks | delta=1 | delta=1 | Full greeks via GreeksCalculator |
 
 ## Mark Price
 
@@ -234,33 +279,28 @@ When insurance fund depletes, the exchange forcibly closes profitable opposing p
 
 `frozen_account=False` enforces margin checks — orders exceeding margin are rejected. Remember: False = checks active (confusing naming).
 
-## Circuit Breakers
+## Circuit Breakers & Market Halts
 
-**NOTE**: `subscribe_instrument_status()` is NOT IMPLEMENTED on Binance adapter (v1.224.0).
-The on_instrument_status callback will never fire. Monitor via REST or external feeds.
+Exchanges can halt/pause trading for various reasons (price limits, volatility, maintenance). NautilusTrader provides `InstrumentStatus` events for this, but **adapter support varies** — Binance does NOT implement `subscribe_instrument_status()`. See [traditional_finance.md](traditional_finance.md#market-session--instrument-status) for the full `MarketStatusAction` / `TradingState` system.
 
 ```python
 from nautilus_trader.model.data import InstrumentStatus
 from nautilus_trader.model.enums import MarketStatusAction
 
 def on_start(self) -> None:
-    # WARNING: NotImplementedError on Binance — won't receive events
+    # Not all adapters support this — check adapter docs
     self.subscribe_instrument_status(self.config.instrument_id)
     self._halted = False
 
 def on_instrument_status(self, status: InstrumentStatus) -> None:
-    if status.action == MarketStatusAction.HALT:
+    if status.action in (MarketStatusAction.HALT, MarketStatusAction.PAUSE):
         self._halted = True
         self.cancel_all_orders(self.config.instrument_id)
-    elif status.action == MarketStatusAction.RESUME:
+    elif status.action == MarketStatusAction.TRADING:
         self._halted = False
 ```
 
-| Trigger | Description |
-|---------|-------------|
-| Price limit | Price moves beyond daily limit (±10%) |
-| Volatility | Rapid movement triggers cooldown |
-| Maintenance | Scheduled exchange maintenance |
+**Note**: `MarketStatusAction.RESUME` does not exist — use `TRADING` to detect resumption. HALT, PAUSE, and SUSPEND are functionally equivalent in v1.224.0 — the backtest matching engine does not enforce them. Your strategy must implement halt logic manually.
 
 ## Position Margin
 

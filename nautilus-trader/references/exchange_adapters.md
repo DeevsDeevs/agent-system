@@ -6,6 +6,8 @@ Venue-specific configuration, data types, rate limits, and resync protocols for 
 
 Every exchange adapter has its own configuration, authentication, data availability, and quirks. **Always check the adapter source or NautilusTrader docs for your specific exchange.**
 
+**Important**: Authentication methods, rate limits, fee structures, and API endpoints can change at any time on the exchange side. The examples below show NautilusTrader's config API — verify exchange-side requirements against their current docs.
+
 | Aspect | What Varies |
 |--------|-------------|
 | Symbology | Different suffixes, delimiters, contract naming per venue |
@@ -19,12 +21,17 @@ Every exchange adapter has its own configuration, authentication, data availabil
 
 ### Symbology
 
-| Venue | Spot | Perpetual | Future |
-|-------|------|-----------|--------|
-| Binance | `BTCUSDT.BINANCE` | `BTCUSDT-PERP.BINANCE` | `BTCUSDT-250328.BINANCE` |
-| Bybit | `BTCUSDT.BYBIT` | `BTCUSDT-LINEAR.BYBIT` | — |
-| OKX | `BTC-USDT.OKX` | `BTC-USDT-SWAP.OKX` | `BTC-USDT-240329.OKX` |
-| dYdX | — | `BTC-USD-PERP.DYDX` | — |
+| Venue | Spot | Perpetual | Future | Option/Other |
+|-------|------|-----------|--------|--------------|
+| Binance | `BTCUSDT.BINANCE` | `BTCUSDT-PERP.BINANCE` | `BTCUSDT-250328.BINANCE` | — |
+| Bybit | `BTCUSDT.BYBIT` | `BTCUSDT-LINEAR.BYBIT` | — | — |
+| OKX | `BTC-USDT.OKX` | `BTC-USDT-SWAP.OKX` | `BTC-USDT-240329.OKX` | — |
+| dYdX | — | `BTC-USD-PERP.DYDX` | — | — |
+| Deribit | `BTC_USDC.DERIBIT` | `BTC-PERPETUAL.DERIBIT` | `BTC-28MAR25.DERIBIT` | `BTC-28MAR25-100000-C.DERIBIT` |
+| Hyperliquid | — | `BTC-USD-PERP.HYPERLIQUID` | — | — |
+| Kraken | `XXBTZUSD.KRAKEN` | (futures separate) | — | — |
+| Polymarket | — | — | — | `{token_id}.POLYMARKET` (BinaryOption) |
+| Betfair | — | — | — | `{market_id}-{sel_id}-{handicap}.BETFAIR` |
 
 Symbology is critical — using the wrong format produces silent failures (instrument not found, no data). The `-PERP` suffix is mandatory for Binance perpetuals to distinguish from spot.
 
@@ -58,11 +65,9 @@ exec_config = BinanceExecClientConfig(
 
 ### Authentication
 
-Ed25519 is the recommended key type for Binance. See [NautilusTrader Binance docs](https://nautilustrader.io/docs/nightly/integrations/binance/).
-
 - `BinanceKeyType` enum: `HMAC`, `RSA`, `ED25519` from `nautilus_trader.adapters.binance.common.enums`
 - Ed25519 private key must be **unencrypted** PKCS#8 format. Encrypted keys fail at signing
-- HMAC may fall back to REST-based auth on some account types, with reduced functionality
+- Auth methods and requirements may change — check the current NautilusTrader and Binance docs
 
 ### Data Types — What Actually Works (v1.224.0 tested)
 
@@ -78,9 +83,7 @@ Ed25519 is the recommended key type for Binance. See [NautilusTrader Binance doc
 | `subscribe_index_prices` | **NOT IMPL** | - | NotImplementedError |
 | `subscribe_instrument_status` | **NOT IMPL** | - | NotImplementedError |
 
-**Total throughput**: ~24,500 events/30s (~817/s) across 10 instruments.
-
-Books rebuild via REST snapshot then apply incremental deltas. BTC spread=0.01bps, ETH spread=0.05bps.
+Books rebuild via REST snapshot then apply incremental deltas.
 
 | Data Type | WS Source | Notes |
 |-----------|-----------|-------|
@@ -88,7 +91,7 @@ Books rebuild via REST snapshot then apply incremental deltas. BTC spread=0.01bp
 | `TradeTick` | aggTrade/trade | Individual trades |
 | `QuoteTick` | bookTicker | Best bid/ask |
 | `Bar` | kline / REST | All intervals |
-| `MarkPriceUpdate` | markPrice | Mark price + funding rate combined |
+| `MarkPriceUpdate` | markPrice | Mark price + funding rate combined. Note: mark price calculation methods differ per exchange (e.g., EMA-based, index-based) |
 
 ### REST Data (OI, Funding, Long/Short) — via BinanceHttpClient
 
@@ -121,10 +124,10 @@ mark = await client.send_request(HttpMethod.GET, '/fapi/v1/premiumIndex',
     {'symbol': 'BTCUSDT'})
 # {"markPrice":"68575.50","indexPrice":"68617.50","lastFundingRate":"-0.000031",...}
 
-# Top Trader Long/Short Ratio
+# Top Trader Long/Short Ratio (period and limit are configurable)
 ratio = await client.send_request(HttpMethod.GET,
     '/futures/data/topLongShortPositionRatio',
-    {'symbol': 'BTCUSDT', 'period': '5m', 'limit': '3'})
+    {'symbol': 'BTCUSDT', 'period': '5m', 'limit': '10'})
 
 # 24h Ticker (volume)
 ticker = await client.send_request(HttpMethod.GET, '/fapi/v1/ticker/24hr',
@@ -135,11 +138,7 @@ ticker = await client.send_request(HttpMethod.GET, '/fapi/v1/ticker/24hr',
 
 ### Rate Limits
 
-| Type | Limit |
-|------|-------|
-| REST weight | 2400/min (most endpoints cost 1-20 weight) |
-| Order rate | 10 orders/sec, 100K orders/day |
-| WS connections | 5/sec per IP |
+Binance uses a weight-based system for REST and separate order rate limits. Check the Binance API docs for current limits — they change and differ between spot and futures.
 
 ### modify_order
 
@@ -199,11 +198,7 @@ exec_config = BybitExecClientConfig(
 
 ### Rate Limits
 
-| Type | Limit |
-|------|-------|
-| REST | 120 req/min per endpoint |
-| Order WS | 10 orders/sec |
-| Order REST | 10 req/sec per endpoint |
+Bybit uses per-endpoint rate limits for REST and separate order rate limits. Check the Bybit API docs for current values.
 
 ### modify_order
 
@@ -246,20 +241,42 @@ exec_config = DydxExecClientConfig(
 
 ### Key Details
 
-- Cosmos SDK chain — orders submitted as **blockchain transactions** via gRPC
-- Indexer API (REST + WS) for market data
-- `DydxOraclePrice` custom data type
+- Cosmos SDK appchain — orders submitted as blockchain transactions via gRPC
+- Three transport layers: HTTP (indexer read), WebSocket (indexer read), gRPC (validator write)
+- Block time ~0.5s (variable)
+- `grpc_rate_limit_per_second=4` on exec config — controls order submission throughput
+- Multiple gRPC URL fallback: `base_url_grpc="https://primary:443,https://fallback:443"`
+
+### Order Classification
+
+| Category | Storage | Expiry | Use Case |
+|----------|---------|--------|----------|
+| Short-term | In-memory | Block height | IOC/FOK, or GTC/GTD within ~10s |
+| Long-term | On-chain | UTC timestamp | GTC (defaults 90-day), GTD |
+| Conditional | On-chain | UTC timestamp | Stop-loss, take-profit triggers |
+
+- Market orders: aggressive IOC limit at `oracle_price × 1.01` (buy) / `× 0.99` (sell)
+- Short-term orders broadcast concurrently, expire silently without cancel events
+- Long-term orders serialized via semaphore with exponential backoff
+
+### Data Subscriptions
+
+| Type | Live | Historical | Notes |
+|------|------|-----------|-------|
+| Trade ticks | Yes | Yes | — |
+| Quote ticks | Yes | No | Synthesized from order book top-of-book |
+| Order book deltas | Yes | Yes | L2 depth only |
+| Bars | Yes | Yes | 1MIN, 5MINS, 15MINS, 30MINS, 1HOUR, 4HOURS, 1DAY |
+| Mark/Index prices | Yes | No | Via markets channel |
+| Funding rates | Yes | No | Via markets channel |
 
 ### Rate Limits
 
-| Type | Limit |
-|------|-------|
-| Short-term orders | 100 per 10s per subaccount |
-| Long-term orders | 1 per block (~1s) |
+dYdX rate limits are blockchain-based — short-term orders have per-subaccount limits, long-term orders are constrained by block time. The `grpc_rate_limit_per_second` config controls adapter-side throttling. Check dYdX docs for current limits.
 
 ### modify_order
 
-**Not supported.** Cancel + replace only. This is the only major crypto venue where modify_order falls back.
+**Not supported.** Cancel + replace only.
 
 ### Factory
 
@@ -281,6 +298,281 @@ node.add_exec_client_factory(DYDX, DydxLiveExecClientFactory)
 - Trade modes: cross margin, isolated margin, cash
 - Symbology: `BTC-USDT` (spot), `BTC-USDT-SWAP` (perp), `BTC-USDT-240329` (future)
 - **modify_order**: Supported
+
+## Deribit
+
+**Venue ID**: `DERIBIT` | **Products**: Futures, Options, Spot, Future Combos, Option Combos | **Requires**: `pip install nautilus_trader[deribit]`
+
+### Configuration
+
+```python
+from nautilus_trader.adapters.deribit import (
+    DERIBIT, DeribitDataClientConfig, DeribitExecClientConfig,
+    DeribitLiveDataClientFactory, DeribitLiveExecClientFactory,
+    DeribitProductType,
+)
+from nautilus_trader.config import InstrumentProviderConfig
+
+data_config = DeribitDataClientConfig(
+    api_key="...",
+    api_secret="...",
+    product_types=(DeribitProductType.OPTION, DeribitProductType.FUTURE),
+    is_testnet=False,                  # note: is_testnet, not testnet
+    update_instruments_interval_mins=60,
+    instrument_provider=InstrumentProviderConfig(load_all=True),
+)
+
+exec_config = DeribitExecClientConfig(
+    api_key="...", api_secret="...",
+    product_types=(DeribitProductType.OPTION,),
+    is_testnet=False,
+)
+```
+
+### Key Details
+
+- **Authentication**: HMAC (api_key + api_secret). Required scopes: `account:read`, `trade:read_write`, `wallet:read`
+- **Product types**: `DeribitProductType.FUTURE`, `OPTION`, `SPOT`, `FUTURE_COMBO`, `OPTION_COMBO`
+- **Symbology**: `BTC-28MAR25-100000-C.DERIBIT` (options), `BTC-28MAR25.DERIBIT` (futures), `BTC_USDC.DERIBIT` (spot), `BTC-PERPETUAL.DERIBIT` (perps)
+- **Instruments**: `CryptoOption` for options, `CryptoFuture` for futures
+- **Inverse**: Deribit options and futures are BTC-settled (inverse). `is_inverse=True`
+- **modify_order**: Supported via `private/edit`
+- **Option greeks**: Use `GreeksCalculator` — see [options_and_greeks.md](options_and_greeks.md)
+- **Matching engine**: Equinix LD4, Slough, UK
+
+### Order Types
+
+| Type | Supported | Notes |
+|------|-----------|-------|
+| MARKET | Yes | Immediate execution |
+| LIMIT | Yes | `post_only`, `reduce_only` supported |
+| STOP_MARKET | Yes | Trigger types: `last_price`, `mark_price`, `index_price` |
+| STOP_LIMIT | Yes | Conditional limit |
+| TIF | — | GTC, GTD (expires 8 UTC), IOC, FOK |
+
+### Order Book Subscriptions
+
+```python
+# Default: 100ms batched, no auth required
+strategy.subscribe_order_book_deltas(instrument_id)
+
+# Raw tick-by-tick (requires authentication)
+strategy.subscribe_order_book_deltas(
+    instrument_id,
+    params={"interval": "raw"},  # raw, 100ms, agg2
+)
+```
+
+Depth options: `1`, `10` (default), `20`
+
+### Rate Limits
+
+Deribit uses a credit-based rate limit system with separate pools for general REST, order operations, and connection limits. Check the Deribit API docs for current values.
+
+### Testnet
+
+```python
+config = DeribitDataClientConfig(is_testnet=True)
+```
+
+### Factory
+
+```python
+node.add_data_client_factory(DERIBIT, DeribitLiveDataClientFactory)
+node.add_exec_client_factory(DERIBIT, DeribitLiveExecClientFactory)
+```
+
+## Hyperliquid
+
+**Venue ID**: `HYPERLIQUID` | **Products**: Perpetual Futures (DEX) | **Requires**: `pip install nautilus_trader[hyperliquid]`
+
+### Configuration
+
+```python
+from nautilus_trader.adapters.hyperliquid import (
+    HYPERLIQUID, HyperliquidDataClientConfig, HyperliquidExecClientConfig,
+    HyperliquidLiveDataClientFactory, HyperliquidLiveExecClientFactory,
+)
+
+data_config = HyperliquidDataClientConfig(
+    testnet=False,
+)
+
+exec_config = HyperliquidExecClientConfig(
+    private_key="...",                  # EVM wallet private key
+    vault_address=None,                 # for vault trading (optional)
+    testnet=False,
+    normalize_prices=True,              # default: True — rounds to 5 sig figs
+)
+```
+
+### Key Details
+
+- **Authentication**: EVM wallet private key (not API key). Sign orders with wallet
+- **Symbology**: `BTC-USD-PERP.HYPERLIQUID`
+- **normalize_prices**: `True` by default. Rounds prices to 5 significant figures. Example: `95123.456` → `95123.0`. Disable only if you handle precision yourself
+- **Vault trading**: Set `vault_address` to trade on behalf of a vault
+- **Order books**: Full snapshots (not deltas). Higher bandwidth than incremental adapters
+- **Cross-margin only**: No isolated margin mode
+- **On-chain settlement**: All trades settle on Hyperliquid's L1
+
+### Factory
+
+```python
+node.add_data_client_factory(HYPERLIQUID, HyperliquidLiveDataClientFactory)
+node.add_exec_client_factory(HYPERLIQUID, HyperliquidLiveExecClientFactory)
+```
+
+## Kraken
+
+**Venue ID**: `KRAKEN` | **Products**: Spot, Futures | **Requires**: `pip install nautilus_trader[kraken]`
+
+### Configuration
+
+```python
+from nautilus_trader.adapters.kraken import (
+    KRAKEN, KrakenDataClientConfig, KrakenExecClientConfig,
+    KrakenLiveDataClientFactory, KrakenLiveExecClientFactory,
+)
+
+data_config = KrakenDataClientConfig(
+    api_key="...",
+    api_secret="...",
+    product_types=None,                 # load both spot and futures
+    update_instruments_interval_mins=60,
+)
+
+exec_config = KrakenExecClientConfig(
+    api_key="...", api_secret="...",
+    product_types=None,
+    use_spot_position_reports=False,    # if True, subscribes to spot position updates
+    spot_positions_quote_currency="USDT",
+)
+```
+
+### Key Details
+
+- **Authentication**: API key + secret (separate keys for spot vs futures may be needed)
+- **Separate URLs**: `base_url_http_spot`, `base_url_http_futures`, `base_url_ws_spot`, `base_url_ws_futures`
+- **Testnet**: Futures testnet only (no spot testnet)
+- **modify_order**: Supported
+
+### Factory
+
+```python
+node.add_data_client_factory(KRAKEN, KrakenLiveDataClientFactory)
+node.add_exec_client_factory(KRAKEN, KrakenLiveExecClientFactory)
+```
+
+## Polymarket
+
+**Venue ID**: `POLYMARKET` | **Products**: Binary Options (prediction markets) | **Requires**: `pip install nautilus_trader[polymarket]` (needs `py_clob_client`)
+
+### Configuration
+
+```python
+from nautilus_trader.adapters.polymarket.config import (
+    PolymarketDataClientConfig, PolymarketExecClientConfig,
+)
+from nautilus_trader.adapters.polymarket.factories import (
+    PolymarketLiveDataClientFactory, PolymarketLiveExecClientFactory,
+)
+from nautilus_trader.adapters.polymarket.common.constants import POLYMARKET_VENUE
+
+data_config = PolymarketDataClientConfig(
+    private_key="...",                  # Polygon wallet key
+    signature_type=0,                   # 0=EOA, 1=Email/Magic, 2=Browser proxy
+    funder="...",                       # Polygon wallet address
+    api_key="...",
+    api_secret="...",
+    passphrase="...",
+    ws_max_subscriptions_per_connection=200,  # Polymarket limit: 500
+    compute_effective_deltas=False,     # ~1ms overhead if True
+)
+
+exec_config = PolymarketExecClientConfig(
+    private_key="...",
+    signature_type=0,
+    funder="...",
+    api_key="...", api_secret="...", passphrase="...",
+)
+```
+
+### Key Details
+
+- **Authentication**: Polygon (MATIC) wallet + API credentials. Orders signed on-chain
+- **Instruments**: `BinaryOption` type. Each market has YES/NO outcomes as separate instruments
+- **Instrument IDs**: Token ID based, loaded via instrument provider
+- **Price range**: `0.001` to `0.999` (probability)
+- **Execution constraints**: No `post_only`, no `reduce_only`, no stop orders, no `modify_order`. Market BUY orders may need `quote_quantity=True`
+- **WS subscriptions**: Max 200 per connection (configurable, Polymarket max 500)
+- **Order signing latency**: ~1s due to on-chain signature
+- **151k+ instruments**: Use instrument provider filters — `load_all=True` will be very slow
+
+### Factory
+
+```python
+node.add_data_client_factory(POLYMARKET_VENUE, PolymarketLiveDataClientFactory)
+node.add_exec_client_factory(POLYMARKET_VENUE, PolymarketLiveExecClientFactory)
+```
+
+## Betfair
+
+**Venue ID**: `BETFAIR` | **Products**: Sports Betting (BettingInstrument) | **Requires**: `pip install nautilus_trader[betfair]` (needs `betfair_parser`)
+
+### Configuration
+
+```python
+from nautilus_trader.adapters.betfair.config import (
+    BetfairDataClientConfig, BetfairExecClientConfig,
+)
+from nautilus_trader.adapters.betfair.factories import (
+    BetfairLiveDataClientFactory, BetfairLiveExecClientFactory,
+)
+
+data_config = BetfairDataClientConfig(
+    account_currency="GBP",            # required
+    username="...",
+    password="...",
+    app_key="...",
+    certs_dir="/path/to/certs",        # SSL certificate directory
+    subscribe_race_data=False,          # True = live GPS tracking data
+    stream_conflate_ms=0,               # 0 = no conflation (default None = Betfair default)
+)
+
+exec_config = BetfairExecClientConfig(
+    account_currency="GBP",
+    username="...", password="...", app_key="...", certs_dir="...",
+    use_market_version=False,           # True = price protection via market version
+    order_request_rate_per_second=20,
+)
+```
+
+### Key Details
+
+- **Authentication**: SSL certificate + username/password/app_key. Requires Betfair-issued certificates
+- **Instruments**: `BettingInstrument` with full hierarchy: event_type → competition → event → market → selection
+- **Back/Lay model**: `OrderSide.BUY` maps to **back** (bet for), `OrderSide.SELL` maps to **lay** (bet against)
+- **use_market_version**: When `True`, orders include the latest market version. If the market has moved (version advanced), Betfair lapses the order instead of matching — provides price protection
+- **subscribe_race_data**: Enables Race Change Messages (RCM) with live GPS tracking data (Total Performance Data)
+- **stream_conflate_ms**: Set to `0` for no conflation (full tick stream). Default `None` uses Betfair's default which applies conflation
+- **modify_order**: Supported via `replaceOrders`
+- **Custom data types**: `BetfairTicker`, `BetfairStartingPrice`, `BSPOrderBookDelta`
+
+### Factory
+
+```python
+from nautilus_trader.model.identifiers import Venue
+BETFAIR = Venue("BETFAIR")
+node.add_data_client_factory(BETFAIR, BetfairLiveDataClientFactory)
+node.add_exec_client_factory(BETFAIR, BetfairLiveExecClientFactory)
+```
+
+## Interactive Brokers
+
+**Venue ID**: Varies by exchange MIC (e.g., `XNAS`, `GLBX`, `CBOE`) | **Products**: Equities, Futures, Options, FX, CFDs | **Requires**: `pip install nautilus_trader[ib]` (needs `ibapi`)
+
+See [traditional_finance.md](traditional_finance.md) for full IB details including DockerizedIBGateway, IBContract, options/futures chain building, and session hours.
 
 ## Tardis (Data Provider Only)
 
@@ -340,6 +632,11 @@ deltas = wrangler.process(df)
 | Bybit | Yes (REST/WS) | Cancel + replace |
 | dYdX | **No** | Cancel + replace only |
 | OKX | Yes | Cancel + replace |
+| Deribit | Yes (`private/edit`) | Cancel + replace |
+| Hyperliquid | Yes | Cancel + replace |
+| Kraken | Yes | Cancel + replace |
+| Polymarket | **No** | Cancel + replace only |
+| Betfair | Yes (`replaceOrders`) | Cancel + replace |
 
 **Binance Spot limitation** (verified): The adapter explicitly rejects `modify_order` on Spot — "only supported for USDT_FUTURES and COIN_FUTURES account types". Use cancel + new order on Spot.
 
@@ -356,14 +653,7 @@ config = SomeExchangeConfig(testnet=True)  # routes to testnet URLs
 
 ### Rate Limiting
 
-Rate limit structures differ significantly across exchanges:
-
-| Exchange | REST Limits | Order Limits | WS Limits |
-|----------|------------|-------------|-----------|
-| Binance | 2400 weight/min (endpoints cost 1-20 weight) | 10 orders/sec, 100K/day | 5 connections/sec per IP |
-| Bybit | 120 req/min per endpoint | 10 orders/sec | Per-subscription limits |
-| dYdX | Per-block (~1s for long-term orders) | 100 short-term per 10s | Indexer WS limits |
-| OKX | Per-endpoint tiered | 60 orders/2s | Connection-based |
+Rate limit structures differ significantly across exchanges — weight-based (Binance), per-endpoint (Bybit, Kraken), per-block (dYdX), credit-based (Deribit), on-chain (Hyperliquid), etc. **Always check the exchange's current API docs** as these change frequently. Some exchanges also have different limits for different account tiers.
 
 **NautilusTrader handling**:
 - Adapters internally manage rate limits for standard data subscriptions and order operations
