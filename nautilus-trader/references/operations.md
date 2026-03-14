@@ -485,3 +485,8 @@ tokio::select! {
     }
 }
 ```
+
+## Related Examples
+
+- [spread_capture_live.py](../examples/spread_capture_live.py) — live spread capture strategy with shutdown
+- [live_data_collector.rs](../examples/live_data_collector.rs) — Rust LiveNode with graceful shutdown via tokio::select!

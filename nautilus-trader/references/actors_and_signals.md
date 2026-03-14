@@ -510,3 +510,9 @@ pub struct MomentumSignal {
 
 Actor publishes via `msgbus::publish_any`. Strategy subscribes via `subscribe_data(DataType::new("MomentumSignal", None, None), None, None)` and receives in `on_data`.
 | `queue_for_executor` is async | It schedules an async coroutine from a sync context — the callback itself is sync |
+
+## Related Examples
+
+- [signal_pipeline_backtest.py](../examples/signal_pipeline_backtest.py) — Actor signal pipeline with publish_signal
+- [signal_actor_backtest.rs](../examples/signal_actor_backtest.rs) — Rust DataActor signal pub/sub
+- [binance_enrichment_actor.py](../examples/binance_enrichment_actor.py) — Actor polling REST for OI + funding data

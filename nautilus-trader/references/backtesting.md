@@ -709,3 +709,10 @@ Written files land at:
 - `{catalog_path}/trade_tick/{instrument_id}/{ts_start}-{ts_end}.parquet`
 - `{catalog_path}/order_book_delta/{instrument_id}/{ts_start}-{ts_end}.parquet`
 | Data granularity auto-synthesis | Nautilus cannot synthesize higher-frequency data from lower |
+
+## Related Examples
+
+- [ema_crossover_backtest.py](../examples/ema_crossover_backtest.py) — EMA crossover strategy with BacktestEngine
+- [bracket_order_backtest.py](../examples/bracket_order_backtest.py) — bracket orders with TP/SL
+- [custom_data_backtest.rs](../examples/custom_data_backtest.rs) — Rust #[custom_data] macro with BacktestEngine
+- [catalog_backtest.rs](../examples/catalog_backtest.rs) — Rust BacktestNode with Parquet catalog

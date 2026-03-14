@@ -375,3 +375,10 @@ fn on_book_deltas(&mut self, deltas: &OrderBookDeltas) -> Result<()> {
 catalog.write_to_parquet(deltas_vec, None, None, None)?;
 // → {catalog_path}/order_book_delta/{instrument_id}/{ts_start}-{ts_end}.parquet
 ```
+
+## Related Examples
+
+- [market_maker_backtest.py](../examples/market_maker_backtest.py) — L2 market maker with skew
+- [market_maker_backtest.rs](../examples/market_maker_backtest.rs) — Rust market maker with modify_order
+
+See also: [market_making.md](market_making.md) for spread calculation, inventory management, and venue support.

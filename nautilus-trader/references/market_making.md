@@ -288,3 +288,10 @@ def _should_quote(self) -> bool:
 | `pos.signed_qty` is Decimal | Returns float — wrap: `Decimal(str(pos.signed_qty))` |
 | Spread < breakeven is profitable | Must verify `half_spread * 2 > maker_fee + taker_fee` |
 | Backtest MM PnL = live PnL | Expect 30-50% of backtest PnL in live (adverse selection) |
+
+## Related Examples
+
+- [market_maker_backtest.py](../examples/market_maker_backtest.py) — L2 market maker with skew
+- [market_maker_backtest.rs](../examples/market_maker_backtest.rs) — Rust market maker with modify_order
+
+See also: [order_book.md](order_book.md) for book API, delta processing, and F_LAST rule.

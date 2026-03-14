@@ -403,3 +403,7 @@ from nautilus_trader.model.enums import (
 from nautilus_trader.model.data import Bar, BookOrder, OrderBookDelta, QuoteTick, TradeTick
 from nautilus_trader.model.objects import Price, Quantity, Money
 ```
+
+## Related Examples
+
+- [custom_adapter_minimal.py](../examples/custom_adapter_minimal.py) — minimal custom adapter implementation

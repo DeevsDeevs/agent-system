@@ -296,3 +296,7 @@ Monitor `expiration_utc` and reduce/close positions before resolution if the str
 | Stop orders on Polymarket | Not available |
 | `modify_order` on Polymarket | Not supported — cancel + replace only |
 | `BinaryOption.margin_init` matters | Always `Decimal(0)` — no margin on binary options |
+
+## Related Examples
+
+- [polymarket_binary_backtest.py](../examples/polymarket_binary_backtest.py) — Polymarket binary option backtest with BinaryOption instruments

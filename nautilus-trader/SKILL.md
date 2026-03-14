@@ -13,6 +13,14 @@ High-performance algorithmic trading platform. Hybrid Python/Rust/Cython archite
 
 **Tested against v1.224.0** — all code validated by running tests.
 
+## Before Writing Code
+
+Load these references proactively — don't wait for the user to ask:
+- **Any live task**: [exchange_adapters.md](references/exchange_adapters.md) (venue config, symbology, data availability) + [operations.md](references/operations.md) (shutdown, timers, error recovery)
+- **Any backtest**: [backtesting.md](references/backtesting.md) (engine setup, fill model, data loading, indicators)
+- **Any Rust task**: [rust_trading.md](references/rust_trading.md) (crate setup, anti-hallucination table, trait signatures)
+- **Always**: Check the Common Hallucinations table below — wrong APIs cause silent failures or crashes
+
 ## Architecture
 
 | Component | Role |
@@ -42,10 +50,6 @@ class MyConfig(StrategyConfig, frozen=True):
     trade_size: Decimal = Decimal("0.01")
 
 class MyStrategy(Strategy):
-    def __init__(self, config: MyConfig) -> None:
-        super().__init__(config)
-        self.instrument = None
-
     def on_start(self) -> None:
         self.instrument = self.cache.instrument(self.config.instrument_id)
         if not self.instrument:
@@ -59,7 +63,6 @@ class MyStrategy(Strategy):
         book = self.cache.order_book(self.config.instrument_id)
         if not book.best_bid_price():
             return
-        mid = float(book.midpoint())
         # Trading logic here
 
     def on_stop(self) -> None:
@@ -67,7 +70,7 @@ class MyStrategy(Strategy):
         self.close_all_positions(self.config.instrument_id)
 ```
 
-Full market maker with skew: [market_maker_backtest.py](examples/market_maker_backtest.py). All examples in `examples/`.
+Full examples: [ema_crossover_backtest.py](examples/ema_crossover_backtest.py), [market_maker_backtest.py](examples/market_maker_backtest.py) (L2 MM with skew). All examples in `examples/`.
 
 ### Strategy Lifecycle
 
@@ -80,6 +83,16 @@ Full market maker with skew: [market_maker_backtest.py](examples/market_maker_ba
 | `on_load(state)` | Restore custom state |
 
 ## Subscription Ordering (Critical)
+
+### Live node config — REQUIRED before any strategy code runs:
+
+```python
+instrument_provider=InstrumentProviderConfig(
+    load_ids=frozenset({"BTCUSDT-PERP.BINANCE"}),  # REQUIRED — no instruments = 0 data, no error
+)
+```
+
+Without `load_ids` (or `load_all=True`): no instruments load into cache → `cache.instrument()` returns None → subscriptions silently produce 0 callbacks. Full venue configs: [exchange_adapters.md](references/exchange_adapters.md).
 
 ### Correct `on_start()` sequence:
 
@@ -107,6 +120,7 @@ def on_start(self) -> None:
 | `subscribe_quote_ticks()` but only trade data loaded | 0 quotes, no error |
 | `subscribe_bars()` EXTERNAL but no bar data loaded | 0 bars, no error |
 | `cache.instrument(wrong_id)` | Returns `None`, crashes on `make_price()` later |
+| No `load_ids` / `load_all` in `InstrumentProviderConfig` | 0 instruments in cache, all subscriptions produce 0 data |
 | Wrong subscription for loaded data type | 0 callbacks, no exception |
 
 ### INTERNAL vs EXTERNAL bars:
@@ -128,24 +142,9 @@ SMA/EMA/RSI produce **partial values** before warmup — not NaN, not zero, just
 
 ## Data Subscriptions
 
-Availability varies by adapter — check [exchange_adapters.md](references/exchange_adapters.md).
+Availability varies by adapter — check [exchange_adapters.md](references/exchange_adapters.md) for the full support matrix per venue.
 
-| Subscription | Typical | Callback | Notes |
-|-------------|---------|----------|-------|
-| `subscribe_trade_ticks` | **YES** | `on_trade_tick` | aggTrade / publicTrade |
-| `subscribe_quote_ticks` | **YES** | `on_quote_tick` | BBO bookTicker |
-| `subscribe_order_book_deltas` | **YES** | `on_order_book_deltas` | L2 incremental |
-| `subscribe_mark_prices` | **YES** | `on_mark_price` | includes funding on some adapters |
-| `subscribe_bars` | **YES** | `on_bar` | EXTERNAL kline |
-| `subscribe_order_book_depth` | **SOME** | `on_order_book_depth` | Use deltas as fallback |
-| `subscribe_funding_rates` | **SOME** | `on_funding_rate` | Use mark prices or REST |
-| `subscribe_data` | **YES** | `on_data` | Custom data via MessageBus |
-
-**Missing subscriptions?** If `NotImplementedError` but data is critical:
-1. **Build an Actor** that polls REST on a timer — see [binance_enrichment_actor.py](examples/binance_enrichment_actor.py)
-2. **Adjust strategy** to use alternatives (e.g. mark prices include funding on some adapters)
-
-REST-only data (OI, funding, long/short) — use adapter HTTP client. See [exchange_adapters.md](references/exchange_adapters.md).
+**Missing subscriptions?** Build an Actor that polls REST — see [binance_enrichment_actor.py](examples/binance_enrichment_actor.py).
 
 ## Execution & OMS
 
@@ -188,11 +187,12 @@ L2_MBP is the ceiling for crypto. L3_MBO not available on crypto venues.
 ```python
 book = self.cache.order_book(instrument_id)
 book.best_bid_price() / book.best_ask_price() / book.spread() / book.midpoint()
-book.bids() / book.asks()                               # list[BookLevel]: price, size, side, exposure
+book.bids() / book.asks()                               # list[BookLevel]
 book.get_avg_px_for_quantity(OrderSide.BUY, qty)         # execution cost
-book.get_quantity_for_price(OrderSide.BUY, price)        # depth query
 # Does NOT exist: book.filtered_view(), get_avg_px_qty_for_exposure(), level.count
 ```
+
+> Full book API: [order_book.md](references/order_book.md)
 
 **F_LAST rule**: Every delta batch must end with `RecordFlag.F_LAST` or DataEngine buffers indefinitely.
 
@@ -217,7 +217,7 @@ self.portfolio.net_position(instrument_id)
 
 **Data-only node**: Omit `exec_clients` for pure data collection. Two harmless `[WARN]` at startup (`No 'exec_clients' configuration found`, `No clients to connect`). At shutdown: `[ERROR] Failed to emit data event: channel closed` spam for ~10s — known nautilus-binance race condition, harmless. See [operations.md](references/operations.md) for shutdown patterns.
 
-**Instruments**: `load_ids=frozenset({"BTCUSDT-PERP.BINANCE", ...})` for fast startup — full `"SYMBOL.VENUE"` strings, not bare symbols. `load_all=True` takes minutes. Use adapter-specific enums for account types.
+**Instruments**: `load_ids=frozenset({"BTCUSDT-PERP.BINANCE", ...})` is REQUIRED in `InstrumentProviderConfig` — without it, no instruments load and all subscriptions silently produce 0 data. Full `"SYMBOL.VENUE"` strings, not bare symbols. `load_all=True` works but takes minutes. Use adapter-specific enums for account types.
 
 **Fills**: `fills > orders` is normal (partials). CASH + `frozen_account=False` = 0 fills if insufficient balance. Use `AccountType.MARGIN` for derivatives.
 
@@ -283,35 +283,31 @@ These do NOT exist in v1.224.0:
 | `load_ids=frozenset({"BTCUSDT-PERP"})` bare symbol | Must be full InstrumentId: `frozenset({"BTCUSDT-PERP.BINANCE"})` — crashes at connect with `missing '.' separator` |
 | `modify_order` auto-fallback | Adapter errors if venue doesn't support — no auto cancel+replace fallback |
 | `InstrumentStatus` stops order flow | Does NOT automatically stop orders — strategy must react manually |
+| Omitting `load_ids` from `InstrumentProviderConfig` | REQUIRED — without it, 0 instruments load, all subscriptions silently produce 0 data |
 
 ## Reference Navigator
 
-| Task | Load These | Key Gotchas |
-|------|-----------|-------------|
-| **Build a backtest** | [backtesting.md](references/backtesting.md), [execution.md](references/execution.md) | `AccountType.Margin` for derivatives, `engine.cache` not `engine.trader.cache` |
-| **Live strategy (Python)** | [execution.md](references/execution.md), [exchange_adapters.md](references/exchange_adapters.md), [operations.md](references/operations.md) | SIGINT shutdown built-in, `on_stop` fires before disconnect |
-| **Live strategy (Rust)** | [rust_trading.md](references/rust_trading.md), [execution.md](references/execution.md), [exchange_adapters.md](references/exchange_adapters.md), [operations.md](references/operations.md) | `on_stop` channel closed, `tokio::signal::ctrl_c()` for SIGINT, ERROR spam at shutdown is harmless |
-| **Data-only live node** | [exchange_adapters.md](references/exchange_adapters.md), [operations.md](references/operations.md) | No exec client → 2 harmless WARNs, shutdown ERROR spam (channel closed) |
-| **Market making** | [market_making.md](references/market_making.md), [execution.md](references/execution.md), [order_book.md](references/order_book.md) | `modify_order` not on all venues, L2 is ceiling for crypto |
-| **Actors & signals** | [actors_and_signals.md](references/actors_and_signals.md) | `publish_signal` values must be int/float/str, Rust uses `#[custom_data]` |
-| **Exchange adapters** | [exchange_adapters.md](references/exchange_adapters.md) | Symbology varies per venue, `load_ids` needs full `SYMBOL.VENUE` strings |
-| **Options & Greeks** | [options_and_greeks.md](references/options_and_greeks.md) | `GreeksCalculator(cache, clock)` — 2 args only |
-| **Prediction markets** | [prediction_and_betting.md](references/prediction_and_betting.md) | Polymarket needs `py_clob_client` |
-| **Traditional finance** | [traditional_finance.md](references/traditional_finance.md) | Equity/FuturesContract Cython constructors differ |
-| **Custom adapter** | [adapter_development_python.md](references/adapter_development_python.md), [adapter_development_rust.md](references/adapter_development_rust.md) | |
-| **Pure Rust** | [rust_trading.md](references/rust_trading.md) | `default-features = false` on all crates, `on_stop` always implement (even empty) |
+### Proactive (load before generating code)
 
-## Examples
+| Category | References |
+|----------|-----------|
+| **Any live task** | [exchange_adapters.md](references/exchange_adapters.md), [operations.md](references/operations.md) |
+| **Any backtest** | [backtesting.md](references/backtesting.md) |
+| **Any Rust task** | [rust_trading.md](references/rust_trading.md) |
 
-Working code: [market_maker_backtest.py](examples/market_maker_backtest.py) (L2 MM with skew), [ema_crossover_backtest.py](examples/ema_crossover_backtest.py), [bracket_order_backtest.py](examples/bracket_order_backtest.py), [signal_pipeline_backtest.py](examples/signal_pipeline_backtest.py), [binance_enrichment_actor.py](examples/binance_enrichment_actor.py) (OI+funding), [spread_capture_live.py](examples/spread_capture_live.py) (live), [custom_adapter_minimal.py](examples/custom_adapter_minimal.py), [deribit_option_greeks_backtest.py](examples/deribit_option_greeks_backtest.py) (options + greeks), [polymarket_binary_backtest.py](examples/polymarket_binary_backtest.py) (prediction markets).
+### On-Demand (load when task matches)
 
-**Pure Rust examples** (compiled and verified, in `examples/`): `ema_crossover_backtest.rs` (Strategy + BacktestEngine), `signal_actor_backtest.rs` (DataActor signal pub/sub), `custom_data_backtest.rs` (#[custom_data] macro), `live_data_collector.rs` (LiveNode + Binance), `live_order_test.rs` (full order lifecycle), `market_maker_backtest.rs` (modify_order), `bracket_order_backtest.rs` (manual bracket), `catalog_backtest.rs` (BacktestNode + Parquet), `live_spot_test.rs` (Spot + high-precision), `live_modify_order_test.rs` (modify + rejection callbacks). See [rust_trading.md](references/rust_trading.md).
-
-### Rust Quick Reference
-
-- `Strategy` in `nautilus_trading`, `DataActor` in `nautilus_common` — NOT the reverse
-- All crates from git, `default-features = false`, `features = ["examples"]` for indicators
-- `on_stop` must be implemented (even empty) or warns
-- `modify_order` takes owned `OrderAny` — clone from cache, drop borrow, then call
-- Live shutdown: `tokio::select!` with `tokio::signal::ctrl_c()` + `node.stop().await?` — then `std::process::exit(0)` to kill channel-closed ERROR spam
-- See [rust_trading.md](references/rust_trading.md) for full anti-hallucination table
+| Task | References | Examples |
+|------|-----------|----------|
+| **Build a backtest** | [backtesting.md](references/backtesting.md), [execution.md](references/execution.md) | `ema_crossover_backtest.py`, `bracket_order_backtest.py` |
+| **Live strategy (Python)** | [execution.md](references/execution.md), [exchange_adapters.md](references/exchange_adapters.md), [operations.md](references/operations.md) | `spread_capture_live.py` |
+| **Live strategy (Rust)** | [rust_trading.md](references/rust_trading.md), [execution.md](references/execution.md), [exchange_adapters.md](references/exchange_adapters.md), [operations.md](references/operations.md) | `live_data_collector.rs`, `live_order_test.rs` |
+| **Data-only live node** | [exchange_adapters.md](references/exchange_adapters.md), [operations.md](references/operations.md) | `live_data_collector.rs` |
+| **Market making** | [market_making.md](references/market_making.md), [execution.md](references/execution.md), [order_book.md](references/order_book.md) | `market_maker_backtest.py`, `market_maker_backtest.rs` |
+| **Actors & signals** | [actors_and_signals.md](references/actors_and_signals.md) | `signal_pipeline_backtest.py`, `signal_actor_backtest.rs` |
+| **Options & Greeks** | [options_and_greeks.md](references/options_and_greeks.md) | `deribit_option_greeks_backtest.py` |
+| **Prediction markets** | [prediction_and_betting.md](references/prediction_and_betting.md) | `polymarket_binary_backtest.py` |
+| **Traditional finance** | [traditional_finance.md](references/traditional_finance.md) | — |
+| **Derivatives / synths** | [derivatives.md](references/derivatives.md) | — |
+| **Custom adapter** | [adapter_development_python.md](references/adapter_development_python.md), [adapter_development_rust.md](references/adapter_development_rust.md) | `custom_adapter_minimal.py` |
+| **Dev environment** | [dev_environment.md](references/dev_environment.md) | — |

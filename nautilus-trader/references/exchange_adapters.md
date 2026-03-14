@@ -638,3 +638,11 @@ nautilus-binance = { ..., features = ["high-precision"] }
 
 Affects live connections only (instrument HTTP endpoint). Backtests with `TestInstrumentProvider` stubs are unaffected.
 
+
+## Related Examples
+
+- [spread_capture_live.py](../examples/spread_capture_live.py) — live spread capture strategy
+- [live_data_collector.rs](../examples/live_data_collector.rs) — Rust LiveNode + Binance data collection
+- [live_order_test.rs](../examples/live_order_test.rs) — Rust full order lifecycle (live)
+- [live_spot_test.rs](../examples/live_spot_test.rs) — Rust Spot + high-precision
+- [binance_enrichment_actor.py](../examples/binance_enrichment_actor.py) — Actor polling REST for OI + funding

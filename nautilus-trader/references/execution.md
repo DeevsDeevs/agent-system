@@ -760,3 +760,10 @@ if let Some(order) = order_opt {
 ### Shutdown "channel closed" Errors
 
 `[ERROR] Failed to emit data event: channel closed` during node shutdown is a known race condition in the nautilus-binance adapter. Harmless — cannot be suppressed without patching library source.
+
+## Related Examples
+
+- [bracket_order_backtest.py](../examples/bracket_order_backtest.py) — bracket orders with TP/SL
+- [live_order_test.rs](../examples/live_order_test.rs) — Rust full order lifecycle (live)
+- [live_modify_order_test.rs](../examples/live_modify_order_test.rs) — Rust modify order + rejection callbacks
+- [spread_capture_live.py](../examples/spread_capture_live.py) — live spread capture strategy

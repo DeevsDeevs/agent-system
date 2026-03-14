@@ -470,3 +470,7 @@ from nautilus_trader.model.greeks_data import GreeksData, PortfolioGreeks, Yield
 # BS functions
 from nautilus_trader.core.nautilus_pyo3 import black_scholes_greeks, imply_vol_and_greeks, refine_vol_and_greeks
 ```
+
+## Related Examples
+
+- [deribit_option_greeks_backtest.py](../examples/deribit_option_greeks_backtest.py) — Deribit options with GreeksCalculator and BS pricing
