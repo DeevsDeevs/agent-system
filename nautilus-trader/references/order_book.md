@@ -329,3 +329,49 @@ Access managed books: `book = self.cache.order_book(instrument_id)`
 | `book.best_bid_price()` returns float | Returns `Price` object — cast with `float(book.best_bid_price())` |
 | `from nautilus_trader.model.book import BookOrder` | `from nautilus_trader.model.data import BookOrder` — BookOrder is in `model.data` |
 | `BookOrder(price=, size=, side=)` kwargs | Positional only: `BookOrder(OrderSide, Price, Quantity, order_id)` |
+
+## Rust
+
+| Concern | Python | Rust |
+|---|---|---|
+| Subscribe method | `subscribe_order_book_deltas(instrument_id=..., book_type=...)` | `subscribe_book_deltas(id, book_type, NonZeroUsize::new(10), None, false, None)` |
+| Callback name | `on_order_book_deltas(deltas)` | `on_book_deltas(deltas: &OrderBookDeltas)` — plural **batch** |
+| Depth type | `Optional[int]` | `Option<NonZeroUsize>` — use `NonZeroUsize::new(n)` |
+| `managed` flag | `managed=True` (default, kwarg) | `managed: bool` (positional, no default) |
+
+### L2 Subscriptions
+
+```rust
+use std::num::NonZeroUsize;
+use nautilus_model::{
+    data::{OrderBookDelta, OrderBookDeltas},
+    enums::BookType,
+};
+
+// In on_start:
+self.subscribe_book_deltas(
+    self.instrument_id,
+    BookType::L2_MBP,
+    NonZeroUsize::new(10), // depth: top-10 levels; None = full book
+    None,                  // client_id
+    false,                 // managed: false = raw deltas, true = engine-managed book
+    None,                  // params
+);
+
+// Callback — receives a batch per exchange message (snapshot or incremental):
+fn on_book_deltas(&mut self, deltas: &OrderBookDeltas) -> Result<()> {
+    self.collected.lock().unwrap().extend_from_slice(&deltas.deltas);
+    Ok(())
+}
+```
+
+`OrderBookDelta` is `Copy` — `extend_from_slice` works directly from `deltas.deltas: Vec<OrderBookDelta>`.
+
+### Writing Deltas to Parquet
+
+`write_to_parquet` accepts `Vec<OrderBookDelta>` (individual items), not `Vec<OrderBookDeltas>` (batch containers):
+
+```rust
+catalog.write_to_parquet(deltas_vec, None, None, None)?;
+// → {catalog_path}/order_book_delta/{instrument_id}/{ts_start}-{ts_end}.parquet
+```

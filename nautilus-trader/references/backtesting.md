@@ -572,4 +572,140 @@ See [market_making.md](market_making.md#order-sizing) for the `_safe_size()` pat
 | `MACD(fast, slow, signal_period)` | 3rd param is `MovingAverageType`, not signal period |
 | Indicator warmup returns NaN | Returns partial values (silently wrong) — guard with `indicators_initialized()` |
 | `from nautilus_trader.indicators.ema` | `from nautilus_trader.indicators import ExponentialMovingAverage` |
+
+## Rust
+
+| Concern | Python | Rust |
+|---|---|---|
+| Engine config | `BacktestEngineConfig(trader_id=..., logging=...)` named kwargs | `BacktestEngineConfig::default()` — trader_id assigned internally |
+| `add_venue` | Named kwargs with defaults | 31 positional args, all `Option<...>` |
+| Account type for perps | `AccountType.MARGIN` | `AccountType::Margin` — `Cash` panics when trading futures/perpetuals |
+| Catalog writes from async | No restriction | Must wrap in `tokio::task::spawn_blocking` — catalog creates its own runtime internally |
+| `NautilusDataType` location | `nautilus_trader.model` | `nautilus_backtest::config` — NOT `nautilus_model` |
+| `BacktestNode` availability | Always available | Behind `features = ["streaming"]` on `nautilus-backtest` |
+
+### BacktestEngine
+
+```rust
+use ahash::AHashMap;
+use nautilus_backtest::{config::BacktestEngineConfig, engine::BacktestEngine};
+use nautilus_execution::models::{fee::FeeModelAny, fill::FillModelAny};
+use nautilus_model::{
+    enums::{AccountType, BookType, OmsType},
+    identifiers::Venue,
+    types::Money,
+};
+
+let config = BacktestEngineConfig::default();
+let mut engine = BacktestEngine::new(config)?;
+
+// add_venue takes 31 positional args — most are Option<...>
+engine.add_venue(
+    Venue::from("BINANCE"),
+    OmsType::Netting,
+    AccountType::Margin,  // Margin required for perps/futures
+    BookType::L1_MBP,
+    vec![Money::from("100000 USDT")],
+    None,              // base_currency
+    None,              // default_leverage
+    AHashMap::new(),   // leverages (per-instrument map)
+    None,              // margin_model
+    vec![],            // modules
+    FillModelAny::default(),
+    FeeModelAny::default(),
+    None,  // latency_model
+    None,  // routing
+    None,  // reject_stop_orders
+    None,  // support_gtd_orders
+    None,  // support_contingent_orders
+    None,  // use_position_ids
+    None,  // use_random_ids
+    None,  // use_reduce_only
+    None,  // use_message_queue
+    None,  // use_market_order_acks
+    None,  // bar_execution
+    None,  // bar_adaptive_high_low_ordering
+    None,  // trade_execution
+    None,  // liquidity_consumption
+    None,  // allow_cash_borrowing
+    None,  // frozen_account
+    None,  // queue_position
+    None,  // oto_full_trigger
+    None,  // price_protection_points
+)?;
+
+engine.add_instrument(&instrument)?;
+engine.add_data(data_vec, None, true, true);  // (data, client_id, validate, sort)
+engine.add_strategy(my_strategy)?;
+engine.add_actor(my_actor)?;
+
+engine.run(None, None, None, false)?;  // (start, end, run_config_id, streaming)
+
+let result = engine.get_result();
+println!("{} iterations, {} orders", result.iterations, result.total_orders);
+```
+
+### BacktestNode (catalog-backed)
+
+Behind `features = ["streaming"]` on `nautilus-backtest`. For large datasets that don't fit in memory.
+
+```rust
+use nautilus_backtest::{
+    config::{
+        BacktestDataConfig, BacktestEngineConfig, BacktestRunConfig,
+        BacktestVenueConfig, NautilusDataType,  // NautilusDataType is here, NOT in nautilus_model
+    },
+    node::BacktestNode,
+};
+use ustr::Ustr;
+
+let venue_config = BacktestVenueConfig::new(
+    Ustr::from("BINANCE"), OmsType::Netting, AccountType::Margin, BookType::L1_MBP,
+    None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
+    vec!["100000 USDT".to_string()],
+    None, None, None, None,
+);
+
+let data_config = BacktestDataConfig::new(
+    NautilusDataType::QuoteTick,
+    catalog_path.to_string(),
+    None, None, Some(instrument_id), None, None, None, None, None, None, None, None, None,
+);
+
+let run_config = BacktestRunConfig::new(
+    None, vec![venue_config], vec![data_config],
+    BacktestEngineConfig::default(), None, None, None, None,
+);
+
+let mut node = BacktestNode::new(vec![run_config])?;
+node.build()?;
+let config_id = node.configs()[0].id().to_string();
+let engine = node.get_engine_mut(&config_id).ok_or_else(|| anyhow::anyhow!("engine not found"))?;
+engine.add_strategy(my_strategy)?;
+let results = node.run()?;
+println!("{} iterations, {} orders", results[0].iterations, results[0].total_orders);
+```
+
+### Parquet Catalog Writes (from async context)
+
+`ParquetDataCatalog` internally calls `tokio::runtime::Runtime::block_on`. Calling it from `#[tokio::main]` panics with `cannot start a runtime from within a runtime`. Wrap in `spawn_blocking`:
+
+```rust
+use nautilus_persistence::backend::catalog::ParquetDataCatalog;
+
+tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
+    let catalog = ParquetDataCatalog::new(&catalog_path, None, None, None, None);
+    catalog.write_instruments(instruments)?;
+    catalog.write_to_parquet(quotes, None, None, None)?;
+    catalog.write_to_parquet(trades, None, None, None)?;
+    catalog.write_to_parquet(deltas, None, None, None)?;  // Vec<OrderBookDelta>
+    Ok(())
+}).await??;
+```
+
+Written files land at:
+- `{catalog_path}/instruments/`
+- `{catalog_path}/quote_tick/{instrument_id}/{ts_start}-{ts_end}.parquet`
+- `{catalog_path}/trade_tick/{instrument_id}/{ts_start}-{ts_end}.parquet`
+- `{catalog_path}/order_book_delta/{instrument_id}/{ts_start}-{ts_end}.parquet`
 | Data granularity auto-synthesis | Nautilus cannot synthesize higher-frequency data from lower |

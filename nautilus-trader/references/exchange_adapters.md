@@ -535,3 +535,106 @@ Handled automatically by adapters: exponential backoff (1s → 60s), re-authenti
 | `-PERP` suffix optional for Binance | Mandatory — `BTCUSDT-PERP.BINANCE` for perpetuals, `BTCUSDT.BINANCE` for spot |
 | `subscribe_instrument_status()` on Binance | Binance does NOT implement this |
 
+## Rust (Binance)
+
+The Binance adapter is pure Rust — no PyO3 headers, no Python dependency.
+
+| Concern | Python | Rust |
+|---|---|---|
+| Node class | `TradingNode(config=TradingNodeConfig(...))` | `LiveNodeBuilder::new(trader_id, env)?` builder pattern |
+| Adding data client | Config-dict driven | `add_data_client(None, Box::new(BinanceDataClientFactory::new()), Box::new(config))?` |
+| Adding exec client | Config-dict driven | `add_exec_client(None, Box::new(BinanceExecutionClientFactory::new()), Box::new(config))?` |
+| Run | `node.start()` + signal wait | `node.run().await?` (async, blocks until stop) |
+| Spot instrument loading | Works | Requires `features = ["high-precision"]` — see Spot SBE Overflow below |
+
+### LiveNodeBuilder
+
+```rust
+use nautilus_binance::{
+    common::enums::{BinanceEnvironment, BinanceProductType},
+    config::{BinanceDataClientConfig, BinanceExecClientConfig},
+    factories::{BinanceDataClientFactory, BinanceExecutionClientFactory},
+};
+use nautilus_common::enums::Environment;
+use nautilus_live::builder::LiveNodeBuilder;
+use nautilus_model::identifiers::{AccountId, TraderId};
+
+let data_config = BinanceDataClientConfig {
+    product_types: vec![BinanceProductType::UsdM],  // or Spot, CoinM
+    environment: BinanceEnvironment::Mainnet,
+    base_url_http: None,
+    base_url_ws: None,
+    api_key: std::env::var("BINANCE_LINEAR_API_KEY").ok(),
+    api_secret: std::env::var("BINANCE_LINEAR_API_SECRET").ok(),
+};
+
+let exec_config = BinanceExecClientConfig {
+    trader_id: trader_id.clone(),
+    account_id: AccountId::from("BINANCE-001"),
+    product_types: vec![BinanceProductType::UsdM],
+    environment: BinanceEnvironment::Mainnet,
+    base_url_http: None,
+    base_url_ws: None,
+    base_url_ws_trading: None,
+    use_ws_trading: true,
+    api_key,
+    api_secret,
+};
+
+let mut node = LiveNodeBuilder::new(trader_id, Environment::Live)?
+    .with_timeout_connection(30)
+    .with_reconciliation(false)
+    .add_data_client(None, Box::new(BinanceDataClientFactory::new()), Box::new(data_config))?
+    .add_exec_client(None, Box::new(BinanceExecutionClientFactory::new()), Box::new(exec_config))?
+    .build()?;
+
+node.add_strategy(my_strategy)?;
+
+// Timed run — stops after N seconds
+tokio::select! {
+    result = node.run() => result?,
+    _ = tokio::time::sleep(std::time::Duration::from_secs(60)) => {
+        node.stop().await?;
+    }
+}
+```
+
+Data-only node (no exec client): omit `add_exec_client` — node connects and streams normally, emits harmless warnings.
+
+`BinanceProductType`: `Spot`, `UsdM` (perpetuals/futures), `CoinM`.
+
+### Instrument Availability at Startup
+
+Binance loads all instruments via HTTP at `connect()` time, **before** `on_start` fires. Instruments are already in cache:
+
+```rust
+fn on_start(&mut self) -> Result<()> {
+    let cache = self.cache_rc();
+    for id in &self.instrument_ids {
+        if let Some(inst) = cache.borrow().instrument(id) {
+            self.instruments.push(inst.clone());
+        }
+    }
+    // subscribe_instrument only delivers future updates (e.g. expiry rollovers)
+    for id in self.instrument_ids.clone() {
+        self.subscribe_quotes(id, None, None);
+    }
+    Ok(())
+}
+```
+
+### Binance Spot SBE Overflow Bug
+
+**Root cause**: `parse_sbe_lot_size_filter` in `nautilus-binance/src/common/parse.rs` reads `maxQty` as `i64`, casts via unchecked `as u64`, then scales by 10^8 for fixed-point `QuantityRaw`. High-supply tokens (SHIB, PEPE) have `maxQty` in the trillions: `9_000_000_000_000 × 10^8 = 9×10^20` overflows `u64::MAX` (1.8×10^19) and panics.
+
+**Fix**: Enable `high-precision` in `Cargo.toml` — switches `QuantityRaw` from `u64` to `u128`:
+
+```toml
+nautilus-model   = { ..., features = ["high-precision"] }
+nautilus-binance = { ..., features = ["high-precision"] }
+```
+
+`nautilus-binance` includes `high-precision` as a **default** feature. Using `default-features = false` silently disables it — adding it back explicitly is the correct fix.
+
+Affects live connections only (instrument HTTP endpoint). Backtests with `TestInstrumentProvider` stubs are unaffected.
+

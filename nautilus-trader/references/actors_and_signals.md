@@ -60,7 +60,9 @@ class MyActor(Actor):
 `on_signal`, `on_data`, `on_historical_data`, `on_event`,
 `on_order_filled`, `on_order_canceled` (observe-only, via `subscribe_order_fills`/`subscribe_order_cancels`)
 
-## Signal API (Native — Preferred)
+## Signal API (Native — Preferred) *(Python/Cython only)*
+
+> *Not available in pure Rust. Use `#[custom_data]` struct + `msgbus::publish_any` + `subscribe_data` — see [## Rust](#rust).*
 
 The simplest way to pass data between components. No custom class needed.
 
@@ -255,7 +257,9 @@ class ComboStrategy(Strategy):
             self.spread = signal.value
 ```
 
-## Actor for External Data (Live)
+## Actor for External Data (Live) *(Python only)*
+
+> *`HttpClient` and `queue_for_executor` are PyO3 bindings — not available in pure-Rust mode.*
 
 Poll REST APIs on a timer and publish results as custom data:
 
@@ -287,4 +291,222 @@ class RestPollerActor(Actor):
 | `on_signal` receives typed fields | Single scalar value only — use custom Data for multi-field |
 | `Actor.subscribe_trade_ticks()` in `__init__` | Must subscribe in `on_start()` — cache not available in `__init__` |
 | Custom `Data` without `ts_event`/`ts_init` | Both required as properties — use `_ts_event`/`_ts_init` backing fields |
+
+## Rust
+
+| Concern | Python | Rust |
+|---|---|---|
+| Strategy base | `class MyStrategy(Strategy): super().__init__(config)` | Struct with `Deref/DerefMut` to `DataActorCore`; no class inheritance |
+| Actor base | `class MyActor(Actor)` | Struct with `DataActor` trait + `DataActorCore` |
+| Signals | `publish_signal(name, value)` / `subscribe_signal(name, callback)` | Cython-only; use `#[custom_data]` struct + `msgbus::publish_any` + `subscribe_data` |
+| Callback return | `None` | `Result<()>` for DataActor; `()` (no Result) for Strategy event callbacks |
+| Config | `StrategyConfig(strategy_id=..., order_id_tag=...)` Pydantic kwargs | `StrategyConfig { strategy_id: Some(...), ..Default::default() }` |
+| Cache access | `self.cache.positions_open(...)` | `self.cache_rc().borrow().positions_open(...)` — RefCell, must scope borrows |
+
+### Strategy Trait
+
+```rust
+use std::{fmt::Debug, ops::{Deref, DerefMut}};
+use anyhow::Result;
+use nautilus_common::actor::{DataActor, DataActorCore};
+use nautilus_model::{
+    data::QuoteTick,
+    enums::OrderSide,
+    identifiers::{InstrumentId, StrategyId},
+    types::Quantity,
+};
+use nautilus_trading::strategy::{Strategy, StrategyConfig, StrategyCore};
+
+struct MyStrategy {
+    core: StrategyCore,
+    instrument_id: InstrumentId,
+    trade_size: Quantity,
+}
+
+impl MyStrategy {
+    fn new(instrument_id: InstrumentId, trade_size: Quantity) -> Self {
+        let config = StrategyConfig {
+            strategy_id: Some(StrategyId::from("MY_STRATEGY-001")),
+            order_id_tag: Some("001".to_string()),
+            ..Default::default()
+        };
+        Self { core: StrategyCore::new(config), instrument_id, trade_size }
+    }
+}
+
+impl Deref for MyStrategy {
+    type Target = DataActorCore;
+    fn deref(&self) -> &Self::Target { &self.core }
+}
+impl DerefMut for MyStrategy {
+    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.core }
+}
+impl Debug for MyStrategy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MyStrategy").finish()
+    }
+}
+
+impl DataActor for MyStrategy {
+    fn on_start(&mut self) -> Result<()> {
+        self.subscribe_quotes(self.instrument_id, None, None);
+        Ok(())
+    }
+    fn on_stop(&mut self) -> Result<()> {
+        self.unsubscribe_quotes(self.instrument_id, None, None);
+        Ok(())
+    }
+    fn on_quote(&mut self, quote: &QuoteTick) -> Result<()> {
+        Ok(())
+    }
+}
+
+impl Strategy for MyStrategy {
+    fn core(&self) -> &StrategyCore { &self.core }
+    fn core_mut(&mut self) -> &mut StrategyCore { &mut self.core }
+}
+```
+
+Order submission and cache access:
+
+```rust
+// Market order — 7 trailing None args
+let order = self.core.order_factory().market(
+    self.instrument_id, OrderSide::Buy, self.trade_size,
+    None, None, None, None, None, None, None,
+);
+self.submit_order(order, None, None)?;
+
+// Close all positions on one instrument
+self.close_all_positions(self.instrument_id, None, None, None, None, None, None)?;
+
+// Cache — borrow must be dropped before any &mut self call
+let cache = self.cache_rc();
+let open = cache.borrow().positions_open(None, Some(&self.instrument_id), None, None, None);
+drop(cache);
+```
+
+### DataActor Trait
+
+Actor without order management — signal computation, data enrichment, VPIN, etc.
+
+```rust
+use nautilus_common::actor::{DataActor, DataActorCore, DataActorConfig};
+use nautilus_model::data::TradeTick;
+
+struct SignalActor {
+    core: DataActorCore,
+    instrument_ids: Vec<InstrumentId>,
+}
+
+impl SignalActor {
+    fn new(instrument_ids: Vec<InstrumentId>) -> Self {
+        Self { core: DataActorCore::new(DataActorConfig::default()), instrument_ids }
+    }
+}
+
+// Deref/DerefMut/Debug impls identical to Strategy pattern above
+
+impl DataActor for SignalActor {
+    fn on_start(&mut self) -> Result<()> {
+        // Clone IDs before iterating to avoid borrow conflict with &mut self
+        let ids: Vec<InstrumentId> = self.instrument_ids.clone();
+        for id in ids {
+            self.subscribe_trades(id, None, None);
+        }
+        Ok(())
+    }
+    fn on_trade(&mut self, trade: &TradeTick) -> Result<()> {
+        Ok(())
+    }
+}
+```
+
+Available subscription methods (on `DataActorCore` via `Deref`):
+- `subscribe_quotes(instrument_id, client_id, params)`
+- `subscribe_trades(instrument_id, client_id, params)`
+- `subscribe_bars(bar_type, await_partial, client_id, params)`
+- `subscribe_book_deltas(instrument_id, book_type, depth, client_id, managed, params)`
+- `subscribe_data(data_type, client_id, params)` — custom data types
+- Matching `unsubscribe_*` for each
+
+Handler callbacks (override in `impl DataActor`):
+- `on_start / on_stop / on_reset`
+- `on_quote(&mut self, quote: &QuoteTick) -> Result<()>`
+- `on_trade(&mut self, trade: &TradeTick) -> Result<()>`
+- `on_bar(&mut self, bar: &Bar) -> Result<()>`
+- `on_book_deltas(&mut self, deltas: &OrderBookDeltas) -> Result<()>` — batch, not single delta
+- `on_instrument(&mut self, instrument: &InstrumentAny) -> Result<()>`
+- `on_data(&mut self, data: &CustomData) -> Result<()>` — custom data types
+
+### Custom Data Types
+
+```rust
+use nautilus_core::UnixNanos;
+use nautilus_persistence_macros::custom_data;
+
+#[custom_data]
+pub struct VpinSnapshot {
+    pub instrument_id: InstrumentId,
+    pub buy_volume: f64,
+    pub sell_volume: f64,
+    pub vpin: f64,
+    pub ts_event: UnixNanos,  // REQUIRED
+    pub ts_init: UnixNanos,   // REQUIRED — compilation fails without both
+}
+```
+
+Supported field types: `f64`, `f32`, `i64`, `i32`, `u64`, `u32`, `u16`, `u8`, `bool`, `String`, `InstrumentId`, `Vec<f64>`, `Vec<u8>`.
+
+Register once at startup before publishing or querying:
+```rust
+nautilus_serialization::ensure_custom_data_registered::<VpinSnapshot>();
+```
+
+Publishing:
+```rust
+use std::sync::Arc;
+use nautilus_common::{msgbus, msgbus::switchboard::get_custom_topic};
+use nautilus_model::data::CustomData;
+
+let snapshot = VpinSnapshot { /* ... */ };
+let custom = CustomData::from_arc(Arc::new(snapshot));
+let topic = get_custom_topic(&custom.data_type);
+msgbus::publish_any(topic, &custom);
+```
+
+Subscribing (in `on_start`):
+```rust
+use nautilus_model::data::DataType;
+let data_type = DataType::new(stringify!(VpinSnapshot), None, None);
+self.subscribe_data(data_type, None, None);
+```
+
+Receiving (in `on_data`):
+```rust
+fn on_data(&mut self, data: &CustomData) -> Result<()> {
+    let Some(snap) = data.data.as_any().downcast_ref::<VpinSnapshot>() else {
+        return Ok(());
+    };
+    println!("vpin={:.4}", snap.vpin);
+    Ok(())
+}
+```
+
+`CustomData` has a public `.data: Arc<dyn CustomDataTrait>` field — no `.inner()` method exists.
+
+### Signal Pattern (Actor → Strategy)
+
+Python's `publish_signal`/`subscribe_signal` are Cython-only. The Rust equivalent:
+
+```rust
+#[custom_data]
+pub struct MomentumSignal {
+    pub value: f64,
+    pub ts_event: UnixNanos,
+    pub ts_init: UnixNanos,
+}
+```
+
+Actor publishes via `msgbus::publish_any`. Strategy subscribes via `subscribe_data(DataType::new("MomentumSignal", None, None), None, None)` and receives in `on_data`.
 | `queue_for_executor` is async | It schedules an async coroutine from a sync context — the callback itself is sync |

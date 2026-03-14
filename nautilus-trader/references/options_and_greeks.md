@@ -2,6 +2,8 @@
 
 Option instrument types, greeks calculation, and Black-Scholes functions in NautilusTrader v1.224.0.
 
+> *Python only — `GreeksCalculator`, Black-Scholes functions (`black_scholes_greeks`, `imply_vol_and_greeks`, `refine_vol_and_greeks`), and greeks data types are exposed via PyO3 bindings. Not available in pure-Rust mode. Instrument types (`CryptoOption`, `OptionContract`, etc.) exist in `nautilus-model` but the greeks calculation layer is Python/PyO3 only.*
+
 ## Option Instrument Types
 
 Four option instrument types cover crypto, tradfi, spreads, and prediction markets:

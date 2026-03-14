@@ -2,6 +2,8 @@
 
 Equity, FuturesContract, FuturesSpread, CFD, Commodity, IndexInstrument, and Interactive Brokers adapter in NautilusTrader v1.224.0.
 
+> *Python only — the Interactive Brokers execution and data adapters are Python/Cython only. Instrument types (`FuturesContract`, `EquityInstrument`, etc.) exist in `nautilus-model` and are usable in Rust, but there is no Rust IB adapter for live trading.*
+
 ## TradFi Instrument Types
 
 ### Equity

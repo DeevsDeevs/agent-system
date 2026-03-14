@@ -2,7 +2,9 @@
 
 Clock, timers, graceful shutdown, error recovery, circuit breakers, reconnection handling, logging, and monitoring for NautilusTrader.
 
-## Clock API
+## Clock API *(Python only)*
+
+> *No `self.clock` equivalent on Rust `DataActorCore`/`StrategyCore`. Use `std::time::Instant` tracked in a struct field and checked in `on_trade` or other callbacks — see [## Rust](#rust).*
 
 Every `Strategy` and `Actor` has `self.clock` — `BacktestClock` in backtest, `LiveClock` in live. Same interface, different time sources.
 
@@ -194,6 +196,8 @@ The 2-second delay gives fills time to arrive before the node shuts down.
 
 ## Graceful Shutdown
 
+> *Rust: `cancel_all_orders`/`close_all_positions` called from `on_stop` silently fail — the trading channel closes before `on_stop` fires. Cancel from `on_trade` or other live callbacks instead. See [execution.md](execution.md#rust).*
+
 `on_stop()` is called when the node receives SIGINT or `node.stop()` is called.
 
 ```python
@@ -317,7 +321,9 @@ def on_order_book_deltas(self, deltas) -> None:
         return  # book empty — awaiting snapshot after reconnect
 ```
 
-## Logging
+## Logging *(Python only)*
+
+> *Rust has no `self.log`. Use `println!()` for debugging or add the `tracing` crate for structured logging — see [## Rust](#rust).*
 
 ```python
 from nautilus_trader.config import LoggingConfig
@@ -342,7 +348,9 @@ self.log.error("Needs attention")
 self.log.debug("Verbose detail")  # only visible at DEBUG level
 ```
 
-## Health Monitoring via External Streaming
+## Health Monitoring via External Streaming *(Python only)*
+
+> *`MessageBusConfig` with Redis/Kafka external streaming is a Python-only configuration.*
 
 Stream MessageBus events to Redis/Kafka for external monitoring:
 
@@ -353,4 +361,127 @@ msgbus_config = MessageBusConfig(
     database=DatabaseConfig(type="redis", host="localhost", port=6379),
     external_streams=["data.*", "events.order.*", "events.position.*"],
 )
+```
+
+## Rust
+
+| Concern | Python | Rust |
+|---|---|---|
+| Recurring timer | `self.clock.set_timer("name", interval, callback)` | No equivalent — track `std::time::Instant` in struct, check elapsed in `on_trade` |
+| One-shot alert | `self.clock.set_time_alert("name", time, callback)` | No equivalent — same `Instant` pattern |
+| Programmatic shutdown | `os.kill(os.getpid(), sig.SIGINT)` | `tokio::select!` timeout or `Arc<AtomicBool>` flag checked in main loop |
+| SIGINT handling | Built-in (`TradingNode` catches SIGINT) | Manual: `tokio::signal::ctrl_c()` in `tokio::select!` |
+| Shutdown ERROR spam | None | `channel closed` for ~10s after stop — harmless, suppress with `std::process::exit(0)` |
+| Logging | `self.log.info("msg")` | `println!()` or `tracing::info!()` |
+| Error callbacks | On `Actor`, return `None` | On `Strategy` trait, take owned event, return `()` |
+| `cancel_all_orders` in `on_stop` | Works | Silent no-op — channel already closed |
+
+### Timer Pattern
+
+No `self.clock` on Rust `DataActorCore`. Track timing with `std::time::Instant` in a struct field, checked on every market event:
+
+```rust
+struct MyStrategy {
+    core: StrategyCore,
+    action_after: Option<std::time::Instant>,
+    // ...
+}
+
+// Set the timer on some event:
+fn on_order_accepted(&mut self, event: OrderAccepted) {
+    self.action_after = Some(std::time::Instant::now());
+}
+
+// Check elapsed on every trade tick:
+fn on_trade(&mut self, trade: &TradeTick) -> Result<()> {
+    if let Some(t) = self.action_after {
+        if t.elapsed() >= std::time::Duration::from_secs(5) {
+            self.cancel_all_orders(self.instrument_id, None, None)?;
+            self.action_after = None;
+        }
+    }
+    Ok(())
+}
+```
+
+For interval-based polling, store a `last_check: Instant` and reset it each time the interval elapses.
+
+### Error Callbacks
+
+Available on the `Strategy` trait — take owned events, return `()` (no `Result`):
+
+```rust
+impl Strategy for MyStrategy {
+    fn on_order_rejected(&mut self, event: OrderRejected) {
+        println!("Rejected: {}", event.reason);
+        if Some(event.client_order_id) == self.bid_order_id {
+            self.bid_order_id = None;
+        }
+    }
+
+    fn on_order_cancel_rejected(&mut self, event: OrderCancelRejected) {
+        println!("Cancel rejected: {}", event.reason);
+        // Order may already be closed — check cache before retrying
+    }
+
+    fn on_order_modify_rejected(&mut self, event: OrderModifyRejected) {
+        println!("Modify rejected: {}", event.reason);
+    }
+}
+```
+
+### Logging
+
+```rust
+// Simple stdout:
+println!("[INFO] Order submitted: {}", order.client_order_id());
+
+// Structured (add `tracing = "0.1"` to Cargo.toml):
+use tracing::{info, warn, error};
+tracing_subscriber::fmt::init();  // once in main
+info!(order_id = %order.client_order_id(), "Order submitted");
+```
+
+### Programmatic Shutdown
+
+Control run duration via `tokio::select!` in `main` — no in-strategy signal needed:
+
+```rust
+tokio::select! {
+    result = node.run() => result?,
+    _ = tokio::time::sleep(std::time::Duration::from_secs(60)) => {
+        node.stop().await?;
+    }
+}
+```
+
+### SIGINT Shutdown (Recommended for Live Nodes)
+
+`node.stop()` closes data channels but WebSocket stays alive for ~10s, producing harmless `[ERROR] channel closed` spam. Use `tokio::signal::ctrl_c()` for clean Ctrl+C handling and `std::process::exit(0)` to suppress the noise:
+
+```rust
+tokio::select! {
+    result = node.run() => result?,
+    _ = tokio::signal::ctrl_c() => {
+        println!("Shutting down...");
+        node.stop().await?;
+    }
+}
+// Force exit to suppress channel-closed ERROR spam (~10s after stop)
+std::process::exit(0);
+```
+
+For timed collection with SIGINT support, combine both branches:
+
+```rust
+tokio::select! {
+    result = node.run() => result?,
+    _ = tokio::time::sleep(Duration::from_secs(COLLECTION_SECS)) => {
+        node.stop().await?;
+    }
+    _ = tokio::signal::ctrl_c() => {
+        println!("Interrupted — shutting down...");
+        node.stop().await?;
+    }
+}
 ```

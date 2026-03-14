@@ -602,3 +602,161 @@ CMD ["python", "run_trading.py"]
 | `reconciliation_startup_delay_secs < 10` | Causes premature reconciliation — keep at 10+ |
 | Jupyter notebooks for live trading | Event loop conflicts, no signal handling — use standalone script |
 | `modify_order` auto-fallback on unsupported venues | Adapter errors — no automatic cancel+replace |
+
+## Rust
+
+| Concern | Python | Rust |
+|---|---|---|
+| `modify_order` argument | Order object (reference) | `OrderAny` (owned — must clone from cache before calling) |
+| `cancel_order` argument | `ClientOrderId` or order | `OrderAny` (owned) — use `cancel_all_orders` if order object not stored |
+| `on_order_accepted` | On `Actor`, returns `None` | On `Strategy` trait, takes **owned** `OrderAccepted`, returns `()` (no Result) |
+| `on_order_filled` | Returns `None` | `DataActor` trait, `&OrderFilled` reference, returns `Result<()>` |
+| Bracket return type | `OrderList` object | `Vec<OrderAny>` — pass directly to `submit_order_list` |
+| Cancel from `on_stop` | Works | Channel closed before `on_stop` fires — cancel from `on_trade` or other live callbacks |
+
+### Order Event Callbacks
+
+| Callback | Trait | Signature |
+|---|---|---|
+| `on_order_filled` | `DataActor` | `fn on_order_filled(&mut self, event: &OrderFilled) -> Result<()>` |
+| `on_order_canceled` | `DataActor` | `fn on_order_canceled(&mut self, event: &OrderCanceled) -> Result<()>` |
+| `on_order_accepted` | `Strategy` | `fn on_order_accepted(&mut self, event: OrderAccepted)` ← owned, no Result |
+| `on_order_rejected` | `Strategy` | `fn on_order_rejected(&mut self, event: OrderRejected)` ← owned, no Result |
+
+`on_order_accepted`/`on_order_rejected` are on the `Strategy` trait and take **owned** events with no `Result` return. `DataActor` callbacks take `&Event` references and return `Result<()>`.
+
+### Order Cancellation
+
+```rust
+// Cancel all open orders on an instrument — no order object needed
+self.cancel_all_orders(instrument_id, None, None)?;
+// Args: (instrument_id, order_side: Option<OrderSide>, client_id: Option<ClientId>)
+
+// Cancel a specific order — requires owned OrderAny
+let order_opt = { cache.borrow().order(&id_to_cancel).cloned() };
+if let Some(order) = order_opt {
+    if order.is_open() { self.cancel_order(order, None)?; }
+}
+```
+
+**Canceling from `on_stop` silently fails** — the trading channel closes before `on_stop` fires. Cancel from `on_trade` or another live callback using a timer:
+
+```rust
+// In Strategy::on_order_accepted (fires while node is live)
+fn on_order_accepted(&mut self, event: OrderAccepted) {
+    if Some(event.client_order_id) == self.limit_order_id {
+        self.cancel_after = Some(std::time::Instant::now());
+    }
+}
+
+// In DataActor::on_trade (fires while node is live)
+fn on_trade(&mut self, trade: &TradeTick) -> Result<()> {
+    if let Some(t) = self.cancel_after {
+        if t.elapsed() >= std::time::Duration::from_secs(5) {
+            self.cancel_all_orders(self.instrument_id, None, None)?;
+            self.cancel_after = None;
+        }
+    }
+    Ok(())
+}
+```
+
+### Margin Sequencing
+
+Submitting a market buy and a limit sell simultaneously can fail on cross-margin netting accounts: the limit sell reserves margin for the short side before the long position exists. Submit the second order inside `on_order_filled`:
+
+```rust
+fn on_order_filled(&mut self, event: &OrderFilled) -> Result<()> {
+    if self.phase == Phase::EntrySubmitted && event.order_side == OrderSide::Buy {
+        // Long position confirmed — margin for limit sell is now covered
+        self.submit_order(limit_sell, None, None)?;
+    }
+    Ok(())
+}
+```
+
+### Order Modification
+
+`Strategy::modify_order` takes an **owned** `OrderAny`. The cache stores orders and returns `Option<&OrderAny>`. Pattern: borrow in a scoped block, clone to owned, drop borrow, then call modify:
+
+```rust
+fn requote(&mut self, order_id: ClientOrderId, new_price: Price) -> Result<()> {
+    // Borrow scope must end before modify_order needs &mut self
+    let order_opt = {
+        let cache = self.cache_rc();
+        let guard = cache.borrow();
+        guard.order(&order_id).cloned()  // Option<OrderAny>
+    };
+    if let Some(order) = order_opt {
+        if order.is_open() {
+            // (order: OrderAny, qty, price, trigger_price, client_id)
+            self.modify_order(order, None, Some(new_price), None, None)?;
+        }
+    }
+    Ok(())
+}
+```
+
+- Pass `None` for any field you don't want to change
+- `trigger_price` is for stop orders; `None` for plain limits
+- `order.is_open()` works on `OrderAny` via enum_dispatch — no match needed
+
+### Bracket / OTO Orders
+
+`OrderFactory::bracket` creates market-entry + stop-loss + take-profit with contingency rules embedded, returning `Vec<OrderAny>`. Submit via `submit_order_list`:
+
+```rust
+use nautilus_model::enums::TriggerType;
+
+let orders = self.core.order_factory().bracket(
+    self.instrument_id, OrderSide::Buy, self.trade_size,
+    None,       // entry_price: None = market; Some(price) = limit entry
+    sl_price,   // sl_trigger_price (Price, required)
+    None,       // sl_trigger_type: None = venue default
+    tp_price,   // tp_price (Price, required)
+    None, None, None, None,
+    None,       // reduce_only: pass None — Some(true) applies to entry order too, causing rejection
+    None, None, None, None, None, None,
+);
+self.submit_order_list(orders, None, None)?;  // Vec<OrderAny>, not OrderList
+```
+
+BacktestEngine requires `support_contingent_orders = Some(true)` in `add_venue` for OTO to fire automatically.
+
+**Known backtest engine bugs (v1.224.0)** that prevent `bracket()` + `submit_order_list()` from working:
+
+1. `execution/src/engine/mod.rs:1520` — double `borrow_mut` of `RefCell<Cache>` when assigning position IDs to OTO children after entry fill. Panics with "RefCell already borrowed".
+2. `matching_engine/engine.rs:3431` — `todo!("Exhausted simulated book volume")` for `StopMarket` + `BookType::L1_MBP`.
+
+**Working workaround** — manual bracket (entry, then SL+TP on fill):
+
+```rust
+// 1. Market entry
+self.submit_order(entry, None, None)?;
+
+// 2. On entry fill — submit SL (StopLimit, NOT StopMarket) + TP (Limit) independently
+//    StopMarket hits the unimplemented L1 volume-exhaustion path; StopLimit bypasses it
+let sl = self.core.order_factory().stop_limit(
+    instrument_id, OrderSide::Sell, qty,
+    sl_price, sl_price,  // trigger == limit for guaranteed fill at stop level
+    Some(TriggerType::LastPrice), Some(TimeInForce::Gtc),
+    None, None, None, None, None, None, None, None, None, None, None,
+);
+let tp = self.core.order_factory().limit(
+    instrument_id, OrderSide::Sell, qty, tp_price,
+    Some(TimeInForce::Gtc),
+    None, None, None, None, None, None, None, None, None, None, None,
+);
+self.submit_order(sl, None, None)?;
+self.submit_order(tp, None, None)?;
+
+// 3. On SL or TP fill — cancel the survivor (manual OCO)
+let order_opt = { cache.borrow().order(&id_to_cancel).cloned() };
+if let Some(order) = order_opt {
+    if order.is_open() { self.cancel_order(order, None)?; }
+}
+```
+
+### Shutdown "channel closed" Errors
+
+`[ERROR] Failed to emit data event: channel closed` during node shutdown is a known race condition in the nautilus-binance adapter. Harmless — cannot be suppressed without patching library source.

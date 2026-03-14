@@ -2,6 +2,8 @@
 EMA crossover strategy backtest.
 Runs out of the box with TestInstrumentProvider — no external data needed.
 Goes long on golden cross (fast > slow), flat on death cross (fast < slow).
+
+Rust counterpart: ema_crossover_backtest.rs (same directory)
 """
 
 from decimal import Decimal

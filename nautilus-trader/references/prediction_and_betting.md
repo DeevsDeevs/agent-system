@@ -2,6 +2,8 @@
 
 BinaryOption (Polymarket), BettingInstrument (Betfair), and event market patterns in NautilusTrader v1.224.0.
 
+> *Python only — Polymarket and Betfair adapters are Python/Cython only. No Rust equivalents exist.*
+
 ## BinaryOption Instrument
 
 Used for prediction markets like Polymarket. A binary outcome (YES/NO) that resolves to 0 or 1.

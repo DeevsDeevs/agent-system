@@ -215,7 +215,7 @@ self.portfolio.net_position(instrument_id)
 
 **Clock**: `set_timer("name", interval=timedelta(...), callback=fn)` for recurring, `set_time_alert("name", time, callback=fn)` for one-shot. No `on_timer()` method. See [operations.md](references/operations.md).
 
-**Data-only node**: Omit `exec_clients` for pure data collection. Two harmless `[WARN]` messages appear (`No 'exec_clients' configuration found`, `No clients to connect`) — node connects and streams data normally. See [execution.md](references/execution.md).
+**Data-only node**: Omit `exec_clients` for pure data collection. Two harmless `[WARN]` at startup (`No 'exec_clients' configuration found`, `No clients to connect`). At shutdown: `[ERROR] Failed to emit data event: channel closed` spam for ~10s — known nautilus-binance race condition, harmless. See [operations.md](references/operations.md) for shutdown patterns.
 
 **Instruments**: `load_ids=frozenset({"BTCUSDT-PERP.BINANCE", ...})` for fast startup — full `"SYMBOL.VENUE"` strings, not bare symbols. `load_all=True` takes minutes. Use adapter-specific enums for account types.
 
@@ -284,19 +284,34 @@ These do NOT exist in v1.224.0:
 | `modify_order` auto-fallback | Adapter errors if venue doesn't support — no auto cancel+replace fallback |
 | `InstrumentStatus` stops order flow | Does NOT automatically stop orders — strategy must react manually |
 
-## References
+## Reference Navigator
 
-Detailed coverage in supporting files:
-
-- **Trading**: [market_making.md](references/market_making.md), [execution.md](references/execution.md), [derivatives.md](references/derivatives.md)
-- **Options & Greeks**: [options_and_greeks.md](references/options_and_greeks.md) — CryptoOption, OptionContract, OptionSpread, BinaryOption, GreeksCalculator, Black-Scholes
-- **Prediction & Betting**: [prediction_and_betting.md](references/prediction_and_betting.md) — Polymarket (BinaryOption), Betfair (BettingInstrument)
-- **Traditional Finance**: [traditional_finance.md](references/traditional_finance.md) — Equity, FuturesContract, Interactive Brokers
-- **Data & Microstructure**: [order_book.md](references/order_book.md), [backtesting.md](references/backtesting.md), [actors_and_signals.md](references/actors_and_signals.md)
-- **Infrastructure**: [execution.md](references/execution.md), [operations.md](references/operations.md), [backtesting.md](references/backtesting.md)
-- **Venues**: [exchange_adapters.md](references/exchange_adapters.md) (12 adapters)
-- **Development**: [adapter_development_python.md](references/adapter_development_python.md), [adapter_development_rust.md](references/adapter_development_rust.md), [dev_environment.md](references/dev_environment.md)
+| Task | Load These | Key Gotchas |
+|------|-----------|-------------|
+| **Build a backtest** | [backtesting.md](references/backtesting.md), [execution.md](references/execution.md) | `AccountType.Margin` for derivatives, `engine.cache` not `engine.trader.cache` |
+| **Live strategy (Python)** | [execution.md](references/execution.md), [exchange_adapters.md](references/exchange_adapters.md), [operations.md](references/operations.md) | SIGINT shutdown built-in, `on_stop` fires before disconnect |
+| **Live strategy (Rust)** | [rust_trading.md](references/rust_trading.md), [execution.md](references/execution.md), [exchange_adapters.md](references/exchange_adapters.md), [operations.md](references/operations.md) | `on_stop` channel closed, `tokio::signal::ctrl_c()` for SIGINT, ERROR spam at shutdown is harmless |
+| **Data-only live node** | [exchange_adapters.md](references/exchange_adapters.md), [operations.md](references/operations.md) | No exec client → 2 harmless WARNs, shutdown ERROR spam (channel closed) |
+| **Market making** | [market_making.md](references/market_making.md), [execution.md](references/execution.md), [order_book.md](references/order_book.md) | `modify_order` not on all venues, L2 is ceiling for crypto |
+| **Actors & signals** | [actors_and_signals.md](references/actors_and_signals.md) | `publish_signal` values must be int/float/str, Rust uses `#[custom_data]` |
+| **Exchange adapters** | [exchange_adapters.md](references/exchange_adapters.md) | Symbology varies per venue, `load_ids` needs full `SYMBOL.VENUE` strings |
+| **Options & Greeks** | [options_and_greeks.md](references/options_and_greeks.md) | `GreeksCalculator(cache, clock)` — 2 args only |
+| **Prediction markets** | [prediction_and_betting.md](references/prediction_and_betting.md) | Polymarket needs `py_clob_client` |
+| **Traditional finance** | [traditional_finance.md](references/traditional_finance.md) | Equity/FuturesContract Cython constructors differ |
+| **Custom adapter** | [adapter_development_python.md](references/adapter_development_python.md), [adapter_development_rust.md](references/adapter_development_rust.md) | |
+| **Pure Rust** | [rust_trading.md](references/rust_trading.md) | `default-features = false` on all crates, `on_stop` always implement (even empty) |
 
 ## Examples
 
 Working code: [market_maker_backtest.py](examples/market_maker_backtest.py) (L2 MM with skew), [ema_crossover_backtest.py](examples/ema_crossover_backtest.py), [bracket_order_backtest.py](examples/bracket_order_backtest.py), [signal_pipeline_backtest.py](examples/signal_pipeline_backtest.py), [binance_enrichment_actor.py](examples/binance_enrichment_actor.py) (OI+funding), [spread_capture_live.py](examples/spread_capture_live.py) (live), [custom_adapter_minimal.py](examples/custom_adapter_minimal.py), [deribit_option_greeks_backtest.py](examples/deribit_option_greeks_backtest.py) (options + greeks), [polymarket_binary_backtest.py](examples/polymarket_binary_backtest.py) (prediction markets).
+
+**Pure Rust examples** (compiled and verified, in `examples/`): `ema_crossover_backtest.rs` (Strategy + BacktestEngine), `signal_actor_backtest.rs` (DataActor signal pub/sub), `custom_data_backtest.rs` (#[custom_data] macro), `live_data_collector.rs` (LiveNode + Binance), `live_order_test.rs` (full order lifecycle), `market_maker_backtest.rs` (modify_order), `bracket_order_backtest.rs` (manual bracket), `catalog_backtest.rs` (BacktestNode + Parquet), `live_spot_test.rs` (Spot + high-precision), `live_modify_order_test.rs` (modify + rejection callbacks). See [rust_trading.md](references/rust_trading.md).
+
+### Rust Quick Reference
+
+- `Strategy` in `nautilus_trading`, `DataActor` in `nautilus_common` — NOT the reverse
+- All crates from git, `default-features = false`, `features = ["examples"]` for indicators
+- `on_stop` must be implemented (even empty) or warns
+- `modify_order` takes owned `OrderAny` — clone from cache, drop borrow, then call
+- Live shutdown: `tokio::select!` with `tokio::signal::ctrl_c()` + `node.stop().await?` — then `std::process::exit(0)` to kill channel-closed ERROR spam
+- See [rust_trading.md](references/rust_trading.md) for full anti-hallucination table

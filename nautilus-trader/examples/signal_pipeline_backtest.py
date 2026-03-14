@@ -2,6 +2,10 @@
 Signal pipeline: Actor publishes EMA signal → Strategy trades on crossover.
 Runs out of the box with TestInstrumentProvider — no external data needed.
 Demonstrates the native publish_signal/subscribe_signal/on_signal API.
+
+Rust counterpart: signal_actor_backtest.rs (same directory)
+Note: Python's publish_signal/subscribe_signal are Cython-only. Rust uses
+#[custom_data] + msgbus::publish_any + subscribe_data instead.
 """
 
 from decimal import Decimal

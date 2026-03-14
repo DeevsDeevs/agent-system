@@ -2,6 +2,8 @@
 
 Market making patterns for NautilusTrader: inventory skew, spread methods, Avellaneda-Stoikov, and fee-aware quoting.
 
+> *Rust: Core patterns (`modify_order`, inventory skew, bid/ask requoting) are available — see [execution.md](execution.md#rust) for ownership differences and `examples/market_maker_backtest.rs` for a working example. `self.log`, `self.clock`, and Python-style `self.cache.order(id)` differ — see topic files. `self.order_factory.limit(post_only=True)` → pass `None` for `post_only` as a positional arg in Rust.*
+
 ## Core Pattern: modify_order as Primary
 
 `modify_order` sends a single amend message — fewer messages, less detectable, lower latency than cancel+replace. Fall back to cancel+replace only when modify is rejected or unsupported (dYdX).
