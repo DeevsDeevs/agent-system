@@ -361,6 +361,27 @@ node.build()
 node.run()  # blocks until shutdown signal
 ```
 
+### Data-Only Node (No Execution)
+
+For data collection, research, or signal generation without trading, omit `exec_clients` entirely:
+
+```python
+config = TradingNodeConfig(
+    trader_id="COLLECTOR-001",
+    data_clients={"BINANCE": BinanceDataClientConfig(...)},
+    # no exec_clients — data only
+)
+node = TradingNode(config=config)
+node.add_data_client_factory(BINANCE, BinanceLiveDataClientFactory)
+# no add_exec_client_factory call
+```
+
+**Expected warnings** (both are harmless — not errors):
+- `No 'exec_clients' configuration found`
+- `No clients to connect`
+
+The node connects, loads instruments, and subscribes to market data normally.
+
 ### TradingNode vs BacktestNode
 
 | Aspect | TradingNode | BacktestNode |

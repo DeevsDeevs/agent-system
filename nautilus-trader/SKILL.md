@@ -215,7 +215,9 @@ self.portfolio.net_position(instrument_id)
 
 **Clock**: `set_timer("name", interval=timedelta(...), callback=fn)` for recurring, `set_time_alert("name", time, callback=fn)` for one-shot. No `on_timer()` method. See [operations.md](references/operations.md).
 
-**Instruments**: `load_ids=frozenset({...})` for fast startup. `load_all=True` takes minutes. Use adapter-specific enums for account types.
+**Data-only node**: Omit `exec_clients` for pure data collection. Two harmless `[WARN]` messages appear (`No 'exec_clients' configuration found`, `No clients to connect`) — node connects and streams data normally. See [execution.md](references/execution.md).
+
+**Instruments**: `load_ids=frozenset({"BTCUSDT-PERP.BINANCE", ...})` for fast startup — full `"SYMBOL.VENUE"` strings, not bare symbols. `load_all=True` takes minutes. Use adapter-specific enums for account types.
 
 **Fills**: `fills > orders` is normal (partials). CASH + `frozen_account=False` = 0 fills if insufficient balance. Use `AccountType.MARGIN` for derivatives.
 
@@ -278,6 +280,7 @@ These do NOT exist in v1.224.0:
 | `subscribe_instrument_status()` on Binance | Binance does NOT implement this — not all adapters support it |
 | `MarketStatusAction.RESUME` | Does not exist — use `TRADING` to detect resumption |
 | `BinanceAccountType.USDT_FUTURE` (no S) | Must be `USDT_FUTURES` (with S) |
+| `load_ids=frozenset({"BTCUSDT-PERP"})` bare symbol | Must be full InstrumentId: `frozenset({"BTCUSDT-PERP.BINANCE"})` — crashes at connect with `missing '.' separator` |
 | `modify_order` auto-fallback | Adapter errors if venue doesn't support — no auto cancel+replace fallback |
 | `InstrumentStatus` stops order flow | Does NOT automatically stop orders — strategy must react manually |
 

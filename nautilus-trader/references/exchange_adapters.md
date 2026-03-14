@@ -53,7 +53,11 @@ data_config = BinanceDataClientConfig(
     api_key="...", api_secret="...",
     key_type=BinanceKeyType.ED25519,  # REQUIRED for exec WS API (HMAC rejected)
     account_type=BinanceAccountType.USDT_FUTURES,  # note: USDT_FUTURES (with S)
-    instrument_provider=InstrumentProviderConfig(load_all=True),
+    # fast startup — full "SYMBOL.VENUE" strings required, not bare symbols:
+    instrument_provider=InstrumentProviderConfig(
+        load_ids=frozenset({"BTCUSDT-PERP.BINANCE", "ETHUSDT-PERP.BINANCE"}),
+    ),
+    # or load_all=True to load all instruments (slow, minutes)
 )
 
 exec_config = BinanceExecClientConfig(
