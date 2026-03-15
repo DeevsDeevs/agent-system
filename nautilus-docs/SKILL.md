@@ -1,15 +1,15 @@
 ---
 name: nautilus-docs
 description: >
-  Official NautilusTrader documentation — concepts, API reference, integration guides,
-  tutorials. Use when needing detailed explanations of NautilusTrader architecture,
-  component behavior, adapter configuration, or API signatures beyond what the
-  nautilus-trader skill covers.
+  NautilusTrader trading platform — strategies, backtesting, live deployment, order management,
+  market data, Rust native binaries. Use when writing, reviewing, or debugging NautilusTrader
+  code (Python or Rust), configuring venue adapters, or answering questions about the platform.
+argument-hint: "[topic or question]"
 ---
 
-# NautilusTrader Official Docs
+# NautilusTrader v1.224.0
 
-Read the relevant doc before answering questions about platform behavior. All paths relative to `docs/`.
+Read the relevant doc before generating code or answering questions. Use `${CLAUDE_SKILL_DIR}/docs/` for doc file paths, `${CLAUDE_SKILL_DIR}/battle_tested.md` for non-obvious patterns.
 
 ## Doc Navigator
 
@@ -83,9 +83,10 @@ Read the relevant doc before answering questions about platform behavior. All pa
 | Databento data catalog | [databento_data_catalog.py](docs/tutorials/databento_data_catalog.py) |
 | Loading external data | [loading_external_data.py](docs/tutorials/loading_external_data.py) |
 
-## Battle-Tested Patterns
+## Supporting Files
 
-Non-obvious tricks from live testing — NOT in official docs: [battle_tested.md](battle_tested.md). Covers: on_start() ordering, microprice, inventory skew, signal pipeline, timer polling, FillModel, frozen_account inversion, F_LAST rule, venue gotchas, performance checklist.
+- **[battle_tested.md](battle_tested.md)** — Non-obvious patterns verified against live exchanges. Load when: writing on_start() ordering, market making, signal pipelines, backtest config, venue-specific gotchas, performance optimization.
+- **[REBUILD.md](REBUILD.md)** — Meta-prompt for regenerating this skill when NautilusTrader API changes.
 
 ## Rust Standalone Binary
 
