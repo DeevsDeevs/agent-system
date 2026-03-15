@@ -4,7 +4,6 @@ description: >
   NautilusTrader trading platform — strategies, backtesting, live deployment, order management,
   market data, Rust native binaries. Use when writing, reviewing, or debugging NautilusTrader
   code (Python or Rust), configuring venue adapters, or answering questions about the platform.
-argument-hint: "[topic or question]"
 ---
 
 # NautilusTrader v1.224.0
@@ -149,6 +148,16 @@ All follow `nautilus-{venue}` naming:
 | With indicators | add `nautilus-trading` with `features = ["examples"]` |
 | With Parquet catalog | add `nautilus-persistence` |
 | `high-precision` (128-bit) | Default on most crates — `default-features = false` disables it, re-add explicitly |
+
+### Rust vs Python
+
+- **No `load_ids` / `InstrumentProviderConfig` in Rust** — adapters auto-discover all instruments at connect
+- **Logging**: Nautilus owns the `log` backend. Use `log::info!()`. Output goes to stdout. No `RUST_LOG` env var, no `env_logger`
+- **First build**: minutes (430+ crates). Incremental: ~2s. Use `cargo build` not `--release` for iteration
+- **`#[derive(Debug)]` on all actor structs** — Nautilus requires `Debug` trait; missing it = compile error (zero-cost, fine for prod)
+- **Trade fields**: `trade.price.as_f64()`, `trade.size.as_f64()`, `trade.aggressor_side` (`AggressorSide::Buyer`/`Seller`)
+- **`node.run().await`** blocks the event loop. Callbacks fire during run. `on_stop` fires on shutdown signal
+- **Adapter configs** are all struct literals with `..Default::default()`, never builders. Pattern: `{Venue}DataClientConfig { environment, api_key, api_secret, ..Default::default() }`. Some add venue-specific fields (e.g. `product_types`, `is_testnet`). Check the venue's integration doc for exact fields
 
 ### DataActor pattern (the only way to build custom Rust actors)
 
