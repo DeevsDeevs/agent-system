@@ -12,20 +12,21 @@ Prompt and checklist for regenerating SKILL.md when NautilusTrader's API changes
 
 ## Step 1: Update the Docs
 
+Docs are a git submodule with sparse checkout (`docs/` only):
+
 ```bash
-# Pull latest official docs from nautilus_trader repo
-# Replace docs/ contents with the updated versions
-# Keep the directory structure identical
+cd nautilus-docs/references/upstream
+git fetch origin develop --depth 1
+git diff HEAD..FETCH_HEAD -- docs/   # review changes before applying
+git checkout FETCH_HEAD -- docs/
+cd ../../..
+git add nautilus-docs/references/upstream
 ```
 
-Diff against previous version to identify:
+Check for:
 - New files (new concepts, new adapters, new tutorials)
 - Removed files (deprecated features)
 - Changed files (API changes, renamed types)
-
-```bash
-diff -rq docs/ /path/to/new/docs/ | head -50
-```
 
 ## Step 2: Rebuild the Doc Navigator
 

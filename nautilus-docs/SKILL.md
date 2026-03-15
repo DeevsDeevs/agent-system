@@ -9,7 +9,7 @@ argument-hint: "[topic or question]"
 
 # NautilusTrader v1.224.0
 
-Read the relevant doc before generating code or answering questions. Use `${CLAUDE_SKILL_DIR}/docs/` for doc file paths, `${CLAUDE_SKILL_DIR}/battle_tested.md` for non-obvious patterns.
+Read the relevant doc before generating code or answering questions. Docs are a git submodule (sparse checkout, `docs/` only) from [nautilus_trader](https://github.com/nautechsystems/nautilus_trader). Use `${CLAUDE_SKILL_DIR}/references/upstream/docs/` for doc file paths.
 
 ## Doc Navigator
 
@@ -17,76 +17,76 @@ Read the relevant doc before generating code or answering questions. Use `${CLAU
 
 | Topic | Doc |
 |-------|-----|
-| Architecture / overview | [architecture.md](docs/concepts/architecture.md), [overview.md](docs/concepts/overview.md) |
-| Actor development | [actors.md](docs/concepts/actors.md) |
-| Strategy development | [strategies.md](docs/concepts/strategies.md) |
-| Backtesting | [backtesting.md](docs/concepts/backtesting.md) |
-| Live trading | [live.md](docs/concepts/live.md) |
-| Order types & execution | [orders.md](docs/concepts/orders.md), [execution.md](docs/concepts/execution.md) |
-| Order book | [order_book.md](docs/concepts/order_book.md) |
-| Data types & custom data | [data.md](docs/concepts/data.md), [custom_data.md](docs/concepts/custom_data.md) |
-| Instruments | [instruments.md](docs/concepts/instruments.md) |
-| Value types (Price, Quantity, Money) | [value_types.md](docs/concepts/value_types.md) |
-| Positions & PnL | [positions.md](docs/concepts/positions.md) |
-| Cache | [cache.md](docs/concepts/cache.md) |
-| MessageBus | [message_bus.md](docs/concepts/message_bus.md) |
-| Portfolio | [portfolio.md](docs/concepts/portfolio.md) |
-| Options & Greeks | [options.md](docs/concepts/options.md), [greeks.md](docs/concepts/greeks.md) |
-| Logging | [logging.md](docs/concepts/logging.md) |
-| Reports & analysis | [reports.md](docs/concepts/reports.md) |
-| Visualization | [visualization.md](docs/concepts/visualization.md) |
-| Adapter development | [concepts/adapters.md](docs/concepts/adapters.md), [developer_guide/adapters.md](docs/developer_guide/adapters.md) |
+| Architecture / overview | [architecture.md](references/upstream/docs/concepts/architecture.md), [overview.md](references/upstream/docs/concepts/overview.md) |
+| Actor development | [actors.md](references/upstream/docs/concepts/actors.md) |
+| Strategy development | [strategies.md](references/upstream/docs/concepts/strategies.md) |
+| Backtesting | [backtesting.md](references/upstream/docs/concepts/backtesting.md) |
+| Live trading | [live.md](references/upstream/docs/concepts/live.md) |
+| Order types & execution | [orders.md](references/upstream/docs/concepts/orders.md), [execution.md](references/upstream/docs/concepts/execution.md) |
+| Order book | [order_book.md](references/upstream/docs/concepts/order_book.md) |
+| Data types & custom data | [data.md](references/upstream/docs/concepts/data.md), [custom_data.md](references/upstream/docs/concepts/custom_data.md) |
+| Instruments | [instruments.md](references/upstream/docs/concepts/instruments.md) |
+| Value types (Price, Quantity, Money) | [value_types.md](references/upstream/docs/concepts/value_types.md) |
+| Positions & PnL | [positions.md](references/upstream/docs/concepts/positions.md) |
+| Cache | [cache.md](references/upstream/docs/concepts/cache.md) |
+| MessageBus | [message_bus.md](references/upstream/docs/concepts/message_bus.md) |
+| Portfolio | [portfolio.md](references/upstream/docs/concepts/portfolio.md) |
+| Options & Greeks | [options.md](references/upstream/docs/concepts/options.md), [greeks.md](references/upstream/docs/concepts/greeks.md) |
+| Logging | [logging.md](references/upstream/docs/concepts/logging.md) |
+| Reports & analysis | [reports.md](references/upstream/docs/concepts/reports.md) |
+| Visualization | [visualization.md](references/upstream/docs/concepts/visualization.md) |
+| Adapter development | [concepts/adapters.md](references/upstream/docs/concepts/adapters.md), [developer_guide/adapters.md](references/upstream/docs/developer_guide/adapters.md) |
 
 ### Venue Integrations
 
 | Venue | Doc |
 |-------|-----|
-| Binance | [binance.md](docs/integrations/binance.md) |
-| Bybit | [bybit.md](docs/integrations/bybit.md) |
-| OKX | [okx.md](docs/integrations/okx.md) |
-| dYdX | [dydx.md](docs/integrations/dydx.md) |
-| Deribit | [deribit.md](docs/integrations/deribit.md) |
-| Hyperliquid | [hyperliquid.md](docs/integrations/hyperliquid.md) |
-| Kraken | [kraken.md](docs/integrations/kraken.md) |
-| Interactive Brokers | [ib.md](docs/integrations/ib.md) |
-| Betfair | [betfair.md](docs/integrations/betfair.md) |
-| Polymarket | [polymarket.md](docs/integrations/polymarket.md) |
-| Databento | [databento.md](docs/integrations/databento.md) |
-| Tardis | [tardis.md](docs/integrations/tardis.md) |
-| BitMEX | [bitmex.md](docs/integrations/bitmex.md) |
-| AX Exchange | [architect_ax.md](docs/integrations/architect_ax.md) |
+| Binance | [binance.md](references/upstream/docs/integrations/binance.md) |
+| Bybit | [bybit.md](references/upstream/docs/integrations/bybit.md) |
+| OKX | [okx.md](references/upstream/docs/integrations/okx.md) |
+| dYdX | [dydx.md](references/upstream/docs/integrations/dydx.md) |
+| Deribit | [deribit.md](references/upstream/docs/integrations/deribit.md) |
+| Hyperliquid | [hyperliquid.md](references/upstream/docs/integrations/hyperliquid.md) |
+| Kraken | [kraken.md](references/upstream/docs/integrations/kraken.md) |
+| Interactive Brokers | [ib.md](references/upstream/docs/integrations/ib.md) |
+| Betfair | [betfair.md](references/upstream/docs/integrations/betfair.md) |
+| Polymarket | [polymarket.md](references/upstream/docs/integrations/polymarket.md) |
+| Databento | [databento.md](references/upstream/docs/integrations/databento.md) |
+| Tardis | [tardis.md](references/upstream/docs/integrations/tardis.md) |
+| BitMEX | [bitmex.md](references/upstream/docs/integrations/bitmex.md) |
+| AX Exchange | [architect_ax.md](references/upstream/docs/integrations/architect_ax.md) |
 
 ### Dev / Setup
 
 | Topic | Doc |
 |-------|-----|
-| Installation | [installation.md](docs/getting_started/installation.md) |
-| Quickstart | [quickstart.py](docs/getting_started/quickstart.py) |
-| Environment setup | [environment_setup.md](docs/developer_guide/environment_setup.md) |
-| Rust development | [rust.md](docs/developer_guide/rust.md) |
-| Testing | [testing.md](docs/developer_guide/testing.md) |
-| Coding standards | [coding_standards.md](docs/developer_guide/coding_standards.md) |
-| Benchmarking | [benchmarking.md](docs/developer_guide/benchmarking.md) |
-| FFI | [ffi.md](docs/developer_guide/ffi.md) |
+| Installation | [installation.md](references/upstream/docs/getting_started/installation.md) |
+| Quickstart | [quickstart.py](references/upstream/docs/getting_started/quickstart.py) |
+| Environment setup | [environment_setup.md](references/upstream/docs/developer_guide/environment_setup.md) |
+| Rust development | [rust.md](references/upstream/docs/developer_guide/rust.md) |
+| Testing | [testing.md](references/upstream/docs/developer_guide/testing.md) |
+| Coding standards | [coding_standards.md](references/upstream/docs/developer_guide/coding_standards.md) |
+| Benchmarking | [benchmarking.md](references/upstream/docs/developer_guide/benchmarking.md) |
+| FFI | [ffi.md](references/upstream/docs/developer_guide/ffi.md) |
 
 ### Tutorials
 
 | Tutorial | Doc |
 |----------|-----|
-| FX mean reversion (AX) | [ax_fx_mean_reversion.md](docs/tutorials/ax_fx_mean_reversion.md) |
-| Gold book imbalance (AX) | [ax_gold_book_imbalance.md](docs/tutorials/ax_gold_book_imbalance.md) |
-| dYdX grid market maker | [dydx_grid_market_maker.md](docs/tutorials/dydx_grid_market_maker.md) |
-| BitMEX grid market maker | [bitmex_grid_market_maker.md](docs/tutorials/bitmex_grid_market_maker.md) |
-| Backtest Binance orderbook | [backtest_binance_orderbook.py](docs/tutorials/backtest_binance_orderbook.py) |
-| Backtest Bybit orderbook | [backtest_bybit_orderbook.py](docs/tutorials/backtest_bybit_orderbook.py) |
-| Backtest FX bars | [backtest_fx_bars.py](docs/tutorials/backtest_fx_bars.py) |
-| Databento data catalog | [databento_data_catalog.py](docs/tutorials/databento_data_catalog.py) |
-| Loading external data | [loading_external_data.py](docs/tutorials/loading_external_data.py) |
+| FX mean reversion (AX) | [ax_fx_mean_reversion.md](references/upstream/docs/tutorials/ax_fx_mean_reversion.md) |
+| Gold book imbalance (AX) | [ax_gold_book_imbalance.md](references/upstream/docs/tutorials/ax_gold_book_imbalance.md) |
+| dYdX grid market maker | [dydx_grid_market_maker.md](references/upstream/docs/tutorials/dydx_grid_market_maker.md) |
+| BitMEX grid market maker | [bitmex_grid_market_maker.md](references/upstream/docs/tutorials/bitmex_grid_market_maker.md) |
+| Backtest Binance orderbook | [backtest_binance_orderbook.py](references/upstream/docs/tutorials/backtest_binance_orderbook.py) |
+| Backtest Bybit orderbook | [backtest_bybit_orderbook.py](references/upstream/docs/tutorials/backtest_bybit_orderbook.py) |
+| Backtest FX bars | [backtest_fx_bars.py](references/upstream/docs/tutorials/backtest_fx_bars.py) |
+| Databento data catalog | [databento_data_catalog.py](references/upstream/docs/tutorials/databento_data_catalog.py) |
+| Loading external data | [loading_external_data.py](references/upstream/docs/tutorials/loading_external_data.py) |
 
 ## Supporting Files
 
-- **[battle_tested.md](battle_tested.md)** — Non-obvious patterns verified against live exchanges. Load when: writing on_start() ordering, market making, signal pipelines, backtest config, venue-specific gotchas, performance optimization.
-- **[REBUILD.md](REBUILD.md)** — Meta-prompt for regenerating this skill when NautilusTrader API changes.
+- **[battle_tested.md](references/battle_tested.md)** — Non-obvious patterns verified against live exchanges. Load when: writing on_start() ordering, market making, signal pipelines, backtest config, venue-specific gotchas, performance optimization.
+- **[REBUILD.md](references/REBUILD.md)** — Meta-prompt for regenerating this skill when NautilusTrader API changes.
 
 ## Rust Standalone Binary
 
