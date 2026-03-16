@@ -1,8 +1,4 @@
-"""Deribit BTC option greeks calculation in backtest context.
-
-Constructs a CryptoOption manually, sets up BacktestEngine with a DERIBIT venue,
-and uses GreeksCalculator inside a strategy to compute greeks on bar events.
-"""
+"""Deribit BTC option greeks calculation in backtest context."""
 
 from decimal import Decimal
 
@@ -92,7 +88,6 @@ class GreeksStrategy(Strategy):
 
 
 def main():
-    # Demonstrate standalone BS calculation (no engine needed)
     result = black_scholes_greeks(
         95000.0,    # spot
         0.05,       # interest_rate
@@ -125,12 +120,6 @@ def main():
     engine.add_instrument(option)
 
     engine.add_strategy(GreeksStrategy(GreeksStrategyConfig()))
-
-    # NOTE: In a real backtest, you'd add tick data via:
-    #   engine.add_data(quote_ticks)
-    # Without data, the strategy simply won't receive callbacks.
-    # This example validates the setup and BS function.
-
     engine.run()
     engine.dispose()
     print("Engine run complete (no data loaded — setup validated).")

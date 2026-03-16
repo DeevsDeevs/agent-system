@@ -1,13 +1,4 @@
-"""
-Backtest test for the BinanceEnrichmentActor funding rate pipeline.
-
-In backtest, the Binance adapter isn't running, so we simulate the flow:
-- A mock actor publishes BinanceFuturesMarkPriceUpdate (simulating the adapter)
-- BinanceEnrichmentActor receives it, extracts funding rate, publishes FundingRateUpdate
-- A test strategy subscribes to FundingRateUpdate and counts received events
-
-This validates the full pipeline: mark price WS → Actor → FundingRateUpdate → Strategy
-"""
+"""Backtest test for BinanceEnrichmentActor funding rate pipeline."""
 
 from decimal import Decimal
 
@@ -31,12 +22,10 @@ from binance_enrichment_actor import (
 
 
 class MockMarkPriceActorConfig(ActorConfig, frozen=True):
-    """Simulates Binance adapter emitting BinanceFuturesMarkPriceUpdate."""
     emit_every: int = 100
 
 
 class MockMarkPriceActor(Actor):
-    """Simulates the Binance adapter's mark price stream in backtest."""
 
     def __init__(self, config: MockMarkPriceActorConfig) -> None:
         super().__init__(config)
@@ -75,7 +64,6 @@ class FundingReceiverConfig(StrategyConfig, frozen=True):
 
 
 class FundingReceiverStrategy(Strategy):
-    """Test strategy that subscribes to FundingRateUpdate and OpenInterestData."""
 
     def __init__(self, config: FundingReceiverConfig) -> None:
         super().__init__(config)

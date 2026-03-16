@@ -13,27 +13,17 @@ High-performance algorithmic trading platform. Hybrid Python/Rust/Cython archite
 
 **Tested against v1.224.0** — all code validated by running tests.
 
-## Before Writing Code
-
-Load these references proactively — don't wait for the user to ask:
-- **Any live task**: [exchange_adapters.md](references/exchange_adapters.md) (venue config, symbology, data availability) + [operations.md](references/operations.md) (shutdown, timers, error recovery)
-- **Any backtest**: [backtesting.md](references/backtesting.md) (engine setup, fill model, data loading, indicators)
-- **Any Rust task**: [rust_trading.md](references/rust_trading.md) (crate setup, anti-hallucination table, trait signatures)
-- **Always**: Check the Common Hallucinations table below — wrong APIs cause silent failures or crashes
-
 ## Architecture
 
 | Component | Role |
 |-----------|------|
-| `NautilusKernel` | Single-threaded core: lifecycle, clock, event sequencing. Supports 16+ instrument types: CryptoPerpetual, CryptoFuture, CryptoOption, CurrencyPair, Equity, FuturesContract, FuturesSpread, OptionContract, OptionSpread, BinaryOption, BettingInstrument, Cfd, Commodity, IndexInstrument, PerpetualContract, SyntheticInstrument |
-| `MessageBus` | Pub/Sub + Req/Rep message routing across all components |
-| `Cache` | In-memory store for instruments, orders, positions, books |
-| `DataEngine` | Market data ingestion, buffering (F_LAST rule), distribution |
+| `NautilusKernel` | Single-threaded core: lifecycle, clock, event sequencing. 16+ instrument types. |
+| `MessageBus` | Pub/Sub + Req/Rep routing across all components |
+| `Cache` | In-memory store: instruments, orders, positions, books |
+| `DataEngine` | Data ingestion, buffering (F_LAST rule), distribution |
 | `ExecutionEngine` | Order routing, OMS reconciliation, position tracking |
 | `RiskEngine` | Pre-trade checks: precision, notional, reduce_only, rate limits |
-| `Portfolio` | Real-time aggregated P&L, margin, balances across venues |
-
-One `TradingNode` / `BacktestNode` per process. Background threads for I/O via MessageBus.
+| `Portfolio` | Aggregated P&L, margin, balances across venues |
 
 ## Strategy Pattern
 
@@ -92,8 +82,6 @@ instrument_provider=InstrumentProviderConfig(
 )
 ```
 
-Without `load_ids` (or `load_all=True`): no instruments load into cache → `cache.instrument()` returns None → subscriptions silently produce 0 callbacks. Full venue configs: [exchange_adapters.md](references/exchange_adapters.md).
-
 ### Correct `on_start()` sequence:
 
 ```python
@@ -132,19 +120,9 @@ def on_start(self) -> None:
 
 ### Indicator warmup:
 
-```python
-def on_bar(self, bar: Bar) -> None:
-    if not self.indicators_initialized():
-        return  # CRITICAL — values are WRONG before warmup, not NaN
-```
+Indicators produce **partial values** before warmup (not NaN) — guard with `indicators_initialized()`. See [backtesting.md](references/backtesting.md).
 
-SMA/EMA/RSI produce **partial values** before warmup — not NaN, not zero, just wrong numbers. See [backtesting.md](references/backtesting.md) for indicator imports and registration.
-
-## Data Subscriptions
-
-Availability varies by adapter — check [exchange_adapters.md](references/exchange_adapters.md) for the full support matrix per venue.
-
-**Missing subscriptions?** Build an Actor that polls REST — see [binance_enrichment_actor.py](examples/binance_enrichment_actor.py).
+Data availability varies by adapter — check [exchange_adapters.md](references/exchange_adapters.md). For missing data, build an Actor that polls REST — see [binance_enrichment_actor.py](examples/binance_enrichment_actor.py).
 
 ## Execution & OMS
 
@@ -215,25 +193,23 @@ self.portfolio.net_position(instrument_id)
 
 **Clock**: `set_timer("name", interval=timedelta(...), callback=fn)` for recurring, `set_time_alert("name", time, callback=fn)` for one-shot. No `on_timer()` method. See [operations.md](references/operations.md).
 
-**Data-only node**: Omit `exec_clients` for pure data collection. Two harmless `[WARN]` at startup (`No 'exec_clients' configuration found`, `No clients to connect`). At shutdown: `[ERROR] Failed to emit data event: channel closed` spam for ~10s — known nautilus-binance race condition, harmless. See [operations.md](references/operations.md) for shutdown patterns.
+**Data-only node**: Omit `exec_clients`. Harmless WARN at startup, `channel closed` errors at shutdown (~10s) — known race condition.
 
-**Instruments**: `load_ids=frozenset({"BTCUSDT-PERP.BINANCE", ...})` is REQUIRED in `InstrumentProviderConfig` — without it, no instruments load and all subscriptions silently produce 0 data. Full `"SYMBOL.VENUE"` strings, not bare symbols. `load_all=True` works but takes minutes. Use adapter-specific enums for account types.
+**Instruments**: `load_ids=frozenset({"BTCUSDT-PERP.BINANCE"})` REQUIRED in `InstrumentProviderConfig`. Full `"SYMBOL.VENUE"` strings. `load_all=True` works but slow.
 
-**Fills**: `fills > orders` is normal (partials). CASH + `frozen_account=False` = 0 fills if insufficient balance. Use `AccountType.MARGIN` for derivatives.
+**Fills**: `fills > orders` normal (partials). CASH + `frozen_account=False` = 0 fills if insufficient balance. Use MARGIN for derivatives.
 
-**BacktestEngine**: `engine.cache` (not `engine.trader.cache`). `BacktestEngineConfig` from `nautilus_trader.backtest.engine`. `Currency.from_str("USDT")` not bare constant. `base_currency=None` for multi-currency. Two venue APIs: low-level `engine.add_venue(venue=Venue("X"), oms_type=OmsType.NETTING, account_type=AccountType.MARGIN, starting_balances=[Money...])` vs high-level `BacktestRunConfig(venues=[BacktestVenueConfig(...)])`.
+**BacktestEngine**: `engine.cache` (not `engine.trader.cache`). `BacktestEngineConfig` from `nautilus_trader.backtest.engine`. `Currency.from_str("USDT")`. `base_currency=None` for multi-currency.
 
-**SimulatedExchange**: `FillModel(prob_fill_on_limit=0.3, prob_slippage=0.5, random_seed=42)` — no `prob_fill_on_stop`. `LatencyModel` takes nanoseconds.
+**Actors**: `from nautilus_trader.common.actor import Actor`. For signal computation, REST polling, enrichment.
 
-**Actors**: `from nautilus_trader.common.actor import Actor` (NOT `trading.actor`). Strategies without order management. Use for signal computation, REST polling, enrichment. See [actors_and_signals.md](references/actors_and_signals.md).
+**Signals**: `publish_signal(name="x", value=42.5, ts_event=...)` — values must be int/float/str. For structured data use `Data` subclass + `publish_data`.
 
-**Signals**: `publish_signal(name="x", value=42.5, ts_event=...)` — values must be int/float/str (dict → KeyError). For structured data use `Data` subclass + `publish_data`. See [actors_and_signals.md](references/actors_and_signals.md).
+**Greeks**: `GreeksCalculator(cache, clock)` — 2 args only. BS: `from nautilus_trader.core.nautilus_pyo3 import black_scholes_greeks`.
 
-**Greeks**: `GreeksCalculator(cache, clock)` — 2 args only. Uses `cache.price(id, PriceType.MID)` internally. BS functions via `from nautilus_trader.core.nautilus_pyo3 import black_scholes_greeks`. Cache methods: `cache.greeks()`, `cache.add_greeks()`, `cache.yield_curve()`, `cache.index_price()`. See [options_and_greeks.md](references/options_and_greeks.md).
+**Adapter configs**: msgspec Structs — enumerate via `cls.__struct_fields__`. Naming: `BinanceDataClientConfig`, `BybitDataClientConfig`, `DydxDataClientConfig` (not DYDX).
 
-**Adapter configs**: All are msgspec Structs — enumerate fields via `cls.__struct_fields__`. Config class naming: `BinanceDataClientConfig`, `BybitDataClientConfig`, `DeribitDataClientConfig`, `DydxDataClientConfig` (not DYDX), `KrakenDataClientConfig`, `OKXDataClientConfig`, `HyperliquidDataClientConfig`. Optional deps: Polymarket (`py_clob_client`), Betfair (`betfair_parser`), IB (`ibapi`).
-
-**Cython vs pyo3**: Most instrument types have both Cython and pyo3 (Rust) implementations. Cython versions have slightly different constructor signatures (e.g., Equity lacks `max_price`/`min_price`, FuturesContract lacks `size_precision`). Use `TestInstrumentProvider` (Cython) or `TestInstrumentProviderPyo3` for test fixtures. `legs()` method works on Cython instruments but not pyo3.
+**Cython vs pyo3**: Both exist for most instruments. Cython has different constructor signatures (Equity lacks `max_price`/`min_price`). Use `TestInstrumentProvider` (Cython) or `TestInstrumentProviderPyo3`.
 
 ## Common Hallucinations
 
@@ -243,71 +219,47 @@ These do NOT exist in v1.224.0:
 |--------------|---------|
 | `cache.position_for_instrument(id)` | `cache.positions_open(instrument_id=id)` returns list |
 | `engine.trader.cache` | `engine.cache` directly |
-| `book.filtered_view()` | Use `cache.own_order_book()` |
-| `book.get_avg_px_qty_for_exposure()` | Use `get_avg_px_for_quantity()` + `get_quantity_for_price()` |
-| `level.count` / `book.count` | `book.update_count` |
-| `BookOrder(price=, size=, side=)` | 4 positional args: `BookOrder(OrderSide.BUY, Price, Quantity, order_id=0)`. Import from `model.data`, NOT `model.book` |
-| `GenericDataWrangler` | TradeTickDataWrangler, QuoteTickDataWrangler, OrderBookDeltaDataWrangler, BarDataWrangler |
-| `catalog.data_types()` | `catalog.list_data_types()` |
-| `BacktestEngineConfig` from `nautilus_trader.config` | from `nautilus_trader.backtest.engine` or `nautilus_trader.backtest.config` |
+| `book.filtered_view()` / `get_avg_px_qty_for_exposure()` / `level.count` | `cache.own_order_book()`, `get_avg_px_for_quantity()`, `book.update_count` |
+| `BookOrder(price=, size=, side=)` | 4 positional args: `BookOrder(OrderSide.BUY, Price, Quantity, order_id=0)`. Import from `model.data` |
+| `GenericDataWrangler` / `catalog.data_types()` | Use specific wranglers (TradeTickDataWrangler etc). `catalog.list_data_types()` |
+| `BacktestEngineConfig` from `nautilus_trader.config` | from `nautilus_trader.backtest.engine`. `CacheConfig` from `nautilus_trader.config` |
+| `BacktestEngine.add_venue(venue=BacktestVenueConfig(...))` | Takes positional args. `BacktestVenueConfig` is for `BacktestRunConfig` only |
 | `FillModel(prob_fill_on_stop=...)` | Only: prob_fill_on_limit, prob_slippage, random_seed |
-| `LoggingConfig(log_file_path=)` | `log_directory=` |
-| `cache.orders_filled()` | `cache.orders_closed()` |
+| `LoggingConfig(log_file_path=)` / `cache.orders_filled()` | `log_directory=` / `cache.orders_closed()` |
 | `pos.signed_qty / Decimal(...)` | TypeError: returns float — `Decimal(str(pos.signed_qty))` |
 | `from nautilus_trader.trading.actor` | `from nautilus_trader.common.actor import Actor` |
-| `from nautilus_trader.indicators.ema` | `from nautilus_trader.indicators import ExponentialMovingAverage` |
-| `BollingerBands(20)` | `BollingerBands(20, 2.0)` — k mandatory |
-| `MACD(12, 26, 9)` | 3rd param is `MovingAverageType`, not signal_period |
+| Indicator imports: `from nautilus_trader.indicators.ema` | `from nautilus_trader.indicators import ExponentialMovingAverage` (flat namespace) |
+| `RSI` in [0,100] / `BollingerBands(20)` / `MACD(12,26,9)` | RSI in [0,1]. BB needs k: `BollingerBands(20, 2.0)`. MACD 3rd arg is `MovingAverageType` |
+| Indicator warmup returns NaN | Returns partial values (silently wrong) — guard with `indicators_initialized()` |
 | `publish_signal(value=dict(...))` | KeyError — values must be int, float, or str |
-| Encrypted Ed25519 private key | Must be unencrypted PKCS#8 |
-| `on_timer()` as callback | `clock.set_timer(callback=handler)` |
-| `order.order_side` | `order.side` — events use `event.order_side` |
-| `request_bars(bar_type)` one arg | Requires `start`: `request_bars(bar_type, start=datetime(...))` |
-| `GreeksCalculator(cache, clock, logger)` | Only 2 args: `GreeksCalculator(cache, clock)` |
+| Encrypted Ed25519 / `on_timer()` as callback | Unencrypted PKCS#8. Use `clock.set_timer(callback=handler)` |
+| `order.order_side` / `request_bars(bar_type)` one arg | `order.side`. Requires `start`: `request_bars(bar_type, start=...)` |
+| `GreeksCalculator(cache, clock, logger)` | 2 args only. BS: `from nautilus_trader.core.nautilus_pyo3 import black_scholes_greeks` |
 | `SyntheticInstrument(sym, prec, comps, formula)` | 6 required args — also needs `ts_event`, `ts_init` |
-| `from nautilus_trader.core.nautilus_pyo3` wrong path | `from nautilus_trader.core.nautilus_pyo3 import black_scholes_greeks` |
-| `BacktestEngine.add_venue(venue=BacktestVenueConfig(...))` | Takes positional args. `BacktestVenueConfig` is for `BacktestRunConfig` only |
-| `DYDXDataClientConfig` (uppercase) | `DydxDataClientConfig` (mixed case) |
-| `DydxOraclePrice` custom data type | Does not exist in v1.224.0 |
-| `from nautilus_trader.common.clock import TestClock` | Use `from nautilus_trader.common.component import LiveClock` |
-| `from nautilus_trader.common.config import CacheConfig` | `from nautilus_trader.config import CacheConfig` or `nautilus_trader.cache.config` |
-| `Equity(..., max_price=, min_price=)` | Constructor rejects these kwargs — properties exist but return None |
-| `FuturesContract(..., size_precision=, size_increment=)` | Hardcoded to 0/1 in Cython |
-| `RSI` value in [0, 100] | Value in [0, 1] — divide by 100 if comparing to standard |
-| Indicator warmup returns NaN | Returns partial values (silently wrong, not NaN) — guard with `indicators_initialized()` |
-| `BookType.L3_MBO` for crypto | L3 not available on crypto exchanges — L2 at best. L3 is for traditional exchanges only |
-| `subscribe_funding_rates()` everywhere | Method exists on Strategy but not all adapters support the feed |
-| `subscribe_instrument_status()` on Binance | Binance does NOT implement this — not all adapters support it |
-| `MarketStatusAction.RESUME` | Does not exist — use `TRADING` to detect resumption |
+| `DYDXDataClientConfig` / `DydxOraclePrice` | `DydxDataClientConfig` (mixed case). OraclePrice doesn't exist in v1.224.0 |
+| `Equity(..., max_price=)` / `FuturesContract(..., size_precision=)` | Equity rejects these kwargs. FuturesContract hardcodes to 0/1 in Cython |
+| `BookType.L3_MBO` for crypto | L3 not available on crypto — L2 at best |
+| `subscribe_funding_rates()` / `subscribe_instrument_status()` | Not all adapters support. Binance lacks instrument_status |
+| `MarketStatusAction.RESUME` / `InstrumentStatus` stops orders | RESUME doesn't exist (use TRADING). InstrumentStatus doesn't auto-stop orders |
 | `BinanceAccountType.USDT_FUTURE` (no S) | Must be `USDT_FUTURES` (with S) |
-| `load_ids=frozenset({"BTCUSDT-PERP"})` bare symbol | Must be full InstrumentId: `frozenset({"BTCUSDT-PERP.BINANCE"})` — crashes at connect with `missing '.' separator` |
-| `modify_order` auto-fallback | Adapter errors if venue doesn't support — no auto cancel+replace fallback |
-| `InstrumentStatus` stops order flow | Does NOT automatically stop orders — strategy must react manually |
-| Omitting `load_ids` from `InstrumentProviderConfig` | REQUIRED — without it, 0 instruments load, all subscriptions silently produce 0 data |
+| `load_ids=frozenset({"BTCUSDT-PERP"})` bare symbol | Full InstrumentId required: `frozenset({"BTCUSDT-PERP.BINANCE"})` |
+| `modify_order` auto-fallback | No auto cancel+replace — adapter errors if venue doesn't support |
+| `from nautilus_trader.common.clock import TestClock` | `from nautilus_trader.common.component import LiveClock` |
 
 ## Reference Navigator
 
-### Proactive (load before generating code)
-
-| Category | References |
-|----------|-----------|
-| **Any live task** | [exchange_adapters.md](references/exchange_adapters.md), [operations.md](references/operations.md) |
-| **Any backtest** | [backtesting.md](references/backtesting.md) |
-| **Any Rust task** | [rust_trading.md](references/rust_trading.md) |
-
-### On-Demand (load when task matches)
+Load proactively: **live** → exchange_adapters + operations, **backtest** → backtesting, **Rust** → rust_trading.
 
 | Task | References | Examples |
 |------|-----------|----------|
-| **Build a backtest** | [backtesting.md](references/backtesting.md), [execution.md](references/execution.md) | `ema_crossover_backtest.py`, `bracket_order_backtest.py` |
-| **Live strategy (Python)** | [execution.md](references/execution.md), [exchange_adapters.md](references/exchange_adapters.md), [operations.md](references/operations.md) | `spread_capture_live.py` |
-| **Live strategy (Rust)** | [rust_trading.md](references/rust_trading.md), [execution.md](references/execution.md), [exchange_adapters.md](references/exchange_adapters.md), [operations.md](references/operations.md) | `live_data_collector.rs`, `live_order_test.rs` |
-| **Data-only live node** | [exchange_adapters.md](references/exchange_adapters.md), [operations.md](references/operations.md) | `live_data_collector.rs` |
-| **Market making** | [market_making.md](references/market_making.md), [execution.md](references/execution.md), [order_book.md](references/order_book.md) | `market_maker_backtest.py`, `market_maker_backtest.rs` |
+| **Backtest** | [backtesting.md](references/backtesting.md), [execution.md](references/execution.md) | `ema_crossover_backtest.py`, `bracket_order_backtest.py` |
+| **Live (Python)** | [execution.md](references/execution.md), [exchange_adapters.md](references/exchange_adapters.md), [operations.md](references/operations.md) | `spread_capture_live.py` |
+| **Live (Rust)** | [rust_trading.md](references/rust_trading.md), [exchange_adapters.md](references/exchange_adapters.md), [operations.md](references/operations.md) | `live_data_collector.rs`, `live_order_test.rs` |
+| **Data-only node** | [exchange_adapters.md](references/exchange_adapters.md), [operations.md](references/operations.md) | `live_data_collector.rs` |
+| **Market making** | [market_making.md](references/market_making.md), [order_book.md](references/order_book.md) | `market_maker_backtest.py`, `market_maker_backtest.rs` |
 | **Actors & signals** | [actors_and_signals.md](references/actors_and_signals.md) | `signal_pipeline_backtest.py`, `signal_actor_backtest.rs` |
 | **Options & Greeks** | [options_and_greeks.md](references/options_and_greeks.md) | `deribit_option_greeks_backtest.py` |
 | **Prediction markets** | [prediction_and_betting.md](references/prediction_and_betting.md) | `polymarket_binary_backtest.py` |
-| **Traditional finance** | [traditional_finance.md](references/traditional_finance.md) | — |
-| **Derivatives / synths** | [derivatives.md](references/derivatives.md) | — |
+| **TradFi / Derivatives** | [traditional_finance.md](references/traditional_finance.md), [derivatives.md](references/derivatives.md) | — |
 | **Custom adapter** | [adapter_development_python.md](references/adapter_development_python.md), [adapter_development_rust.md](references/adapter_development_rust.md) | `custom_adapter_minimal.py` |
 | **Dev environment** | [dev_environment.md](references/dev_environment.md) | — |

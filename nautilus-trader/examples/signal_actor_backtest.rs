@@ -273,7 +273,7 @@ fn synthetic_trades(instrument_id: InstrumentId, n: usize) -> Vec<nautilus_model
         let ts = (i as u64) * 500_000_000;
         Data::Trade(TradeTick::new(
             instrument_id,
-            Price::from(format!("{:.2}", price).as_str()),
+            Price::new(price, 2),
             Quantity::from("0.100"),
             AggressorSide::Buyer,
             nautilus_model::identifiers::TradeId::new(&format!("T{i}")),

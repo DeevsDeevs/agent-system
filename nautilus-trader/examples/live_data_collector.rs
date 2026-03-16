@@ -29,6 +29,7 @@ use nautilus_persistence::backend::catalog::ParquetDataCatalog;
 const COLLECTION_SECS: u64 = 60;
 const CATALOG_PATH: &str = "./data/catalog";
 const L2_DEPTH: usize = 20;
+const MAX_ITEMS: usize = 5_000_000;
 
 struct DataCollector {
     core: DataActorCore,
@@ -99,8 +100,6 @@ impl DataActor for DataCollector {
         for id in ids {
             self.subscribe_quotes(id, None, None);
             self.subscribe_trades(id, None, None);
-            // depth: Option<NonZeroUsize> (not Option<usize>)
-            // managed=false -> raw deltas; managed=true -> engine-managed OrderBook
             self.subscribe_book_deltas(id, BookType::L2_MBP, NonZeroUsize::new(L2_DEPTH), None, false, None);
         }
         Ok(())
@@ -115,18 +114,20 @@ impl DataActor for DataCollector {
     }
 
     fn on_quote(&mut self, quote: &QuoteTick) -> Result<()> {
-        self.quotes.lock().unwrap().push(*quote);
+        let mut guard = self.quotes.lock().unwrap();
+        if guard.len() < MAX_ITEMS { guard.push(*quote); }
         Ok(())
     }
 
     fn on_trade(&mut self, trade: &TradeTick) -> Result<()> {
-        self.trades.lock().unwrap().push(*trade);
+        let mut guard = self.trades.lock().unwrap();
+        if guard.len() < MAX_ITEMS { guard.push(*trade); }
         Ok(())
     }
 
-    // on_book_deltas receives a BATCH of OrderBookDelta (not a single delta)
     fn on_book_deltas(&mut self, deltas: &OrderBookDeltas) -> Result<()> {
-        self.deltas.lock().unwrap().extend_from_slice(&deltas.deltas);
+        let mut guard = self.deltas.lock().unwrap();
+        if guard.len() < MAX_ITEMS { guard.extend_from_slice(&deltas.deltas); }
         Ok(())
     }
 }
@@ -153,10 +154,10 @@ async fn main() -> Result<()> {
 
     let trader_id = TraderId::from("DATA-COLLECTOR-001");
 
-    let quotes: Arc<Mutex<Vec<QuoteTick>>> = Arc::new(Mutex::new(Vec::new()));
-    let trades: Arc<Mutex<Vec<TradeTick>>> = Arc::new(Mutex::new(Vec::new()));
-    let deltas: Arc<Mutex<Vec<OrderBookDelta>>> = Arc::new(Mutex::new(Vec::new()));
-    let instruments: Arc<Mutex<Vec<InstrumentAny>>> = Arc::new(Mutex::new(Vec::new()));
+    let quotes: Arc<Mutex<Vec<QuoteTick>>> = Arc::new(Mutex::new(Vec::with_capacity(100_000)));
+    let trades: Arc<Mutex<Vec<TradeTick>>> = Arc::new(Mutex::new(Vec::with_capacity(100_000)));
+    let deltas: Arc<Mutex<Vec<OrderBookDelta>>> = Arc::new(Mutex::new(Vec::with_capacity(500_000)));
+    let instruments: Arc<Mutex<Vec<InstrumentAny>>> = Arc::new(Mutex::new(Vec::with_capacity(16)));
 
     let instrument_ids = vec![
         InstrumentId::from("BTCUSDT-PERP.BINANCE"),
@@ -212,7 +213,7 @@ async fn main() -> Result<()> {
     let catalog_path = PathBuf::from(CATALOG_PATH);
     std::fs::create_dir_all(&catalog_path)?;
 
-    // ParquetDataCatalog creates its own tokio runtime — must run in blocking thread
+    // ParquetDataCatalog creates its own tokio runtime internally
     tokio::task::spawn_blocking(move || -> Result<()> {
         let catalog = ParquetDataCatalog::new(&catalog_path, None, None, None, None);
 
@@ -232,7 +233,6 @@ async fn main() -> Result<()> {
         }
 
         if !deltas.is_empty() {
-            // write_to_parquet accepts Vec<OrderBookDelta> (singular), not Vec<OrderBookDeltas>
             catalog.write_to_parquet(deltas.clone(), None, None, None)?;
             println!("Wrote {} book deltas to {CATALOG_PATH}/order_book_delta/", deltas.len());
         }

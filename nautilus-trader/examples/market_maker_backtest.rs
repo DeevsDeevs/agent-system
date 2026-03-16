@@ -52,12 +52,10 @@ impl SimpleMarketMaker {
         }
     }
 
-    fn price(raw: f64, decimals: usize) -> Price {
-        Price::from(format!("{:.prec$}", raw, prec = decimals).as_str())
+    fn price(raw: f64, decimals: u8) -> Price {
+        Price::new(raw, decimals)
     }
 
-    // modify_order takes an owned OrderAny (clone from cache); borrow scope
-    // must end before calling self.modify_order (both need &mut self).
     fn manage_side(
         &mut self,
         side: OrderSide,
@@ -201,8 +199,8 @@ fn synthetic_quotes(instrument_id: InstrumentId, n: usize) -> Vec<Data> {
             let ts = UnixNanos::from((i as u64) * 1_000_000_000);
             Data::Quote(QuoteTick::new(
                 instrument_id,
-                Price::from(format!("{:.2}", bid).as_str()),
-                Price::from(format!("{:.2}", ask).as_str()),
+                Price::new(bid, 2),
+                Price::new(ask, 2),
                 Quantity::from("1.000"),
                 Quantity::from("1.000"),
                 ts,

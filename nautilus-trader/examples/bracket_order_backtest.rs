@@ -70,8 +70,8 @@ impl BracketStrategy {
         }
     }
 
-    fn price(raw: f64, decimals: usize) -> Price {
-        Price::from(format!("{:.prec$}", raw, prec = decimals).as_str())
+    fn price(raw: f64, decimals: u8) -> Price {
+        Price::new(raw, decimals)
     }
 }
 
@@ -141,7 +141,6 @@ impl DataActor for BracketStrategy {
                 let sl_price = Self::price(fill_px * (1.0 - SL_PCT), 2);
                 let tp_price = Self::price(fill_px * (1.0 + TP_PCT), 2);
 
-                // StopLimit with trigger == limit as workaround for StopMarket L1 bug
                 let sl = self.core.order_factory().stop_limit(
                     self.instrument_id,
                     OrderSide::Sell,
@@ -261,7 +260,7 @@ fn zigzag_trades(instrument_id: InstrumentId, n: usize) -> Vec<Data> {
             let ts = UnixNanos::from((i as u64) * 500_000_000);
             Data::Trade(TradeTick::new(
                 instrument_id,
-                Price::from(format!("{:.2}", mid).as_str()),
+                Price::new(mid, 2),
                 Quantity::from("10.000"),
                 AggressorSide::Buyer,
                 TradeId::new(&format!("T{i}")),

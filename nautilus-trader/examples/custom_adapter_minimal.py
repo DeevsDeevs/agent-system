@@ -1,8 +1,4 @@
-"""
-Minimal combined data+exec adapter skeleton.
-Shows the essential methods without 30+ no-op stubs.
-Replace MyExchangeHttpClient/WebSocketClient with your venue's API.
-"""
+"""Minimal combined data+exec adapter skeleton."""
 
 import msgspec
 from nautilus_trader.core.datetime import millis_to_nanos

@@ -144,7 +144,7 @@ impl DataActor for ModifyOrderStrategy {
             println!("[MODIFY-TEST] Last price: {price:.4} USDT");
 
             let limit_price_f64 = (price * 0.95 / TICK_SIZE).round() * TICK_SIZE;
-            let limit_price = Price::from(format!("{:.4}", limit_price_f64).as_str());
+            let limit_price = Price::new(limit_price_f64, 4);
 
             let order = self.core.order_factory().limit(
                 self.instrument_id,
@@ -172,9 +172,11 @@ impl DataActor for ModifyOrderStrategy {
         self.events.lock().unwrap().canceled.push(msg);
 
         if self.phase == Phase::CancelSubmitted {
-            let last_price = self.last_price.unwrap_or(1.0);
+            let Some(last_price) = self.last_price else {
+                return Ok(());
+            };
             let absurd_price_f64 = (last_price * 10.0 / TICK_SIZE).round() * TICK_SIZE;
-            let absurd_price = Price::from(format!("{:.4}", absurd_price_f64).as_str());
+            let absurd_price = Price::new(absurd_price_f64, 4);
 
             let order = self.core.order_factory().limit(
                 self.instrument_id,
@@ -207,9 +209,11 @@ impl Strategy for ModifyOrderStrategy {
         self.events.lock().unwrap().accepted.push(msg);
 
         if self.phase == Phase::LimitSubmitted && Some(event.client_order_id) == self.order_id {
-            let last_price = self.last_price.unwrap_or(1.0);
+            let Some(last_price) = self.last_price else {
+                return;
+            };
             let new_price_f64 = (last_price * 0.96 / TICK_SIZE).round() * TICK_SIZE;
-            let new_price = Price::from(format!("{:.4}", new_price_f64).as_str());
+            let new_price = Price::new(new_price_f64, 4);
             println!("[MODIFY-TEST] Order accepted — modifying to {new_price} (-4%)");
             if let Err(e) = self.modify_current_order(new_price) {
                 println!("[MODIFY-TEST] modify_order error: {e}");

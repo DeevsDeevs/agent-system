@@ -121,8 +121,6 @@ impl DataActor for OrderTestStrategy {
             }
 
             Phase::LimitSellSubmitted => {
-                // Cancel from on_trade (while live) keeps trading channel open,
-                // unlike on_stop where the channel is already closed
                 if let Some(accepted_at) = self.limit_accepted_at {
                     if accepted_at.elapsed() >= Duration::from_secs(CANCEL_AFTER_SECS) {
                         println!("[ORDER-TEST] {CANCEL_AFTER_SECS}s elapsed — canceling limit sell");
@@ -149,7 +147,7 @@ impl DataActor for OrderTestStrategy {
         if self.phase == Phase::MarketBuySubmitted && event.order_side == OrderSide::Buy {
             let last_price = self.last_price.unwrap_or((&event.last_px).into());
             let limit_price_f64 = (last_price * 1.10 / TICK_SIZE).round() * TICK_SIZE;
-            let limit_price = Price::from(format!("{:.4}", limit_price_f64).as_str());
+            let limit_price = Price::new(limit_price_f64, 4);
 
             let limit_order = self.core.order_factory().limit(
                 self.instrument_id,
@@ -269,7 +267,6 @@ async fn main() -> Result<()> {
     println!("Connecting to Binance UsdM for order test...");
     println!("Will submit {TRADE_SIZE} XRP market buy → GTC limit sell → cancel → market sell");
 
-    // "channel closed" errors at shutdown are a nautilus-binance shutdown race — harmless
     tokio::select! {
         result = node.run() => result?,
         _ = tokio::time::sleep(Duration::from_secs(60)) => {

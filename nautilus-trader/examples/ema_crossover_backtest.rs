@@ -106,11 +106,16 @@ impl DataActor for EmaCrossover {
 
         let fast_above = self.ema_fast.value() > self.ema_slow.value();
 
+        let cache = self.cache_rc();
+        let is_long = !cache.borrow()
+            .positions_open(None, Some(&self.instrument_id), None, None, None)
+            .is_empty();
+
         if let Some(prev) = self.prev_fast_above {
-            if fast_above && !prev {
+            if fast_above && !prev && !is_long {
                 self.enter(OrderSide::Buy)?;
-            } else if !fast_above && prev {
-                self.enter(OrderSide::Sell)?;
+            } else if !fast_above && prev && is_long {
+                self.close_all_positions(self.instrument_id, None, None, None, None, None, None)?;
             }
         }
 
@@ -175,8 +180,8 @@ fn main() -> Result<()> {
 fn synthetic_quotes(instrument_id: InstrumentId, n: usize) -> Vec<Data> {
     (0..n).map(|i| {
         let mid = 2000.0 + 50.0 * (i as f64 * 0.05).sin();
-        let bid = Price::from(format!("{:.2}", mid - 0.25).as_str());
-        let ask = Price::from(format!("{:.2}", mid + 0.25).as_str());
+        let bid = Price::new(mid - 0.25, 2);
+        let ask = Price::new(mid + 0.25, 2);
         let qty = Quantity::from("1.000");
         let ts = (i as u64) * 1_000_000_000;
         Data::Quote(QuoteTick::new(instrument_id, bid, ask, qty, qty, ts.into(), ts.into()))

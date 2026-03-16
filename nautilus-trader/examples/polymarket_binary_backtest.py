@@ -1,8 +1,4 @@
-"""Polymarket binary option backtest example.
-
-Constructs BinaryOption instruments manually, sets up BacktestEngine with
-a POLYMARKET venue (CASH account), and demonstrates limit orders on YES/NO outcomes.
-"""
+"""Polymarket binary option backtest example."""
 
 from decimal import Decimal
 
@@ -104,9 +100,6 @@ def main():
     engine.add_instrument(no_option)
 
     engine.add_strategy(BinaryStrategy(BinaryStrategyConfig()))
-
-    # NOTE: Without market data loaded via engine.add_data(), no callbacks fire.
-    # This example validates the setup — add QuoteTick data for a full backtest.
     engine.run()
     engine.dispose()
     print("Binary backtest setup validated (no data loaded).")

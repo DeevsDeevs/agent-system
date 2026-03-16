@@ -1,12 +1,4 @@
-"""
-Signal pipeline: Actor publishes EMA signal → Strategy trades on crossover.
-Runs out of the box with TestInstrumentProvider — no external data needed.
-Demonstrates the native publish_signal/subscribe_signal/on_signal API.
-
-Rust counterpart: signal_actor_backtest.rs (same directory)
-Note: Python's publish_signal/subscribe_signal are Cython-only. Rust uses
-#[custom_data] + msgbus::publish_any + subscribe_data instead.
-"""
+"""Signal pipeline: Actor publishes EMA signal → Strategy trades on crossover."""
 
 from decimal import Decimal
 
@@ -30,8 +22,6 @@ class MomentumActorConfig(ActorConfig, frozen=True):
 
 
 class MomentumActor(Actor):
-    """Computes EMA fast/slow difference and publishes as signal."""
-
     def __init__(self, config: MomentumActorConfig) -> None:
         super().__init__(config)
         self.ema_fast = ExponentialMovingAverage(config.fast_period)
@@ -64,8 +54,6 @@ class MomentumTraderConfig(StrategyConfig, frozen=True):
 
 
 class MomentumTrader(Strategy):
-    """Trades based on momentum signal from MomentumActor."""
-
     def __init__(self, config: MomentumTraderConfig) -> None:
         super().__init__(config)
         self.instrument = None
@@ -74,6 +62,10 @@ class MomentumTrader(Strategy):
 
     def on_start(self) -> None:
         self.instrument = self.cache.instrument(self.config.instrument_id)
+        if self.instrument is None:
+            self.log.error(f"Instrument not found: {self.config.instrument_id}")
+            self.stop()
+            return
         self.subscribe_signal(name="momentum")
 
     def on_signal(self, signal) -> None:

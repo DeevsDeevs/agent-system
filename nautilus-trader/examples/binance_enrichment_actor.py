@@ -1,35 +1,6 @@
 """
-BinanceEnrichmentActor: Extracts funding rates from the Binance mark price
-WebSocket stream and polls Open Interest via REST on a timer.
-
-Architecture:
-- Funding rates: Subscribe to BinanceFuturesMarkPriceUpdate (already emitted by the
-  Binance adapter via @markPrice WS stream). Extract funding_rate + next_funding_ns,
-  re-publish as standard FundingRateUpdate. Pure WebSocket — zero REST calls.
-- Open Interest: No Binance WS stream exists for OI. Poll REST /fapi/v1/openInterest
-  on a configurable timer using HttpClient. Publish as custom OpenInterestData.
-
-Usage (live):
-    from nautilus_trader.adapters.binance.futures.types import BinanceFuturesMarkPriceUpdate
-
-    actor = BinanceEnrichmentActor(BinanceEnrichmentActorConfig(
-        instrument_id=InstrumentId.from_str("BTCUSDT-PERP.BINANCE"),
-        oi_poll_interval_secs=5,
-    ))
-    node.trader.add_actor(actor)
-
-Strategies subscribe to the enriched data:
-    # Funding rates (standard Nautilus type)
-    self.subscribe_data(DataType(FundingRateUpdate, metadata={"instrument_id": inst_id}))
-
-    # Open Interest (custom type)
-    self.subscribe_data(DataType(OpenInterestData, metadata={"instrument_id": inst_id}))
-
-    def on_data(self, data):
-        if isinstance(data, FundingRateUpdate):
-            print(f"Funding: {data.rate}")
-        elif isinstance(data, OpenInterestData):
-            print(f"OI: {data.open_interest}")
+BinanceEnrichmentActor: Extracts funding rates from mark price WS stream,
+polls Open Interest via REST. Publishes FundingRateUpdate + OpenInterestData.
 """
 
 import json
@@ -43,9 +14,6 @@ from nautilus_trader.model.data import DataType, FundingRateUpdate
 from nautilus_trader.model.identifiers import InstrumentId
 
 
-# ---------------------------------------------------------------------------
-# Custom Data: Open Interest
-# ---------------------------------------------------------------------------
 
 class OpenInterestData(Data):
     """Open interest snapshot from Binance REST API."""
@@ -79,9 +47,6 @@ class OpenInterestData(Data):
         )
 
 
-# ---------------------------------------------------------------------------
-# Actor Config
-# ---------------------------------------------------------------------------
 
 class BinanceEnrichmentActorConfig(ActorConfig, frozen=True):
     instrument_id: InstrumentId
@@ -90,18 +55,8 @@ class BinanceEnrichmentActorConfig(ActorConfig, frozen=True):
     funding_enabled: bool = True
 
 
-# ---------------------------------------------------------------------------
-# Enrichment Actor
-# ---------------------------------------------------------------------------
 
 class BinanceEnrichmentActor(Actor):
-    """
-    Extracts funding rates from the mark price WS stream and polls OI via REST.
-
-    Publishes:
-    - FundingRateUpdate (standard Nautilus type) on every mark price tick
-    - OpenInterestData (custom) on timer interval
-    """
 
     def __init__(self, config: BinanceEnrichmentActorConfig) -> None:
         super().__init__(config)
@@ -127,7 +82,6 @@ class BinanceEnrichmentActor(Actor):
             self._setup_oi_polling()
 
     def _subscribe_mark_price(self) -> None:
-        """Subscribe to BinanceFuturesMarkPriceUpdate custom data from the adapter."""
         from nautilus_trader.adapters.binance.futures.types import BinanceFuturesMarkPriceUpdate
 
         data_type = DataType(
@@ -138,7 +92,6 @@ class BinanceEnrichmentActor(Actor):
         self.log.info(f"Subscribed to mark price for {self._instrument_id}")
 
     def _setup_oi_polling(self) -> None:
-        """Set up timer-based OI REST polling."""
         from nautilus_trader.core.nautilus_pyo3 import HttpClient
 
         self._http_client = HttpClient()
@@ -153,7 +106,6 @@ class BinanceEnrichmentActor(Actor):
         )
 
     def on_data(self, data) -> None:
-        """Handle incoming mark price data → extract and re-publish funding rate."""
         from nautilus_trader.adapters.binance.futures.types import BinanceFuturesMarkPriceUpdate
 
         if not isinstance(data, BinanceFuturesMarkPriceUpdate):
@@ -173,11 +125,9 @@ class BinanceEnrichmentActor(Actor):
         self.funding_count += 1
 
     def _poll_open_interest(self, event) -> None:
-        """Timer callback — schedule async OI fetch."""
         self.queue_for_executor(self._fetch_oi)
 
     async def _fetch_oi(self) -> None:
-        """Async HTTP call to Binance OI endpoint."""
         try:
             url = "https://fapi.binance.com/fapi/v1/openInterest"
             resp = await self._http_client.get(url, params={"symbol": self._binance_symbol})

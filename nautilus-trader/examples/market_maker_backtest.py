@@ -36,6 +36,10 @@ class SimpleMarketMaker(Strategy):
 
     def on_start(self) -> None:
         self.instrument = self.cache.instrument(self.config.instrument_id)
+        if self.instrument is None:
+            self.log.error(f"Instrument not found: {self.config.instrument_id}")
+            self.stop()
+            return
         self.subscribe_trade_ticks(self.config.instrument_id)
 
     def on_trade_tick(self, tick: TradeTick) -> None:
@@ -74,6 +78,12 @@ class SimpleMarketMaker(Strategy):
             )
             self.submit_order(ask)
             self._ask_id = ask.client_order_id
+
+    def on_order_filled(self, event) -> None:
+        if event.client_order_id == self._bid_id:
+            self._bid_id = None
+        elif event.client_order_id == self._ask_id:
+            self._ask_id = None
 
     def on_stop(self) -> None:
         self.cancel_all_orders(self.config.instrument_id)

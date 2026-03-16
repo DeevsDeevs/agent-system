@@ -1,12 +1,10 @@
 # Market Making
 
-Market making patterns for NautilusTrader: inventory skew, spread methods, Avellaneda-Stoikov, and fee-aware quoting.
-
-> *Rust: Core patterns (`modify_order`, inventory skew, bid/ask requoting) are available — see [execution.md](execution.md#rust) for ownership differences and `examples/market_maker_backtest.rs` for a working example. `self.log`, `self.clock`, and Python-style `self.cache.order(id)` differ — see topic files. `self.order_factory.limit(post_only=True)` → pass `None` for `post_only` as a positional arg in Rust.*
+> *Rust: See [execution.md](execution.md#rust) for ownership differences. `post_only=True` → pass `None` positionally in Rust.*
 
 ## Core Pattern: modify_order as Primary
 
-`modify_order` sends a single amend message — fewer messages, less detectable, lower latency than cancel+replace. Fall back to cancel+replace only when modify is rejected or unsupported (dYdX).
+`modify_order` sends a single amend — lower latency than cancel+replace. Fall back to cancel+replace when rejected or unsupported (dYdX).
 
 ```python
 from decimal import Decimal
@@ -16,14 +14,12 @@ from nautilus_trader.model.enums import BookType, OrderSide, TimeInForce
 from nautilus_trader.model.identifiers import InstrumentId
 from nautilus_trader.trading.strategy import Strategy
 
-
 class MarketMakerConfig(StrategyConfig, frozen=True):
     instrument_id: InstrumentId
     trade_size: Decimal
     max_size: Decimal = Decimal("10")
     half_spread: Decimal = Decimal("0.0005")  # must exceed breakeven
     skew_factor: Decimal = Decimal("0.5")
-
 
 class MarketMaker(Strategy):
     def __init__(self, config: MarketMakerConfig) -> None:
@@ -38,16 +34,12 @@ class MarketMaker(Strategy):
             self.log.error(f"Instrument not found: {self.config.instrument_id}")
             self.stop()
             return
-        self.subscribe_order_book_deltas(
-            self.config.instrument_id, book_type=BookType.L2_MBP,
-        )
+        self.subscribe_order_book_deltas(self.config.instrument_id, book_type=BookType.L2_MBP)
 
     def on_order_book_deltas(self, deltas: OrderBookDeltas) -> None:
         book = self.cache.order_book(self.config.instrument_id)
         if not book.best_bid_price() or not book.best_ask_price():
             return
-
-        # Microprice: volume-weighted mid
         bv, av = float(book.best_bid_size()), float(book.best_ask_size())
         mid = Decimal(str(
             (float(book.best_bid_price()) * av + float(book.best_ask_price()) * bv) / (bv + av)
@@ -59,70 +51,49 @@ class MarketMaker(Strategy):
         bid_px = self.instrument.make_price(mid * (1 - self.config.half_spread + skew))
         ask_px = self.instrument.make_price(mid * (1 + self.config.half_spread + skew))
         qty = self.instrument.make_qty(self.config.trade_size)
+        for side, px, attr in [
+            (OrderSide.BUY, bid_px, "_bid_id"), (OrderSide.SELL, ask_px, "_ask_id"),
+        ]:
+            existing = self.cache.order(getattr(self, attr)) if getattr(self, attr) else None
+            if existing and existing.is_open:
+                self.modify_order(existing, quantity=qty, price=px)
+            else:
+                order = self.order_factory.limit(
+                    instrument_id=self.config.instrument_id,
+                    order_side=side, quantity=qty, price=px,
+                    time_in_force=TimeInForce.GTC, post_only=True,
+                )
+                self.submit_order(order)
+                setattr(self, attr, order.client_order_id)
 
-        # Modify existing orders if possible
-        bid_order = self.cache.order(self._bid_id) if self._bid_id else None
-        if bid_order and bid_order.is_open:
-            self.modify_order(bid_order, quantity=qty, price=bid_px)
-        else:
-            bid = self.order_factory.limit(
-                instrument_id=self.config.instrument_id,
-                order_side=OrderSide.BUY, quantity=qty, price=bid_px,
-                time_in_force=TimeInForce.GTC, post_only=True,
-            )
-            self.submit_order(bid)
-            self._bid_id = bid.client_order_id
-
-        ask_order = self.cache.order(self._ask_id) if self._ask_id else None
-        if ask_order and ask_order.is_open:
-            self.modify_order(ask_order, quantity=qty, price=ask_px)
-        else:
-            ask = self.order_factory.limit(
-                instrument_id=self.config.instrument_id,
-                order_side=OrderSide.SELL, quantity=qty, price=ask_px,
-                time_in_force=TimeInForce.GTC, post_only=True,
-            )
-            self.submit_order(ask)
-            self._ask_id = ask.client_order_id
+    def on_order_filled(self, event) -> None:
+        if event.client_order_id == self._bid_id:
+            self._bid_id = None
+        elif event.client_order_id == self._ask_id:
+            self._ask_id = None
 
     def _inventory_skew(self) -> Decimal:
+        # Long → negative skew (encourage sells), Short → positive (encourage buys)
         positions = self.cache.positions_open(instrument_id=self.config.instrument_id)
         pos = positions[0] if positions else None
         if pos is None:
             return Decimal(0)
         return -(Decimal(str(pos.signed_qty)) / self.config.max_size) * self.config.skew_factor
 
-    def on_order_filled(self, event) -> None:
-        # Position updated by engine — next book update triggers _requote with new skew
-        self.log.info(f"Filled: {event.client_order_id} @ {event.last_px}")
-
     def on_stop(self) -> None:
         self.cancel_all_orders(self.config.instrument_id)
         self.close_all_positions(self.config.instrument_id)
 ```
 
-### Inventory Skew
+## Spread Calculation
 
-```
-skew = -(signed_qty / max_size) * skew_factor
-```
-
-| Position | Skew | Effect |
-|----------|------|--------|
-| Long +5 (max 10) | -0.25 | Both quotes shift down → encourage sells |
-| Short -5 (max 10) | +0.25 | Both quotes shift up → encourage buys |
-| Flat 0 | 0 | Symmetric quotes |
-
-## Spread Calculation Methods
-
-### Fixed Spread (Must Exceed Breakeven)
+### Fixed
 
 ```python
 half_spread = Decimal("0.0005")  # 5 bps each side = 10 bps total
-# Verify: total spread > breakeven (maker_fee + taker_fee)
 ```
 
-### ATR-Based / Volatility Spread
+### ATR-Based
 
 ```python
 from nautilus_trader.indicators import AverageTrueRange
@@ -153,7 +124,7 @@ class VolatilityMM(Strategy):
         return max(spread / 2, self.config.min_spread)
 ```
 
-### Order Book Imbalance Spread
+### Order Book Imbalance
 
 ```python
 def _imbalance_adjusted_spread(self, base_half: Decimal) -> tuple[Decimal, Decimal]:
@@ -164,7 +135,6 @@ def _imbalance_adjusted_spread(self, base_half: Decimal) -> tuple[Decimal, Decim
     if total == 0:
         return base_half, base_half
     imbalance = (bid_sz - ask_sz) / total  # [-1, 1]
-    # Positive imbalance = buy pressure → widen ask, tighten bid
     bid_half = base_half * Decimal(str(1 - imbalance * 0.3))
     ask_half = base_half * Decimal(str(1 + imbalance * 0.3))
     return bid_half, ask_half
@@ -172,24 +142,7 @@ def _imbalance_adjusted_spread(self, base_half: Decimal) -> tuple[Decimal, Decim
 
 ## Avellaneda-Stoikov Model
 
-Theoretical framework for optimal market making under inventory risk.
-
-**Reservation price** (indifference price accounting for inventory risk):
-```
-r(s, q, t) = s - q * γ * σ² * (T - t)
-```
-- `s` = mid price, `q` = inventory, `γ` = risk aversion, `σ` = volatility, `T-t` = time to horizon
-
-**Optimal spread**:
-```
-δ = γ * σ² * (T - t) + (2/γ) * ln(1 + γ/κ)
-```
-- `κ` = order arrival intensity
-
-**Funding carrying cost for perps**: When holding a perp position, add funding cost to reservation price adjustment:
-```
-r_adjusted = s - q * [γ * σ² * (T - t) + funding_rate * Δt]
-```
+`r(s,q,t) = s - q*gamma*sigma^2*(T-t)` — reservation price. `delta = gamma*sigma^2*(T-t) + (2/gamma)*ln(1+gamma/kappa)` — optimal spread. For perps: `r -= q * funding_rate * dt`.
 
 ```python
 import math
@@ -199,36 +152,24 @@ def _avellaneda_quotes(self, mid: float, inventory: float) -> tuple[float, float
     tau = self._time_to_horizon()
     gamma = float(self.config.risk_aversion)
     kappa = float(self.config.order_arrival_intensity)
-
-    # Funding carrying cost (perps)
     funding_cost = inventory * self._current_funding_rate * tau
     reservation = mid - inventory * gamma * sigma**2 * tau - funding_cost
-
     optimal_spread = gamma * sigma**2 * tau + (2 / gamma) * math.log(1 + gamma / kappa)
     bid = reservation - optimal_spread / 2
     ask = reservation + optimal_spread / 2
     return bid, ask
 ```
 
-## Breakeven Spread and Fee Awareness
+## Breakeven and Fee Awareness
 
-Fee tiers differ by exchange, VIP level, and volume. Access at runtime:
-
-```python
-maker_fee = float(instrument.maker_fee)
-taker_fee = float(instrument.taker_fee)
-```
-
-**When adverse selection forces a taker fill**: `breakeven = maker_fee + taker_fee`
-
-**Pure MM both sides maker**: `breakeven = 2 * maker_fee`
-
-Always verify: `config.half_spread * 2 > breakeven`. A strategy that quotes inside breakeven loses money on every round trip.
+- **Adverse selection (taker fill)**: `breakeven = maker_fee + taker_fee`
+- **Both sides maker**: `breakeven = 2 * maker_fee`
+- Verify: `config.half_spread * 2 > breakeven`
+- Access fees: `float(instrument.maker_fee)`, `float(instrument.taker_fee)`
 
 ## Order Sizing
 
-- Always use `instrument.make_qty()` for lot size compliance
-- Size relative to available book depth — use `book.best_bid_size()` / `book.best_ask_size()`
+Use `instrument.make_qty()` for lot size compliance.
 
 ```python
 def _safe_size(self) -> Quantity:
@@ -241,8 +182,6 @@ def _safe_size(self) -> Quantity:
 
 ## Cross-Venue Spread Capture
 
-When the same instrument trades on multiple venues, capture the spread when prices diverge after fees.
-
 ```python
 def on_order_book_deltas(self, deltas: OrderBookDeltas) -> None:
     book_a = self.cache.order_book(self.config.instrument_a)
@@ -250,48 +189,16 @@ def on_order_book_deltas(self, deltas: OrderBookDeltas) -> None:
     if not all([book_a.best_bid_price(), book_a.best_ask_price(),
                 book_b.best_bid_price(), book_b.best_ask_price()]):
         return
-
-    # Buy on B, sell on A (A.bid > B.ask)
     edge_ab = float(book_a.best_bid_price() - book_b.best_ask_price())
-    cost = float(book_b.best_ask_price()) * self._total_fee  # maker+taker across venues
+    cost = float(book_b.best_ask_price()) * self._total_fee
     if edge_ab > cost:
         self._execute_arb(buy_venue=self.config.instrument_b, sell_venue=self.config.instrument_a)
 ```
 
-**Latency matters**: Cross-venue arb is latency-sensitive. The slower leg risks adverse fill. Submit the harder-to-fill side first.
-
 ## Risk Controls
 
-| Control | Implementation |
-|---------|---------------|
-| Max position | Check `abs(signed_qty) < max_size` before quoting |
-| Loss limit | Track portfolio PnL, stop quoting if drawdown exceeded |
-| Stale orders | Timer-based periodic cleanup of old open orders |
-| reduce_only | Set `reduce_only=True` when only reducing position |
-| Circuit breaker | Handle `on_instrument_status` → HALT stops quoting |
+Max position: `abs(signed_qty) < max_size` before quoting. Loss limit: stop quoting on drawdown. Stale orders: timer-based cleanup. `reduce_only=True` when reducing. Circuit breaker: `on_instrument_status` HALT.
 
-```python
-def _should_quote(self) -> bool:
-    positions = self.cache.positions_open(instrument_id=self.config.instrument_id)
-    pos = positions[0] if positions else None
-    if pos and abs(pos.signed_qty) >= float(self.config.max_size):
-        return False
-    return True
-```
+> See SKILL.md for common hallucination guards.
 
-## Anti-Hallucination Notes
-
-| Hallucination | Reality |
-|--------------|---------|
-| `modify_order` works on all venues | Not dYdX, Binance Spot, Polymarket — adapter errors |
-| `book.midpoint()` returns float | Returns `Price` object — cast: `float(book.midpoint())` |
-| `pos.signed_qty` is Decimal | Returns float — wrap: `Decimal(str(pos.signed_qty))` |
-| Spread < breakeven is profitable | Must verify `half_spread * 2 > maker_fee + taker_fee` |
-| Backtest MM PnL = live PnL | Expect 30-50% of backtest PnL in live (adverse selection) |
-
-## Related Examples
-
-- [market_maker_backtest.py](../examples/market_maker_backtest.py) — L2 market maker with skew
-- [market_maker_backtest.rs](../examples/market_maker_backtest.rs) — Rust market maker with modify_order
-
-See also: [order_book.md](order_book.md) for book API, delta processing, and F_LAST rule.
+See also: [order_book.md](order_book.md) | [market_maker_backtest.py](../examples/market_maker_backtest.py) | [market_maker_backtest.rs](../examples/market_maker_backtest.rs)

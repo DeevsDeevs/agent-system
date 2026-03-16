@@ -32,6 +32,10 @@ class BracketStrategy(Strategy):
 
     def on_start(self) -> None:
         self.instrument = self.cache.instrument(self.config.instrument_id)
+        if self.instrument is None:
+            self.log.error(f"Instrument not found: {self.config.instrument_id}")
+            self.stop()
+            return
         self.subscribe_trade_ticks(self.config.instrument_id)
 
     def on_trade_tick(self, tick: TradeTick) -> None:

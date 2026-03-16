@@ -1,7 +1,4 @@
-"""
-Live spread capture market maker on Binance USDT-M futures.
-Structurally complete — needs only API keys in environment variables.
-"""
+"""Live spread capture market maker on Binance USDT-M futures."""
 
 import os
 from decimal import Decimal
@@ -93,6 +90,17 @@ class SpreadCapture(Strategy):
             self.submit_order(ask)
             self._ask_id = ask.client_order_id
 
+    def on_order_rejected(self, event) -> None:
+        order = self.cache.order(event.client_order_id)
+        self.log.warning(f"Order rejected: {event.client_order_id} reason={event.reason}")
+        if order and event.client_order_id == self._bid_id:
+            self._bid_id = None
+        elif order and event.client_order_id == self._ask_id:
+            self._ask_id = None
+
+    def on_order_modify_rejected(self, event) -> None:
+        self.log.warning(f"Modify rejected: {event.client_order_id} reason={event.reason}")
+
     def on_stop(self) -> None:
         self.cancel_all_orders(self.config.instrument_id)
         self.close_all_positions(self.config.instrument_id)
@@ -115,6 +123,7 @@ def main():
                 api_key=os.environ.get("BINANCE_API_KEY", ""),
                 api_secret=os.environ.get("BINANCE_API_SECRET", ""),
                 account_type=BinanceAccountType.USDT_FUTURES,
+                # key_type=BinanceKeyType.ED25519,  # if using Ed25519 keys
             ),
         },
     )

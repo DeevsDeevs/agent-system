@@ -96,8 +96,13 @@ impl DataActor for EmaCrossover {
 
         let fast_above = self.ema_fast.value() > self.ema_slow.value();
 
+        let cache = self.cache_rc();
+        let is_long = !cache.borrow()
+            .positions_open(None, Some(&self.instrument_id), None, None, None)
+            .is_empty();
+
         if let Some(prev) = self.prev_fast_above {
-            if fast_above && !prev {
+            if fast_above && !prev && !is_long {
                 let order = self.core.order_factory().market(
                     self.instrument_id,
                     OrderSide::Buy,
@@ -105,14 +110,8 @@ impl DataActor for EmaCrossover {
                     None, None, None, None, None, None, None,
                 );
                 self.submit_order(order, None, None)?;
-            } else if !fast_above && prev {
-                let order = self.core.order_factory().market(
-                    self.instrument_id,
-                    OrderSide::Sell,
-                    self.trade_size,
-                    None, None, None, None, None, None, None,
-                );
-                self.submit_order(order, None, None)?;
+            } else if !fast_above && prev && is_long {
+                self.close_all_positions(self.instrument_id, None, None, None, None, None, None)?;
             }
         }
 

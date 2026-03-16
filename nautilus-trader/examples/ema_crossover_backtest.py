@@ -37,6 +37,10 @@ class EmaCrossover(Strategy):
 
     def on_start(self) -> None:
         self.instrument = self.cache.instrument(self.config.instrument_id)
+        if self.instrument is None:
+            self.log.error(f"Instrument not found: {self.config.instrument_id}")
+            self.stop()
+            return
         bar_type = BarType.from_str(f"{self.config.instrument_id}-1-MINUTE-LAST-INTERNAL")
         self.register_indicator_for_bars(bar_type, self.ema_fast)
         self.register_indicator_for_bars(bar_type, self.ema_slow)

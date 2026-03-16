@@ -23,29 +23,26 @@ use nautilus_model::{
 };
 use nautilus_persistence_macros::custom_data;
 
-// #[custom_data] requires ts_event + ts_init (UnixNanos). Other fields must be
-// Arrow-compatible: f64, f32, i64, i32, u64, u32, u16, u8, bool, String,
-// InstrumentId, Vec<f64>, Vec<u8>.
 #[custom_data]
-pub struct VpinSnapshot {
+pub struct TradeImbalance {
     pub instrument_id: InstrumentId,
     pub buy_volume: f64,
     pub sell_volume: f64,
-    pub vpin: f64,
+    pub imbalance: f64,
     pub window_size: u32,
     pub ts_event: UnixNanos,
     pub ts_init: UnixNanos,
 }
 
-fn vpin_data_type() -> DataType {
-    DataType::new(stringify!(VpinSnapshot), None, None)
+fn imbalance_data_type() -> DataType {
+    DataType::new(stringify!(TradeImbalance), None, None)
 }
 
 fn register_types() {
-    nautilus_serialization::ensure_custom_data_registered::<VpinSnapshot>();
+    nautilus_serialization::ensure_custom_data_registered::<TradeImbalance>();
 }
 
-struct VpinCollectorActor {
+struct ImbalanceCollector {
     core: DataActorCore,
     instrument_id: InstrumentId,
     window: usize,
@@ -55,7 +52,7 @@ struct VpinCollectorActor {
     snapshots_published: usize,
 }
 
-impl VpinCollectorActor {
+impl ImbalanceCollector {
     fn new(instrument_id: InstrumentId, window: usize) -> Self {
         Self {
             core: DataActorCore::new(DataActorConfig::default()),
@@ -69,34 +66,33 @@ impl VpinCollectorActor {
     }
 }
 
-impl Deref for VpinCollectorActor {
+impl Deref for ImbalanceCollector {
     type Target = DataActorCore;
     fn deref(&self) -> &Self::Target {
         &self.core
     }
 }
 
-impl DerefMut for VpinCollectorActor {
+impl DerefMut for ImbalanceCollector {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.core
     }
 }
 
-impl Debug for VpinCollectorActor {
+impl Debug for ImbalanceCollector {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("VpinCollectorActor")
+        f.debug_struct("ImbalanceCollector")
             .field("snapshots_published", &self.snapshots_published)
             .finish()
     }
 }
 
-impl DataActor for VpinCollectorActor {
+impl DataActor for ImbalanceCollector {
     fn on_start(&mut self) -> Result<()> {
         self.subscribe_trades(self.instrument_id, None, None);
         Ok(())
     }
 
-    // Suppress "on_stop handler was called when not overridden" warning
     fn on_stop(&mut self) -> Result<()> {
         self.unsubscribe_trades(self.instrument_id, None, None);
         Ok(())
@@ -115,13 +111,13 @@ impl DataActor for VpinCollectorActor {
 
         if self.count % self.window == 0 {
             let total = self.buy_vol + self.sell_vol;
-            let vpin = if total > 0.0 { self.buy_vol / total } else { 0.5 };
+            let imbalance = if total > 0.0 { (self.buy_vol - self.sell_vol).abs() / total } else { 0.0 };
 
-            let snapshot = VpinSnapshot {
+            let snapshot = TradeImbalance {
                 instrument_id: self.instrument_id,
                 buy_volume: self.buy_vol,
                 sell_volume: self.sell_vol,
-                vpin,
+                imbalance,
                 window_size: self.window as u32,
                 ts_event: trade.ts_event,
                 ts_init: trade.ts_init,
@@ -140,12 +136,12 @@ impl DataActor for VpinCollectorActor {
     }
 }
 
-struct VpinObserverActor {
+struct ImbalanceObserver {
     core: DataActorCore,
     snapshots_received: usize,
 }
 
-impl VpinObserverActor {
+impl ImbalanceObserver {
     fn new() -> Self {
         Self {
             core: DataActorCore::new(DataActorConfig::default()),
@@ -154,30 +150,30 @@ impl VpinObserverActor {
     }
 }
 
-impl Deref for VpinObserverActor {
+impl Deref for ImbalanceObserver {
     type Target = DataActorCore;
     fn deref(&self) -> &Self::Target {
         &self.core
     }
 }
 
-impl DerefMut for VpinObserverActor {
+impl DerefMut for ImbalanceObserver {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.core
     }
 }
 
-impl Debug for VpinObserverActor {
+impl Debug for ImbalanceObserver {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("VpinObserverActor")
+        f.debug_struct("ImbalanceObserver")
             .field("snapshots_received", &self.snapshots_received)
             .finish()
     }
 }
 
-impl DataActor for VpinObserverActor {
+impl DataActor for ImbalanceObserver {
     fn on_start(&mut self) -> Result<()> {
-        self.subscribe_data(vpin_data_type(), None, None);
+        self.subscribe_data(imbalance_data_type(), None, None);
         Ok(())
     }
 
@@ -186,11 +182,11 @@ impl DataActor for VpinObserverActor {
     }
 
     fn on_data(&mut self, data: &CustomData) -> Result<()> {
-        if let Some(snap) = data.data.as_any().downcast_ref::<VpinSnapshot>() {
+        if let Some(snap) = data.data.as_any().downcast_ref::<TradeImbalance>() {
             self.snapshots_received += 1;
             println!(
-                "[VPIN] {:.4}  buy={:.3}  sell={:.3}  (window={})",
-                snap.vpin, snap.buy_volume, snap.sell_volume, snap.window_size
+                "[IMB] {:.4}  buy={:.3}  sell={:.3}  (window={})",
+                snap.imbalance, snap.buy_volume, snap.sell_volume, snap.window_size
             );
         }
         Ok(())
@@ -221,8 +217,8 @@ fn main() -> Result<()> {
     let trades = synthetic_trades(instrument_id, 200);
     engine.add_data(trades, None, true, true);
 
-    engine.add_actor(VpinCollectorActor::new(instrument_id, 20))?;
-    engine.add_actor(VpinObserverActor::new())?;
+    engine.add_actor(ImbalanceCollector::new(instrument_id, 20))?;
+    engine.add_actor(ImbalanceObserver::new())?;
 
     engine.run(None, None, None, false)?;
 
@@ -240,7 +236,7 @@ fn synthetic_trades(instrument_id: InstrumentId, n: usize) -> Vec<nautilus_model
         let ts = (i as u64) * 1_000_000_000;
         Data::Trade(TradeTick::new(
             instrument_id,
-            Price::from(format!("{:.2}", price).as_str()),
+            Price::new(price, 2),
             Quantity::from("0.100"),
             side,
             nautilus_model::identifiers::TradeId::new(&format!("T{i}")),
