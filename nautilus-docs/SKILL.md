@@ -84,14 +84,12 @@ Read the relevant doc before generating code or answering questions. Docs are a 
 
 ## Supporting Files
 
-- **[battle_tested.md](references/battle_tested.md)** — Non-obvious patterns verified against live exchanges. Load when: writing on_start() ordering, market making, signal pipelines, backtest config, venue-specific gotchas, performance optimization.
+- **[battle_tested.md](references/battle_tested.md)** — Load when: Rust Strategy pattern (orders/positions), credential issues, patching deps, on_start() ordering, market making, backtest config, venue gotchas.
 - **[REBUILD.md](references/REBUILD.md)** — Meta-prompt for regenerating this skill when NautilusTrader API changes.
 
 ## Rust Standalone Binary
 
-External Rust binaries work via git dependencies. No need to clone the nautilus workspace. Requires Rust 1.94+, edition 2024.
-
-All crates: `{ git = "https://github.com/nautechsystems/nautilus_trader.git" }`. Add `default-features = false` if no Python headers. Naming: `nautilus-{name}` in Cargo.toml → `nautilus_{name}` in Rust.
+Git dependencies, no workspace clone needed. All crates: `{ git = "https://github.com/nautechsystems/nautilus_trader.git" }`. Naming: `nautilus-{name}` (Cargo) → `nautilus_{name}` (Rust).
 
 ### Crate Map
 
@@ -155,11 +153,13 @@ All follow `nautilus-{venue}` naming:
 - **Logging**: Nautilus owns the `log` backend. Use `log::info!()`. Output goes to stdout. No `RUST_LOG` env var, no `env_logger`
 - **First build**: minutes (430+ crates). Incremental: ~2s. Use `cargo build` not `--release` for iteration
 - **`#[derive(Debug)]` on all actor structs** — Nautilus requires `Debug` trait; missing it = compile error (zero-cost, fine for prod)
+- **Callback naming**: Rust drops `_tick` suffix — `on_trade` not `on_trade_tick`, `on_quote` not `on_quote_tick`, `subscribe_trades` not `subscribe_trade_ticks`
 - **Trade fields**: `trade.price.as_f64()`, `trade.size.as_f64()`, `trade.aggressor_side` (`AggressorSide::Buyer`/`Seller`)
 - **`node.run().await`** blocks the event loop. Callbacks fire during run. `on_stop` fires on shutdown signal
-- **Adapter configs** are all struct literals with `..Default::default()`, never builders. Pattern: `{Venue}DataClientConfig { environment, api_key, api_secret, ..Default::default() }`. Some add venue-specific fields (e.g. `product_types`, `is_testnet`). Check the venue's integration doc for exact fields
+- **Adapter configs** are struct literals with `..Default::default()`. Full names: `{Venue}DataClientConfig`, `{Venue}ExecutionClientConfig`. Factory: `{Venue}DataClientFactory`, `{Venue}ExecutionClientFactory`
+- **Ed25519 keys (v0.55.0)**: HTTP signature URL-encoding bug — HMAC keys may also be auto-detected as Ed25519 if valid base64. See battle_tested.md
 
-### DataActor pattern (the only way to build custom Rust actors)
+### DataActor pattern (Nautilus-specific — don't generalize Deref/DerefMut elsewhere)
 
 ```rust
 use std::ops::{Deref, DerefMut};
@@ -187,9 +187,7 @@ impl DataActor for MyActor {
         Ok(())
     }
     fn on_trade(&mut self, trade: &TradeTick) -> anyhow::Result<()> {
-        let px = trade.price.as_f64();
-        let qty = trade.size.as_f64();
-        // logic here
+        log::info!("px={} qty={}", trade.price.as_f64(), trade.size.as_f64());
         Ok(())
     }
     fn on_stop(&mut self) -> anyhow::Result<()> { Ok(()) } // MUST implement — warns if missing
@@ -233,11 +231,7 @@ node.add_actor(my_actor)?;
 node.run().await?;
 ```
 
-**Do NOT use `env_logger`** — Nautilus registers its own `log` backend. `env_logger::init()` will crash with "logger already initialized". Use `log::info!()` directly.
-
 ## Common Hallucinations
-
-These do NOT exist in v1.224.0:
 
 | Hallucination | Reality |
 |--------------|---------|
@@ -294,10 +288,17 @@ These do NOT exist in v1.224.0:
 | `BinanceAccountType::UsdtFutures` (Rust) | `BinanceProductType::UsdM` from `nautilus_binance::common::enums` |
 | `nautilus_core::identifiers::InstrumentId` | `nautilus_model::identifiers::InstrumentId` |
 | `DataActor` in `nautilus_trading` | `DataActor` in `nautilus_common::actor` |
-| `env_logger` alongside Nautilus | Crashes — Nautilus registers its own `log` backend. Use `log::info!()` directly |
-| Nautilus crates from crates.io | Must use git source — `nautilus-persistence-macros` not on crates.io |
-| `nautilus_trader_model` crate name | `nautilus_model` |
+| `env_logger` alongside Nautilus | Crashes — Nautilus owns `log` backend. Use `log::info!()` |
+| Nautilus crates from crates.io | Git source only |
+| `nautilus_trader_model` | `nautilus_model` |
 | `on_book_delta` (singular) | `on_book_deltas` (plural — batch) |
 | Skip `on_stop` in DataActor | Warns "on_stop handler was called when not overridden" — always implement |
-| `cancel_all_orders` in `on_stop` | Trading channel closed before `on_stop` — call from `on_trade` or other live callbacks |
-| `node.stop()` exits cleanly | WebSocket lingers ~10s producing `channel closed` errors — add `std::process::exit(0)` after stop |
+| `cancel_all_orders` in `on_stop` | Trading channel closed before `on_stop` — use earlier callbacks |
+| `node.stop()` exits cleanly | WebSocket lingers ~10s. Use `tokio::time::timeout` on shutdown |
+| `event.duration_ns` on PositionClosed | `event.duration` — no `_ns` suffix |
+| `event.realized_pnl` is `Money` | `Option<Money>` — use `{:?}` format, not `{}` |
+| `node.add_actor(strategy)` for Strategy | `node.add_strategy(strategy)?;` — Strategy ≠ DataActor |
+| `Deref<Target = StrategyCore>` for Strategy | `Deref<Target = DataActorCore>` — StrategyCore auto-derefs through |
+| `BinanceExecClientFactory` | `BinanceExecutionClientFactory` — full name, same for config |
+| Patching a nautilus crate | Fork on GitHub + `[patch]` in Cargo.toml. See battle_tested.md |
+| Ed25519 keys in Rust HTTP adapters (v0.55.0) | URL-encoding bug — base64 `+/=` not encoded. Needs fork |

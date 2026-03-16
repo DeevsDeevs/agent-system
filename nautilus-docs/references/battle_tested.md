@@ -210,6 +210,82 @@ Pre-aggregated top 10 levels — lower overhead than full book subscription for 
 - No `modify_order` support
 - Binary outcomes only — `YES`/`NO` tokens
 
+## Rust Live Trading
+
+### Strategy pattern (for order management)
+
+DataActor is data-only. For submitting orders, use `Strategy` from `nautilus-trading`:
+
+```rust
+use nautilus_common::actor::{DataActor, DataActorCore};
+use nautilus_trading::strategy::{Strategy, StrategyConfig, StrategyCore};
+
+#[derive(Debug)]
+struct MyStrategy {
+    core: StrategyCore,  // wraps DataActorCore internally
+}
+
+// CRITICAL: Deref target is DataActorCore, NOT StrategyCore.
+// Strategy extends DataActor which requires Deref<Target = DataActorCore>.
+// StrategyCore itself implements Deref<Target = DataActorCore>, so this chains through.
+impl Deref for MyStrategy {
+    type Target = DataActorCore;
+    fn deref(&self) -> &Self::Target { &self.core }  // auto-derefs StrategyCore → DataActorCore
+}
+impl DerefMut for MyStrategy {
+    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.core }
+}
+
+// DataActor impl — data callbacks + order submission
+impl DataActor for MyStrategy {
+    fn on_start(&mut self) -> anyhow::Result<()> { Ok(()) }
+    fn on_stop(&mut self) -> anyhow::Result<()> { Ok(()) }
+}
+
+// Strategy impl — empty, all logic lives in DataActor callbacks
+impl Strategy for MyStrategy {}
+```
+
+Constructor: `StrategyCore::new(StrategyConfig { strategy_id: Some("MY-001".into()), ..Default::default() })`.
+
+Key event fields:
+- `PositionOpened`: `entry` (OrderSide), `side` (PositionSide), `quantity`, `last_px`, `avg_px_open`, `currency`
+- `PositionClosed`: `realized_pnl` (Option<Money> — use `{:?}` format), `duration` (not `duration_ns`), `avg_px_open`, `avg_px_close`
+- `OrderFilled`: `last_qty`, `last_px`, `commission`, `liquidity_side`, `trade_id`
+
+Add to node: `node.add_strategy(my_strategy)?;` (not `add_actor`).
+
+### Credential handling
+
+Adapters using `SigningCredential` auto-detect key type:
+1. Tries to strip PEM headers + base64 decode → Ed25519 if valid
+2. Falls back to HMAC
+
+**Gotcha**: HMAC secrets that happen to be valid base64 (≥32 bytes) get misdetected as Ed25519. Symptoms: signature validation errors on execution client connect. This affects any adapter using `SigningCredential`.
+
+### Ed25519 HTTP signature encoding (v0.55.0)
+
+Ed25519 signatures are base64 containing `+`, `/`, `=`. Some adapter HTTP clients insert signatures into query strings without URL-encoding. HMAC signatures are hex (URL-safe) so they work fine. If you see signature errors only with Ed25519 keys, check whether the adapter's HTTP client URL-encodes the signature. Most have a `percent_encode()` helper already.
+
+### Patching Nautilus dependencies
+
+Fork on GitHub, push fix to a branch, use Cargo `[patch]`:
+
+```toml
+[patch.'https://github.com/nautechsystems/nautilus_trader.git']
+nautilus-{venue} = { git = "https://github.com/YOUR-USER/nautilus_trader.git", branch = "fix/my-fix" }
+```
+
+Only list the crate(s) you modified. Cargo resolves transitive deps automatically. Submit upstream PR when the fix is general.
+
+### Rust adapter maturity gaps
+
+The Rust adapters are newer than Python. Expect:
+- Some WebSocket event types unhandled (fall to `Unknown`, log warnings) — usually harmless if the critical event path works
+- Some config options existing in Python but missing in Rust (e.g. `use_trade_lite`)
+- HTTP signing edge cases with non-HMAC key types
+- Check the venue's adapter crate README and compare with Python adapter for feature parity
+
 ## Performance Checklist
 
 1. Cache `self.instrument` in `on_start()` — avoid repeated `cache.instrument()` lookups in hot path
