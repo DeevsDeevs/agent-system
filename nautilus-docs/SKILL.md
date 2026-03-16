@@ -8,7 +8,7 @@ description: >
 
 # NautilusTrader v1.224.0
 
-Read the relevant doc before generating code or answering questions. Docs are a git submodule (sparse checkout, `docs/` only) from [nautilus_trader](https://github.com/nautechsystems/nautilus_trader). Use `${CLAUDE_SKILL_DIR}/references/upstream/docs/` for doc file paths.
+**MANDATORY**: Before writing or debugging NautilusTrader code, READ the matching doc from the navigator below. If no entry matches, **grep** `${CLAUDE_SKILL_DIR}/references/upstream/docs/` for the class/method/config name. Never guess signatures or constructors.
 
 ## Doc Navigator
 
@@ -61,6 +61,7 @@ Read the relevant doc before generating code or answering questions. Docs are a 
 |-------|-----|
 | Installation | [installation.md](references/upstream/docs/getting_started/installation.md) |
 | Quickstart | [quickstart.py](references/upstream/docs/getting_started/quickstart.py) |
+| Backtest examples | [backtest_high_level.py](references/upstream/docs/getting_started/backtest_high_level.py), [backtest_low_level.py](references/upstream/docs/getting_started/backtest_low_level.py) |
 | Environment setup | [environment_setup.md](references/upstream/docs/developer_guide/environment_setup.md) |
 | Rust development | [rust.md](references/upstream/docs/developer_guide/rust.md) |
 | Testing | [testing.md](references/upstream/docs/developer_guide/testing.md) |
@@ -81,6 +82,10 @@ Read the relevant doc before generating code or answering questions. Docs are a 
 | Backtest FX bars | [backtest_fx_bars.py](references/upstream/docs/tutorials/backtest_fx_bars.py) |
 | Databento data catalog | [databento_data_catalog.py](references/upstream/docs/tutorials/databento_data_catalog.py) |
 | Loading external data | [loading_external_data.py](references/upstream/docs/tutorials/loading_external_data.py) |
+
+### Search Strategy
+
+When the navigator doesn't cover your need, grep `${CLAUDE_SKILL_DIR}/references/upstream/docs/` for the class, method, or config name. **Concepts docs** have working code examples with correct signatures. **Integration docs** have venue-specific configs, supported features, and gotchas. Read BEFORE writing code — never invent an API call.
 
 ## Supporting Files
 
@@ -117,24 +122,7 @@ Git dependencies, no workspace clone needed. All crates: `{ git = "https://githu
 
 ### Adapter Crates
 
-All follow `nautilus-{venue}` naming:
-
-| Crate | Markets |
-|-------|---------|
-| `nautilus-binance` | Spot, USDT-M, COIN-M |
-| `nautilus-bybit` | Spot, Perpetuals |
-| `nautilus-okx` | Spot, Futures, Options |
-| `nautilus-kraken` | Spot, Futures |
-| `nautilus-bitmex` | Perpetuals |
-| `nautilus-deribit` | Options |
-| `nautilus-dydx` | Perpetuals (DEX) |
-| `nautilus-hyperliquid` | Perpetuals (DEX) |
-| `nautilus-databento` | Historical data provider |
-| `nautilus-tardis` | Historical data provider |
-| `nautilus-betfair` | Betting exchange |
-| `nautilus-polymarket` | Prediction markets |
-| `nautilus-architect-ax` | FX, commodities |
-| `nautilus-sandbox` | Simulated exchange |
+All `nautilus-{venue}`: binance, bybit, okx, kraken, bitmex, deribit, dydx, hyperliquid, databento, tardis, betfair, polymarket, architect-ax, sandbox. See Venue Integrations docs for config details.
 
 ### Which crates for your task
 
