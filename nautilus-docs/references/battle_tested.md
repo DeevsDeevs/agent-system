@@ -67,6 +67,18 @@ self.submit_order(tp)
 
 For Rust backtest: `support_contingent_orders = Some(true)` required in `add_venue`.
 
+### Market maker: on_order_filled resets order IDs
+
+```python
+def on_order_filled(self, event) -> None:
+    if event.client_order_id == self._bid_id:
+        self._bid_id = None
+    elif event.client_order_id == self._ask_id:
+        self._ask_id = None
+```
+
+Without this: stale `_bid_id`/`_ask_id` → `cache.order(stale_id)` returns filled order → `is_open` is False → submits duplicate instead of modifying.
+
 ### Reconciliation delay
 
 `reconciliation_startup_delay_secs >= 10` — lower values cause false positive "missing order" resolutions on startup.
@@ -108,9 +120,9 @@ def on_signal(self, signal) -> None:
 When signal values need to be richer than a single number:
 
 ```python
-class VPINData(Data):
-    def __init__(self, vpin: float, volume: float, ts_event: int, ts_init: int):
-        self.vpin = vpin
+class ImbalanceData(Data):
+    def __init__(self, imbalance: float, volume: float, ts_event: int, ts_init: int):
+        self.imbalance = imbalance
         self.volume = volume
         self._ts_event = ts_event
         self._ts_init = ts_init
@@ -121,7 +133,7 @@ class VPINData(Data):
     def ts_init(self) -> int: return self._ts_init
 ```
 
-Actor: `self.publish_data(data_type=DataType(VPINData), data=vpin_data)`
+Actor: `self.publish_data(data_type=DataType(ImbalanceData), data=data)`
 Strategy: subscribe in `on_start`, receive in `on_data`
 
 ## Backtest Configuration
@@ -242,8 +254,10 @@ impl DataActor for MyStrategy {
     fn on_stop(&mut self) -> anyhow::Result<()> { Ok(()) }
 }
 
-// Strategy impl — empty, all logic lives in DataActor callbacks
-impl Strategy for MyStrategy {}
+impl Strategy for MyStrategy {
+    fn core(&self) -> &StrategyCore { &self.core }
+    fn core_mut(&mut self) -> &mut StrategyCore { &mut self.core }
+}
 ```
 
 Constructor: `StrategyCore::new(StrategyConfig { strategy_id: Some("MY-001".into()), ..Default::default() })`.
@@ -286,12 +300,27 @@ The Rust adapters are newer than Python. Expect:
 - HTTP signing edge cases with non-HMAC key types
 - Check the venue's adapter crate README and compare with Python adapter for feature parity
 
+## Backtest → Live Checklist
+
+1. `InstrumentProviderConfig(load_ids=frozenset({"BTCUSDT-PERP.BINANCE"}))` — backtest uses `engine.add_instrument()`, live requires `load_ids`
+2. Replace `TestInstrumentProvider` instruments with real venue instruments
+3. Add `exec_clients` config (backtest doesn't need it)
+4. Add `reconciliation=True`, `reconciliation_lookback_mins=1440` to `LiveExecEngineConfig`
+5. Add `on_order_rejected` / `on_order_modify_rejected` handlers — backtest rarely rejects
+6. Handle `modify_order` unsupported — fall back to cancel+new
+7. Set realistic `LoggingConfig(log_level="INFO", log_directory="logs/")`
+8. Expect `fills > orders` (partials), `frozen_account` semantics differ
+9. Test on venue testnet first (`testnet=True` or `is_testnet=True` depending on venue)
+10. WebSocket shutdown lingers ~10s — use `tokio::time::timeout` (Rust) or KeyboardInterrupt (Python)
+
 ## Performance Checklist
 
-1. Cache `self.instrument` in `on_start()` — avoid repeated `cache.instrument()` lookups in hot path
-2. Keep `on_order_book_deltas` tight — fires at tick frequency
-3. Never `time.sleep()` in callbacks — single-threaded event loop blocks everything
-4. Use `modify_order` over cancel+replace where supported — single message, less latency
-5. `sort=False` + `engine.sort_data()` for multi-instrument backtest loading
-6. Order books are Rust-native — all operations execute as native code, no Python overhead
-7. `indicators_initialized()` guard prevents acting on partial warmup values
+1. **Rust hot path**: `Price::new(f64, u8)` — never `Price::from(format!("{:.prec$}", val, prec=p).as_str())` (heap alloc per tick)
+2. Cache `self.instrument` in `on_start()` — avoid repeated `cache.instrument()` lookups in hot path
+3. Keep `on_order_book_deltas` tight — fires at tick frequency
+4. Never `time.sleep()` in callbacks — single-threaded event loop blocks everything
+5. Use `modify_order` over cancel+replace where supported — single message, less latency
+6. `sort=False` + `engine.sort_data()` for multi-instrument backtest loading
+7. Order books are Rust-native — all operations execute as native code, no Python overhead
+8. `indicators_initialized()` guard prevents acting on partial warmup values
+9. `Vec::with_capacity(n)` for known-size collections in hot path — avoid reallocation
