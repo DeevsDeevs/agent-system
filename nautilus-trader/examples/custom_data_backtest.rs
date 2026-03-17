@@ -66,19 +66,7 @@ impl ImbalanceCollector {
     }
 }
 
-impl Deref for ImbalanceCollector {
-    type Target = DataActorCore;
-    fn deref(&self) -> &Self::Target {
-        &self.core
-    }
-}
-
-impl DerefMut for ImbalanceCollector {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.core
-    }
-}
-
+// Deref/DerefMut → DataActorCore via self.core (see ema_crossover_backtest.rs)
 impl Debug for ImbalanceCollector {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ImbalanceCollector")
@@ -150,19 +138,7 @@ impl ImbalanceObserver {
     }
 }
 
-impl Deref for ImbalanceObserver {
-    type Target = DataActorCore;
-    fn deref(&self) -> &Self::Target {
-        &self.core
-    }
-}
-
-impl DerefMut for ImbalanceObserver {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.core
-    }
-}
-
+// Deref/DerefMut → DataActorCore via self.core (see ema_crossover_backtest.rs)
 impl Debug for ImbalanceObserver {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ImbalanceObserver")

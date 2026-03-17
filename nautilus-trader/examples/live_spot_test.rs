@@ -55,19 +55,7 @@ impl SpotCollector {
     }
 }
 
-impl Deref for SpotCollector {
-    type Target = DataActorCore;
-    fn deref(&self) -> &Self::Target {
-        &self.core
-    }
-}
-
-impl DerefMut for SpotCollector {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.core
-    }
-}
-
+// Deref/DerefMut → DataActorCore via self.core (see ema_crossover_backtest.rs)
 impl Debug for SpotCollector {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SpotCollector").finish()

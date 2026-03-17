@@ -63,19 +63,7 @@ impl MomentumActor {
     }
 }
 
-impl Deref for MomentumActor {
-    type Target = DataActorCore;
-    fn deref(&self) -> &Self::Target {
-        &self.core
-    }
-}
-
-impl DerefMut for MomentumActor {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.core
-    }
-}
-
+// Deref/DerefMut → DataActorCore via self.core (see ema_crossover_backtest.rs)
 impl Debug for MomentumActor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("MomentumActor")
@@ -149,19 +137,7 @@ impl MomentumTrader {
     }
 }
 
-impl Deref for MomentumTrader {
-    type Target = DataActorCore;
-    fn deref(&self) -> &Self::Target {
-        &self.core
-    }
-}
-
-impl DerefMut for MomentumTrader {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.core
-    }
-}
-
+// Deref/DerefMut → DataActorCore via self.core (see ema_crossover_backtest.rs)
 impl Debug for MomentumTrader {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("MomentumTrader")

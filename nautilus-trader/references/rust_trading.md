@@ -73,13 +73,34 @@ ema.handle_trade(trade);
 
 > See SKILL.md for common hallucination guards.
 
+## Required Boilerplate
+
+Every Rust actor/strategy needs `Deref<Target=DataActorCore>` + `DerefMut` + `Debug`. Canonical impl in `ema_crossover_backtest.rs`:
+
+```rust
+impl Deref for MyActor {
+    type Target = DataActorCore;
+    fn deref(&self) -> &Self::Target { &self.core }
+}
+impl DerefMut for MyActor {
+    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.core }
+}
+impl Debug for MyActor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MyActor").finish()
+    }
+}
+```
+
+Strategies also need `impl Strategy` with `core()`/`core_mut()` returning `&StrategyCore`.
+
 ## Working Examples
 
 | File | Demonstrates |
 |------|--------------|
 | `ema_crossover_backtest.rs` | `Strategy` trait, EMA crossover, `BacktestEngine` wiring |
 | `signal_actor_backtest.rs` | `DataActor` publishes `#[custom_data]` signal, `Strategy` subscribes via `on_data` |
-| `custom_data_backtest.rs` | VPIN accumulator, two actors, custom data round-trip |
+| `custom_data_backtest.rs` | Imbalance accumulator, two actors, custom data round-trip |
 | `market_maker_backtest.rs` | `modify_order` — requotes bid/ask limits on every quote tick |
 | `bracket_order_backtest.rs` | Manual bracket pattern (entry + SL + TP); `order_factory.bracket()` API |
 | `catalog_backtest.rs` | `BacktestNode` from Parquet catalog |

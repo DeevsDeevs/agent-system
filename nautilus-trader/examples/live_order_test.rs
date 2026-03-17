@@ -69,19 +69,7 @@ impl OrderTestStrategy {
     }
 }
 
-impl Deref for OrderTestStrategy {
-    type Target = DataActorCore;
-    fn deref(&self) -> &Self::Target {
-        &self.core
-    }
-}
-
-impl DerefMut for OrderTestStrategy {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.core
-    }
-}
-
+// Deref/DerefMut → DataActorCore via self.core (see ema_crossover_backtest.rs)
 impl Debug for OrderTestStrategy {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("OrderTestStrategy")

@@ -75,19 +75,7 @@ impl BracketStrategy {
     }
 }
 
-impl Deref for BracketStrategy {
-    type Target = DataActorCore;
-    fn deref(&self) -> &Self::Target {
-        &self.core
-    }
-}
-
-impl DerefMut for BracketStrategy {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.core
-    }
-}
-
+// Deref/DerefMut → DataActorCore via self.core (see ema_crossover_backtest.rs)
 impl Debug for BracketStrategy {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("BracketStrategy")

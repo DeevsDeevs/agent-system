@@ -104,6 +104,8 @@ if __name__ == "__main__":
         starting_balances=[Money(100_000, USDT)],
     )
     engine.add_instrument(instrument)
+    # Live: InstrumentProviderConfig(load_ids=frozenset({"ETHUSDT-PERP.BINANCE"})) REQUIRED
+    # Without load_ids, instruments silently fail to load → 0 data
 
     dp = TestDataProvider()
     df = dp.read_csv_ticks("binance/ethusdt-trades.csv")
