@@ -101,7 +101,7 @@ This is the highest-value part of the skill. Each row prevents a specific mistak
 
 4. **Rust hallucinations** — rebuild by attempting to compile a standalone binary:
    ```bash
-   cd vpin_rust && cargo build 2>&1 | grep "error\[E"
+   cd my_trading_system && cargo build 2>&1 | grep "error\[E"
    ```
    Every compilation error that comes from a wrong import path, missing trait, or wrong struct field is a hallucination row candidate.
 
@@ -110,7 +110,7 @@ This is the highest-value part of the skill. Each row prevents a specific mistak
 The DataActor pattern and LiveNode wiring in SKILL.md must compile. Test:
 
 ```bash
-cd vpin_rust && cargo build --release 2>&1
+cd my_trading_system && cargo build --release 2>&1
 ```
 
 If it fails, the Rust section needs updating. Common breakage:
@@ -212,7 +212,7 @@ Steps:
    - For Rust: check actual struct/trait definitions in the crate source
 5. Update the Rust crate map from workspace members
 6. Update the DataActor pattern and LiveNode wiring from actual working examples
-7. Test that the Rust example compiles: cd vpin_rust && cargo build
+7. Test that the Rust example compiles: cd my_trading_system && cargo build
 8. Verify word count is under 2,000
 
 For anti-hallucination entries, try to write code for each of the "Fundamental Questions"
