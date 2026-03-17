@@ -313,6 +313,119 @@ The Rust adapters are newer than Python. Expect:
 9. Test on venue testnet first (`testnet=True` or `is_testnet=True` depending on venue)
 10. WebSocket shutdown lingers ~10s — use `tokio::time::timeout` (Rust) or KeyboardInterrupt (Python)
 
+## State Persistence
+
+### on_save / on_load for strategy restart
+
+```python
+def on_save(self) -> dict[str, bytes]:
+    return {"position_state": msgspec.json.encode(self._state)}
+
+def on_load(self, state: dict[str, bytes]) -> None:
+    if "position_state" in state:
+        self._state = msgspec.json.decode(state["position_state"])
+```
+
+State is saved on graceful shutdown and restored on restart. Keys are strategy-scoped.
+
+### Redis for shared state
+
+```python
+ExecEngineConfig(
+    cache_database=CacheDatabaseConfig(type="redis", host="localhost", port=6379),
+)
+```
+
+Enables order/position state recovery across restarts. Without Redis, in-memory cache is lost on crash.
+
+## Metrics
+
+### Fill quality tracking
+
+```python
+def on_order_filled(self, event) -> None:
+    expected = self._last_signal_price
+    actual = float(event.last_px)
+    slippage_bps = (actual - expected) / expected * 10_000
+    self.log.info(f"Slippage: {slippage_bps:.1f} bps")
+```
+
+Track per-venue, per-side. Asymmetric slippage (buys worse than sells) indicates toxic flow detection.
+
+### Latency measurement
+
+```python
+def on_order_filled(self, event) -> None:
+    round_trip_ns = event.ts_init - self._order_submitted_ns
+    self.log.info(f"Round-trip: {round_trip_ns / 1_000_000:.1f}ms")
+```
+
+`ts_init` on the fill event is when the exchange response arrived locally. Compare against submission timestamp for round-trip latency.
+
+## Log Rotation
+
+```python
+LoggingConfig(
+    log_level="INFO",
+    log_directory="logs/",
+    log_file_format="{trader_id}_{instance_id}",
+    log_colors=False,
+)
+```
+
+Nautilus creates one log file per run. For rotation, use external logrotate or cron. File names include trader_id for multi-strategy separation.
+
+## Custom Indicator Development
+
+```python
+from nautilus_trader.indicators.base.indicator import Indicator
+
+class SpreadEMA(Indicator):
+    def __init__(self, period: int):
+        super().__init__([])  # no input params for registration
+        self.period = period
+        self._values = []
+        self.value = 0.0
+
+    def handle_quote_tick(self, tick: QuoteTick) -> None:
+        spread = float(tick.ask_price - tick.bid_price)
+        self._values.append(spread)
+        if len(self._values) > self.period:
+            self._values.pop(0)
+        self.value = sum(self._values) / len(self._values)
+        self._set_initialized(len(self._values) >= self.period)
+
+    def _set_initialized(self, value: bool) -> None:
+        self.initialized = value
+
+    def reset(self) -> None:
+        self._values.clear()
+        self.value = 0.0
+        self.initialized = False
+```
+
+Register: `self.register_indicator_for_quote_ticks(instrument_id, spread_ema)` in `on_start`.
+
+## Data Pipeline
+
+### Gap detection in tick data
+
+```python
+def check_gaps(ticks, max_gap_ms=60_000):
+    for i in range(1, len(ticks)):
+        gap = (ticks[i].ts_event - ticks[i-1].ts_event) / 1_000_000
+        if gap > max_gap_ms:
+            print(f"Gap: {gap:.0f}ms at index {i}")
+```
+
+Run before backtesting. Gaps > 1 minute during trading hours = suspect data. Gaps during maintenance windows (Binance: Tue 06:00-06:30 UTC) are normal.
+
+### Timestamp sanity
+
+- `ts_event` should increase monotonically
+- `ts_init >= ts_event` always (init is local receipt time)
+- `ts_init - ts_event > 60s` = suspect clock skew or stale data
+
 ## Performance Checklist
 
 1. **Rust hot path**: `Price::new(f64, u8)` — never `Price::from(format!("{:.prec$}", val, prec=p).as_str())` (heap alloc per tick)

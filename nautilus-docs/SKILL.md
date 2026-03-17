@@ -89,7 +89,7 @@ When the navigator doesn't cover your need, grep `${CLAUDE_SKILL_DIR}/references
 
 ## Supporting Files
 
-- **[battle_tested.md](references/battle_tested.md)** — Load when: Rust Strategy pattern (orders/positions), credential issues, patching deps, on_start() ordering, market making, backtest config, venue gotchas, backtest→live migration, hot path performance.
+- **[battle_tested.md](references/battle_tested.md)** — Load when: Rust Strategy pattern, credentials, patching deps, on_start() ordering, market making, backtest config, venue gotchas, backtest→live migration, hot path performance, state persistence, fill/latency metrics, log rotation, custom indicators, data pipeline validation.
 - **[REBUILD.md](references/REBUILD.md)** — Meta-prompt for regenerating this skill when NautilusTrader API changes.
 
 ## Rust Standalone Binary
