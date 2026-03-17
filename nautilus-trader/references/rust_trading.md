@@ -94,6 +94,30 @@ impl Debug for MyActor {
 
 Strategies also need `impl Strategy` with `core()`/`core_mut()` returning `&StrategyCore`.
 
+## Positional None Args
+
+The Rust API uses positional args (no builder pattern), so many calls have long `None` chains. This is an **upstream API limitation** — don't try to refactor it away:
+
+```rust
+// add_venue: venue, oms, account, book_type, balances,
+//   default_leverage, leverages, modules, bar_exec, bar_types,
+//   fill_model, fee_model, latency_model, ...19 more optional Nones
+engine.add_venue(Venue::from("BINANCE"), OmsType::Netting, AccountType::Margin,
+    BookType::L1_MBP, vec![Money::from("100000 USDT")],
+    None, None, AHashMap::new(), None, vec![],
+    FillModelAny::default(), FeeModelAny::default(),
+    None, None, None, None, None, None, None, None,
+    None, None, None, None, None, None, None, None, None,
+)?;
+
+// order_factory.market: instrument_id, side, quantity, + 7 optional Nones
+// order_factory.limit:  instrument_id, side, quantity, price, + 11 optional Nones
+// submit_order:         order, position_id, client_id
+// subscribe_trades:     instrument_id, client_id, buffered_delta
+```
+
+When writing these calls, count args from the trait method signature — getting the count wrong is a compile error but a confusing one.
+
 ## Working Examples
 
 | File | Demonstrates |

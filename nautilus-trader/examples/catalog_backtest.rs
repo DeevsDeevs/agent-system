@@ -128,32 +128,25 @@ fn main() -> Result<()> {
 
     let instrument_id = InstrumentId::from("BTCUSDT-PERP.BINANCE");
 
+    // Positional Nones: upstream API has no builder (see rust_trading.md)
     let venue_config = BacktestVenueConfig::new(
-        Ustr::from("BINANCE"),
-        OmsType::Netting,
-        AccountType::Margin,
-        BookType::L1_MBP,
-        None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None,
+        Ustr::from("BINANCE"), OmsType::Netting, AccountType::Margin, BookType::L1_MBP,
+        None, None, None, None, None, None, None, None,
+        None, None, None, None, None, None, None, None,
         vec!["100000 USDT".to_string()],
         None, None, None, None,
     );
 
     let data_config = BacktestDataConfig::new(
-        NautilusDataType::QuoteTick,
-        CATALOG_PATH.to_string(),
-        None,
-        None,
-        Some(instrument_id),
+        NautilusDataType::QuoteTick, CATALOG_PATH.to_string(),
+        None, None, Some(instrument_id),
         None, None, None, None, None, None, None, None, None,
     );
 
     let run_config = BacktestRunConfig::new(
-        None,
-        vec![venue_config],
-        vec![data_config],
+        None, vec![venue_config], vec![data_config],
         BacktestEngineConfig::default(),
-        None,
-        None, None, None,
+        None, None, None, None,
     );
 
     let mut node = BacktestNode::new(vec![run_config])?;

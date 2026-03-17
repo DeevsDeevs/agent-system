@@ -204,17 +204,14 @@ fn main() -> Result<()> {
     let config = BacktestEngineConfig::default();
     let mut engine = BacktestEngine::new(config)?;
 
+    // Positional Nones: upstream API has no builder (see rust_trading.md)
     engine.add_venue(
-        Venue::from("BINANCE"),
-        OmsType::Netting,
-        AccountType::Margin,
-        BookType::L1_MBP,
+        Venue::from("BINANCE"), OmsType::Netting, AccountType::Margin, BookType::L1_MBP,
         vec![Money::from("10000 USDT")],
         None, None, AHashMap::new(), None, vec![],
         FillModelAny::default(), FeeModelAny::default(),
-        None, None, None, None, None,
-        None, None, None, None, None,
-        None, None, Some(true),
+        None, None, None, None, None, None, None, None,
+        None, None, Some(true),  // support_contingent_orders
         Some(false),
         None, None, None, None, None,
     )?;

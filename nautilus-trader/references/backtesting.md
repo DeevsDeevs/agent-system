@@ -304,6 +304,7 @@ use nautilus_execution::models::{fee::FeeModelAny, fill::FillModelAny};
 use nautilus_model::{enums::{AccountType, BookType, OmsType}, identifiers::Venue, types::Money};
 
 let mut engine = BacktestEngine::new(BacktestEngineConfig::default())?;
+// Positional args — upstream API has no builder. See rust_trading.md for arg map
 engine.add_venue(
     Venue::from("BINANCE"), OmsType::Netting, AccountType::Margin, BookType::L1_MBP,
     vec![Money::from("100000 USDT")],
