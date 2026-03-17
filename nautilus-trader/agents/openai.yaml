@@ -1,0 +1,4 @@
+interface:
+  display_name: "NautilusTrader"
+  short_description: "NautilusTrader library expert knowledge"
+  default_prompt: "Use $nautilus-trade to design/implement or fix trading systems with NautilusTrader."

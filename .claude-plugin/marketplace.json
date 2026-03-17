@@ -105,6 +105,12 @@
       "description": "Hierarchical microstructure knowledge base for trading venues: exchange mechanics, order books, auctions, Reg NMS, Chinese futures (CTP), feed handlers, execution models",
       "source": "./venue-expert",
       "skills": ["./"]
+    },
+    {
+      "name": "nautilus-trader",
+      "description": "NautilusTrader for crypto HFT: market making, order book strategies, adapter development (Python/Rust), microstructure analysis, backtesting, live trading — Binance, Bybit, dYdX, OKX",
+      "source": "./nautilus-trader",
+      "skills": ["./"]
     }
   ]
 }
