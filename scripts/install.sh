@@ -31,14 +31,14 @@ USAGE
 }
 
 PLATFORM="codex"
-REPO_URL="https://github.com/VladKochetov007/agent-system.git"
+REPO_URL="https://github.com/deevsDeevs/agent-system.git"
 CLONE_DIR="$HOME/src/agent-system"
 TARGET="${CODEX_HOME:-$HOME/.codex}/skills"
 MODE="symlink"
 SKILLS_CSV=""
 SKILLS_LIST=()
 REPO_DIR=""
-REPO_REF="nautilus-v2"
+REPO_REF=""
 UNINSTALL="false"
 NON_INTERACTIVE="false"
 
