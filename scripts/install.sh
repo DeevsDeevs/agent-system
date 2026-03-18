@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Install Codex skills and/or print Claude Code plugin install commands.
+Install skills for Codex and/or Claude Code.
 
 Usage:
   install.sh [--platform codex|claude|both]
@@ -31,14 +31,14 @@ USAGE
 }
 
 PLATFORM="codex"
-REPO_URL="https://github.com/DeevsDeevs/agent-system.git"
+REPO_URL="https://github.com/VladKochetov007/agent-system.git"
 CLONE_DIR="$HOME/src/agent-system"
 TARGET="${CODEX_HOME:-$HOME/.codex}/skills"
 MODE="symlink"
 SKILLS_CSV=""
 SKILLS_LIST=()
 REPO_DIR=""
-REPO_REF=""
+REPO_REF="nautilus-v2"
 UNINSTALL="false"
 NON_INTERACTIVE="false"
 
@@ -286,11 +286,14 @@ uninstall_codex() {
   printf '\nDone. Restart Codex to reload skills.\n'
 }
 
-print_claude_instructions() {
-  cat <<'EOC'
+install_claude() {
+  ensure_repo
+
+  cat <<EOC
+
 Run the following commands inside Claude Code:
 
-/plugin marketplace add git@github.com:DeevsDeevs/agent-system.git
+/plugin marketplace add ${REPO_URL}${REPO_REF:+#${REPO_REF}}
 /plugin install chain-system@deevs-agent-system
 /plugin install dev-experts@deevs-agent-system
 /plugin install bug-hunters@deevs-agent-system
@@ -299,10 +302,11 @@ Run the following commands inside Claude Code:
 /plugin install arxiv-search@deevs-agent-system
 
 Note: These are Claude Code commands and will not run in a shell.
+Repo cloned to: ${REPO_DIR} (docs fetched)
 EOC
 }
 
-print_claude_uninstall() {
+uninstall_claude() {
   cat <<'EOC'
 Run the following commands inside Claude Code:
 
@@ -327,20 +331,20 @@ case "$PLATFORM" in
     ;;
   claude)
     if [[ "$UNINSTALL" == "true" ]]; then
-      print_claude_uninstall
+      uninstall_claude
     else
-      print_claude_instructions
+      install_claude
     fi
     ;;
   both)
     if [[ "$UNINSTALL" == "true" ]]; then
       uninstall_codex
       printf '\n'
-      print_claude_uninstall
+      uninstall_claude
     else
       install_codex
       printf '\n'
-      print_claude_instructions
+      install_claude
     fi
     ;;
   *)
