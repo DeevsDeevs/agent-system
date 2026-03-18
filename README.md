@@ -4,45 +4,45 @@ Deevs' plugin marketplace for Claude Code with workflow chains, terminal control
 
 ## Installation
 
-```bash
-/plugin marketplace add git@github.com:DeevsDeevs/agent-system.git
-```
-
-## Codex Setup
-
-Codex loads repo-scoped skills from `.codex/skills`. This repo includes symlinks to each skill folder, so no extra install step is required.
-
-Usage:
-- Invoke a skill with `$skill-name` or `/skills`.
-- For chain operations: `$chain-system link <name>`, `$chain-system load <name>`, `$chain-system list`.
-- For persona workflows: `$dev-experts <persona>`, `$bug-hunters <role>`, `$research-experts <role>`.
-
-If Codex was already running, restart it to reload the skills.
-
-Global (user-scoped) install for any repo:
+Use the installer for all platforms (Claude Code, Codex, or both):
 
 ```bash
-git clone git@github.com:DeevsDeevs/agent-system.git ~/src/agent-system
-mkdir -p ~/.codex/skills
-for d in 97-dev anti-ai-slop datetime golang-pro polars-expertise arxiv-search chain-system dev-experts bug-hunters research-experts cost-status; do
-  ln -s ~/src/agent-system/$d ~/.codex/skills/$d
-done
-```
-
-Installer (interactive by default):
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \\
+curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \
   | bash -s --
 ```
 
-Installer flags: `--non-interactive`, `--platform claude|codex|both`, `--repo-ref <tag|branch|commit>`, `--uninstall`, `--skills a,b,c`.
+The installer is interactive by default — it will ask for your platform and preferences. It clones the repo, fetches any external dependencies (e.g. NautilusTrader docs for the nautilus-docs skill), and sets everything up.
 
-Uninstall:
-- Codex: run the installer with `--uninstall`.
-- Claude Code: use `/plugin uninstall <plugin>@deevs-agent-system` inside Claude Code.
+### Non-interactive
 
-Install a single skill by URL with `$skill-installer`.
+```bash
+# Claude Code
+curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \
+  | bash -s -- --non-interactive --platform claude
+
+# Codex
+curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \
+  | bash -s -- --non-interactive --platform codex
+
+# Both
+curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \
+  | bash -s -- --non-interactive --platform both
+```
+
+### Flags
+
+`--platform claude|codex|both`, `--repo-ref <tag|branch|commit>`, `--repo <url>`, `--clone-dir <path>`, `--target <path>`, `--mode symlink|copy`, `--skills a,b,c`, `--non-interactive`, `--uninstall`
+
+### Uninstall
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \
+  | bash -s -- --uninstall --platform both
+```
+
+### Codex usage
+
+Invoke a skill with `$skill-name` or `/skills`. If Codex was already running, restart it to reload skills.
 
 ## Plugins
 
