@@ -8,9 +8,9 @@ description: >
 
 # NautilusTrader v1.224.0
 
-**MANDATORY**: Before writing or debugging NautilusTrader code, READ the matching doc from the navigator below. If no entry matches, **grep** `${CLAUDE_SKILL_DIR}/references/upstream/docs/` for the class/method/config name. Never guess signatures or constructors.
+**MANDATORY**: Before writing or debugging NautilusTrader code, READ the matching doc from the navigator below. If no entry matches, **grep** `${CLAUDE_SKILL_DIR}/references/docs/` for the class/method/config name. Never guess signatures or constructors.
 
-**MUST READ** before any NautilusTrader work: [architecture.md](references/upstream/docs/concepts/architecture.md) (system diagram, data/execution flow, threading model, component FSM) and [actors.md](references/upstream/docs/concepts/actors.md) (lifecycle, callbacks, data handler mapping).
+**MUST READ** before any NautilusTrader work: [architecture.md](references/docs/concepts/architecture.md) (system diagram, data/execution flow, threading model, component FSM) and [actors.md](references/docs/concepts/actors.md) (lifecycle, callbacks, data handler mapping).
 
 ## Doc Navigator
 
@@ -18,76 +18,81 @@ description: >
 
 | Topic | Doc |
 |-------|-----|
-| Architecture / overview | [architecture.md](references/upstream/docs/concepts/architecture.md), [overview.md](references/upstream/docs/concepts/overview.md) |
-| Actor development | [actors.md](references/upstream/docs/concepts/actors.md) |
-| Strategy development | [strategies.md](references/upstream/docs/concepts/strategies.md) |
-| Backtesting | [backtesting.md](references/upstream/docs/concepts/backtesting.md) |
-| Live trading | [live.md](references/upstream/docs/concepts/live.md) |
-| Order types & execution | [orders.md](references/upstream/docs/concepts/orders.md), [execution.md](references/upstream/docs/concepts/execution.md) |
-| Order book | [order_book.md](references/upstream/docs/concepts/order_book.md) |
-| Data types & custom data | [data.md](references/upstream/docs/concepts/data.md), [custom_data.md](references/upstream/docs/concepts/custom_data.md) |
-| Instruments | [instruments.md](references/upstream/docs/concepts/instruments.md) |
-| Value types (Price, Quantity, Money) | [value_types.md](references/upstream/docs/concepts/value_types.md) |
-| Positions & PnL | [positions.md](references/upstream/docs/concepts/positions.md) |
-| Cache | [cache.md](references/upstream/docs/concepts/cache.md) |
-| MessageBus | [message_bus.md](references/upstream/docs/concepts/message_bus.md) |
-| Portfolio | [portfolio.md](references/upstream/docs/concepts/portfolio.md) |
-| Options & Greeks | [options.md](references/upstream/docs/concepts/options.md), [greeks.md](references/upstream/docs/concepts/greeks.md) |
-| Logging | [logging.md](references/upstream/docs/concepts/logging.md) |
-| Reports & analysis | [reports.md](references/upstream/docs/concepts/reports.md) |
-| Visualization | [visualization.md](references/upstream/docs/concepts/visualization.md) |
-| Adapter development | [concepts/adapters.md](references/upstream/docs/concepts/adapters.md), [developer_guide/adapters.md](references/upstream/docs/developer_guide/adapters.md) |
+| Architecture / overview | [architecture.md](references/docs/concepts/architecture.md), [overview.md](references/docs/concepts/overview.md) |
+| Actor development | [actors.md](references/docs/concepts/actors.md) |
+| Strategy development | [strategies.md](references/docs/concepts/strategies.md) |
+| Backtesting | [backtesting.md](references/docs/concepts/backtesting.md) |
+| Live trading | [live.md](references/docs/concepts/live.md) |
+| Order types & execution | [orders.md](references/docs/concepts/orders.md), [execution.md](references/docs/concepts/execution.md) |
+| Order book | [order_book.md](references/docs/concepts/order_book.md) |
+| Data types & custom data | [data.md](references/docs/concepts/data.md), [custom_data.md](references/docs/concepts/custom_data.md) |
+| Instruments | [instruments.md](references/docs/concepts/instruments.md) |
+| Value types (Price, Quantity, Money) | [value_types.md](references/docs/concepts/value_types.md) |
+| Positions & PnL | [positions.md](references/docs/concepts/positions.md) |
+| Cache | [cache.md](references/docs/concepts/cache.md) |
+| MessageBus | [message_bus.md](references/docs/concepts/message_bus.md) |
+| Portfolio | [portfolio.md](references/docs/concepts/portfolio.md) |
+| Options & Greeks | [options.md](references/docs/concepts/options.md), [greeks.md](references/docs/concepts/greeks.md) |
+| Logging | [logging.md](references/docs/concepts/logging.md) |
+| Reports & analysis | [reports.md](references/docs/concepts/reports.md) |
+| Visualization | [visualization.md](references/docs/concepts/visualization.md) |
+| Adapter development | [concepts/adapters.md](references/docs/concepts/adapters.md), [developer_guide/adapters.md](references/docs/developer_guide/adapters.md) |
 
 ### Venue Integrations
 
 | Venue | Doc |
 |-------|-----|
-| Binance | [binance.md](references/upstream/docs/integrations/binance.md) |
-| Bybit | [bybit.md](references/upstream/docs/integrations/bybit.md) |
-| OKX | [okx.md](references/upstream/docs/integrations/okx.md) |
-| dYdX | [dydx.md](references/upstream/docs/integrations/dydx.md) |
-| Deribit | [deribit.md](references/upstream/docs/integrations/deribit.md) |
-| Hyperliquid | [hyperliquid.md](references/upstream/docs/integrations/hyperliquid.md) |
-| Kraken | [kraken.md](references/upstream/docs/integrations/kraken.md) |
-| Interactive Brokers | [ib.md](references/upstream/docs/integrations/ib.md) |
-| Betfair | [betfair.md](references/upstream/docs/integrations/betfair.md) |
-| Polymarket | [polymarket.md](references/upstream/docs/integrations/polymarket.md) |
-| Databento | [databento.md](references/upstream/docs/integrations/databento.md) |
-| Tardis | [tardis.md](references/upstream/docs/integrations/tardis.md) |
-| BitMEX | [bitmex.md](references/upstream/docs/integrations/bitmex.md) |
-| AX Exchange | [architect_ax.md](references/upstream/docs/integrations/architect_ax.md) |
+| Binance | [binance.md](references/docs/integrations/binance.md) |
+| Bybit | [bybit.md](references/docs/integrations/bybit.md) |
+| OKX | [okx.md](references/docs/integrations/okx.md) |
+| dYdX | [dydx.md](references/docs/integrations/dydx.md) |
+| Deribit | [deribit.md](references/docs/integrations/deribit.md) |
+| Hyperliquid | [hyperliquid.md](references/docs/integrations/hyperliquid.md) |
+| Kraken | [kraken.md](references/docs/integrations/kraken.md) |
+| Interactive Brokers | [ib.md](references/docs/integrations/ib.md) |
+| Betfair | [betfair.md](references/docs/integrations/betfair.md) |
+| Polymarket | [polymarket.md](references/docs/integrations/polymarket.md) |
+| Databento | [databento.md](references/docs/integrations/databento.md) |
+| Tardis | [tardis.md](references/docs/integrations/tardis.md) |
+| BitMEX | [bitmex.md](references/docs/integrations/bitmex.md) |
+| AX Exchange | [architect_ax.md](references/docs/integrations/architect_ax.md) |
+| Blockchain / DeFi | [blockchain.md](references/docs/integrations/blockchain.md) |
 
 ### Dev / Setup
 
 | Topic | Doc |
 |-------|-----|
-| Installation | [installation.md](references/upstream/docs/getting_started/installation.md) |
-| Quickstart | [quickstart.py](references/upstream/docs/getting_started/quickstart.py) |
-| Backtest examples | [backtest_high_level.py](references/upstream/docs/getting_started/backtest_high_level.py), [backtest_low_level.py](references/upstream/docs/getting_started/backtest_low_level.py) |
-| Environment setup | [environment_setup.md](references/upstream/docs/developer_guide/environment_setup.md) |
-| Rust development | [rust.md](references/upstream/docs/developer_guide/rust.md) |
-| Testing | [testing.md](references/upstream/docs/developer_guide/testing.md) |
-| Coding standards | [coding_standards.md](references/upstream/docs/developer_guide/coding_standards.md) |
-| Benchmarking | [benchmarking.md](references/upstream/docs/developer_guide/benchmarking.md) |
-| FFI | [ffi.md](references/upstream/docs/developer_guide/ffi.md) |
+| Installation | [installation.md](references/docs/getting_started/installation.md) |
+| Quickstart | [quickstart.py](references/docs/getting_started/quickstart.py) |
+| Backtest examples | [backtest_high_level.py](references/docs/getting_started/backtest_high_level.py), [backtest_low_level.py](references/docs/getting_started/backtest_low_level.py) |
+| Environment setup | [environment_setup.md](references/docs/developer_guide/environment_setup.md) |
+| Rust development | [rust.md](references/docs/developer_guide/rust.md) |
+| Python development | [python.md](references/docs/developer_guide/python.md) |
+| Testing | [testing.md](references/docs/developer_guide/testing.md) |
+| Data testing spec | [spec_data_testing.md](references/docs/developer_guide/spec_data_testing.md) |
+| Execution testing spec | [spec_exec_testing.md](references/docs/developer_guide/spec_exec_testing.md) |
+| Test datasets | [test_datasets.md](references/docs/developer_guide/test_datasets.md) |
+| Coding standards | [coding_standards.md](references/docs/developer_guide/coding_standards.md) |
+| Benchmarking | [benchmarking.md](references/docs/developer_guide/benchmarking.md), [criterion_template.rs](references/docs/dev_templates/criterion_template.rs), [iai_template.rs](references/docs/dev_templates/iai_template.rs) |
+| FFI | [ffi.md](references/docs/developer_guide/ffi.md) |
 
 ### Tutorials
 
 | Tutorial | Doc |
 |----------|-----|
-| FX mean reversion (AX) | [fx_mean_reversion_ax.md](references/upstream/docs/tutorials/fx_mean_reversion_ax.md) |
-| Gold book imbalance (AX) | [gold_book_imbalance_ax.md](references/upstream/docs/tutorials/gold_book_imbalance_ax.md) |
-| dYdX grid market maker | [grid_market_maker_dydx.md](references/upstream/docs/tutorials/grid_market_maker_dydx.md) |
-| BitMEX grid market maker | [grid_market_maker_bitmex.md](references/upstream/docs/tutorials/grid_market_maker_bitmex.md) |
-| Backtest Binance orderbook | [backtest_orderbook_binance.py](references/upstream/docs/tutorials/backtest_orderbook_binance.py) |
-| Backtest Bybit orderbook | [backtest_orderbook_bybit.py](references/upstream/docs/tutorials/backtest_orderbook_bybit.py) |
-| Backtest FX bars | [backtest_fx_bars.py](references/upstream/docs/tutorials/backtest_fx_bars.py) |
-| Databento data catalog | [data_catalog_databento.py](references/upstream/docs/tutorials/data_catalog_databento.py) |
-| Loading external data | [loading_external_data.py](references/upstream/docs/tutorials/loading_external_data.py) |
+| FX mean reversion (AX) | [fx_mean_reversion_ax.md](references/docs/tutorials/fx_mean_reversion_ax.md) |
+| Gold book imbalance (AX) | [gold_book_imbalance_ax.md](references/docs/tutorials/gold_book_imbalance_ax.md) |
+| dYdX grid market maker | [grid_market_maker_dydx.md](references/docs/tutorials/grid_market_maker_dydx.md) |
+| BitMEX grid market maker | [grid_market_maker_bitmex.md](references/docs/tutorials/grid_market_maker_bitmex.md) |
+| Backtest Binance orderbook | [backtest_orderbook_binance.py](references/docs/tutorials/backtest_orderbook_binance.py) |
+| Backtest Bybit orderbook | [backtest_orderbook_bybit.py](references/docs/tutorials/backtest_orderbook_bybit.py) |
+| Backtest FX bars | [backtest_fx_bars.py](references/docs/tutorials/backtest_fx_bars.py) |
+| Databento data catalog | [data_catalog_databento.py](references/docs/tutorials/data_catalog_databento.py) |
+| Loading external data | [loading_external_data.py](references/docs/tutorials/loading_external_data.py) |
 
 ### Search Strategy
 
-When the navigator doesn't cover your need, grep `${CLAUDE_SKILL_DIR}/references/upstream/docs/` for the class, method, or config name. **Concepts docs** have working code examples with correct signatures. **Integration docs** have venue-specific configs, supported features, and gotchas. **API reference docs** (`api_reference/`) have exact class/method signatures when concepts docs aren't enough. Read BEFORE writing code — never invent an API call.
+When the navigator doesn't cover your need, grep `${CLAUDE_SKILL_DIR}/references/docs/` for the class, method, or config name. **Concepts docs** have working code examples with correct signatures. **Integration docs** have venue-specific configs, supported features, and gotchas. Read BEFORE writing code — never invent an API call.
 
 ## Supporting Files
 

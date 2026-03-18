@@ -172,6 +172,36 @@ ensure_repo() {
     git -C "$REPO_DIR" fetch --tags --prune
     git -C "$REPO_DIR" checkout "$REPO_REF"
   fi
+
+  fetch_nautilus_docs
+}
+
+fetch_nautilus_docs() {
+  local docs_dir="$REPO_DIR/nautilus-docs/references/docs"
+
+  if [[ -d "$docs_dir" ]]; then
+    return
+  fi
+
+  # Skip if nautilus-docs skill doesn't exist in this checkout
+  if [[ ! -f "$REPO_DIR/nautilus-docs/SKILL.md" ]]; then
+    return
+  fi
+
+  echo "Fetching NautilusTrader docs..."
+
+  local temp
+  temp=$(mktemp -d)
+  trap "rm -rf '$temp'" RETURN
+
+  git clone --filter=blob:none --sparse --depth 1 \
+    https://github.com/nautechsystems/nautilus_trader.git "$temp"
+  git -C "$temp" sparse-checkout set docs/
+
+  rm -rf "$temp/docs/api_reference"
+
+  mkdir -p "$(dirname "$docs_dir")"
+  mv "$temp/docs" "$docs_dir"
 }
 
 collect_skills() {

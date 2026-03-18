@@ -1,4 +1,0 @@
-[submodule "nautilus-docs/references/upstream"]
-	path = nautilus-docs/references/upstream
-	url = https://github.com/nautechsystems/nautilus_trader.git
-	shallow = true

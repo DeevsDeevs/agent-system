@@ -12,15 +12,17 @@ Prompt and checklist for regenerating SKILL.md when NautilusTrader's API changes
 
 ## Step 1: Update the Docs
 
-Docs are a git submodule with sparse checkout (`docs/` only):
+Docs are fetched on install into `nautilus-docs/references/docs/` (gitignored). To refresh:
 
 ```bash
-cd nautilus-docs/references/upstream
-git fetch origin develop --depth 1
-git diff HEAD..FETCH_HEAD -- docs/   # review changes before applying
-git checkout FETCH_HEAD -- docs/
-cd ../../..
-git add nautilus-docs/references/upstream
+rm -rf nautilus-docs/references/docs
+# Re-run install.sh or manually:
+temp=$(mktemp -d)
+git clone --filter=blob:none --sparse --depth 1 \
+  https://github.com/nautechsystems/nautilus_trader.git "$temp"
+git -C "$temp" sparse-checkout set docs/
+mv "$temp/docs" nautilus-docs/references/docs
+rm -rf "$temp"
 ```
 
 Check for:
