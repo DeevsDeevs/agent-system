@@ -10,6 +10,8 @@ description: >
 
 **MANDATORY**: Before writing or debugging NautilusTrader code, READ the matching doc from the navigator below. If no entry matches, **grep** `${CLAUDE_SKILL_DIR}/references/upstream/docs/` for the class/method/config name. Never guess signatures or constructors.
 
+**MUST READ** before any NautilusTrader work: [architecture.md](references/upstream/docs/concepts/architecture.md) (system diagram, data/execution flow, threading model, component FSM) and [actors.md](references/upstream/docs/concepts/actors.md) (lifecycle, callbacks, data handler mapping).
+
 ## Doc Navigator
 
 ### Concepts
@@ -73,19 +75,19 @@ description: >
 
 | Tutorial | Doc |
 |----------|-----|
-| FX mean reversion (AX) | [ax_fx_mean_reversion.md](references/upstream/docs/tutorials/ax_fx_mean_reversion.md) |
-| Gold book imbalance (AX) | [ax_gold_book_imbalance.md](references/upstream/docs/tutorials/ax_gold_book_imbalance.md) |
-| dYdX grid market maker | [dydx_grid_market_maker.md](references/upstream/docs/tutorials/dydx_grid_market_maker.md) |
-| BitMEX grid market maker | [bitmex_grid_market_maker.md](references/upstream/docs/tutorials/bitmex_grid_market_maker.md) |
-| Backtest Binance orderbook | [backtest_binance_orderbook.py](references/upstream/docs/tutorials/backtest_binance_orderbook.py) |
-| Backtest Bybit orderbook | [backtest_bybit_orderbook.py](references/upstream/docs/tutorials/backtest_bybit_orderbook.py) |
+| FX mean reversion (AX) | [fx_mean_reversion_ax.md](references/upstream/docs/tutorials/fx_mean_reversion_ax.md) |
+| Gold book imbalance (AX) | [gold_book_imbalance_ax.md](references/upstream/docs/tutorials/gold_book_imbalance_ax.md) |
+| dYdX grid market maker | [grid_market_maker_dydx.md](references/upstream/docs/tutorials/grid_market_maker_dydx.md) |
+| BitMEX grid market maker | [grid_market_maker_bitmex.md](references/upstream/docs/tutorials/grid_market_maker_bitmex.md) |
+| Backtest Binance orderbook | [backtest_orderbook_binance.py](references/upstream/docs/tutorials/backtest_orderbook_binance.py) |
+| Backtest Bybit orderbook | [backtest_orderbook_bybit.py](references/upstream/docs/tutorials/backtest_orderbook_bybit.py) |
 | Backtest FX bars | [backtest_fx_bars.py](references/upstream/docs/tutorials/backtest_fx_bars.py) |
-| Databento data catalog | [databento_data_catalog.py](references/upstream/docs/tutorials/databento_data_catalog.py) |
+| Databento data catalog | [data_catalog_databento.py](references/upstream/docs/tutorials/data_catalog_databento.py) |
 | Loading external data | [loading_external_data.py](references/upstream/docs/tutorials/loading_external_data.py) |
 
 ### Search Strategy
 
-When the navigator doesn't cover your need, grep `${CLAUDE_SKILL_DIR}/references/upstream/docs/` for the class, method, or config name. **Concepts docs** have working code examples with correct signatures. **Integration docs** have venue-specific configs, supported features, and gotchas. Read BEFORE writing code — never invent an API call.
+When the navigator doesn't cover your need, grep `${CLAUDE_SKILL_DIR}/references/upstream/docs/` for the class, method, or config name. **Concepts docs** have working code examples with correct signatures. **Integration docs** have venue-specific configs, supported features, and gotchas. **API reference docs** (`api_reference/`) have exact class/method signatures when concepts docs aren't enough. Read BEFORE writing code — never invent an API call.
 
 ## Supporting Files
 
@@ -192,34 +194,9 @@ impl MyActor {
 }
 ```
 
-### LiveNode + Binance wiring
-
-```rust
-use nautilus_binance::common::enums::{BinanceEnvironment, BinanceProductType};
-use nautilus_binance::config::BinanceDataClientConfig;
-use nautilus_binance::factories::BinanceDataClientFactory;
-use nautilus_common::enums::Environment;
-use nautilus_live::node::LiveNode;
-use nautilus_model::identifiers::TraderId;
-
-let data_config = BinanceDataClientConfig {
-    product_types: vec![BinanceProductType::UsdM],  // or Spot, CoinM
-    environment: BinanceEnvironment::Mainnet,       // or Testnet
-    api_key: Some(key),
-    api_secret: Some(secret),  // Ed25519: wrap in PEM headers
-    ..Default::default()
-};
-
-let mut node = LiveNode::builder(TraderId::from("MY-001"), Environment::Live)?
-    .with_name("MyNode")
-    .add_data_client(None, Box::new(BinanceDataClientFactory::new()), Box::new(data_config))?
-    .build()?;
-
-node.add_actor(my_actor)?;
-node.run().await?;
-```
-
 ## Common Hallucinations
+
+### Python
 
 | Hallucination | Reality |
 |--------------|---------|
@@ -270,7 +247,11 @@ node.run().await?;
 | `testnet=True` for Deribit/dYdX | `is_testnet=True` |
 | `AccountType.CASH` for perps backtest | Use `AccountType.MARGIN` — CASH + perps = 0 fills silently |
 | `book.best_bid_price()` returns float | Returns `Price` object — cast with `float()` for arithmetic |
-| **Rust-specific** | |
+
+### Rust
+
+| Hallucination | Reality |
+|--------------|---------|
 | `LiveNode::new(config)` or `LiveNodeConfig::builder()` | `LiveNode::builder(trader_id, Environment::Live)?.build()?` |
 | `BinanceDataClientConfig::builder()` | Struct literal: `BinanceDataClientConfig { product_types: vec![...], ..Default::default() }` |
 | `BinanceAccountType::UsdtFutures` (Rust) | `BinanceProductType::UsdM` from `nautilus_binance::common::enums` |
