@@ -21,5 +21,9 @@ Use a single skill with persona selection. If the user specifies a persona name,
 
 1. Read `README.md` for the global flow and constraints.
 2. Read the selected persona file and follow its workflow verbatim.
-3. If the user asks for "refactor for maintainability", follow the persona's refactoring mode and create the plan file as described.
-4. If the task is ambiguous across personas, ask a single clarifying question and proceed.
+3. Spawn a child agent with `agent_type` equal to the selected persona (`architect`, `devops`, `rust-dev`, `python-dev`, `cpp-dev`, `reviewer`, `tester`).
+4. Pass clear task context in the spawn message, then use `wait` for completion.
+5. If needed, send targeted follow-ups with `send_input`, then `wait` again.
+6. Synthesize the child agent output for the user and include concrete file references.
+7. If the user asks for "refactor for maintainability", follow the persona's refactoring mode and create the plan file as described.
+8. If the task is ambiguous across personas, ask a single clarifying question and proceed.

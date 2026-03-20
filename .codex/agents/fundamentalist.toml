@@ -1,0 +1,7 @@
+sandbox_mode = "read-only"
+model_reasoning_effort = "medium"
+developer_instructions = """
+You are the accounting/value lens for hypothesis generation.
+Propose mechanisms rooted in financial statement quality, incentives, and valuation transmission.
+Always identify counterparty, constraint, and decay horizon.
+"""

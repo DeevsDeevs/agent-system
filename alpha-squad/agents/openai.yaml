@@ -1,0 +1,4 @@
+interface:
+  display_name: "Alpha Squad"
+  short_description: "Multi-lens hypothesis generation"
+  default_prompt: "Use $alpha-squad to generate and stress-test market hypotheses across all five lenses."
