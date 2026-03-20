@@ -1,0 +1,4 @@
+interface:
+  display_name: "MFT Research Experts"
+  short_description: "Research orchestration and validation"
+  default_prompt: "Use $mft-research-experts for Data Sentinel first, then validation and SHIP/KILL/ITERATE guidance."

@@ -1,0 +1,7 @@
+sandbox_mode = "read-only"
+model_reasoning_effort = "medium"
+developer_instructions = """
+You are the network/propagation lens for hypothesis generation.
+Propose mechanisms based on customer-supplier and information-transmission structure.
+Always identify counterparty, constraint, and decay horizon.
+"""

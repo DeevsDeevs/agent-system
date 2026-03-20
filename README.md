@@ -10,23 +10,32 @@ Deevs' plugin marketplace for Claude Code with workflow chains, terminal control
 
 ## Codex Setup
 
-Codex loads repo-scoped skills from `.codex/skills`. This repo includes symlinks to each skill folder, so no extra install step is required.
+Codex loads repo-scoped skills from `.agents/skills`. This repo includes `.agents/skills` symlinks to each skill folder.
+For backward compatibility, `.codex/skills` symlinks are also kept.
+
+Codex multi-agent role config for all personas is included in:
+- `.codex/config.toml`
+- `.codex/agents/*.toml`
 
 Usage:
 - Invoke a skill with `$skill-name` or `/skills`.
 - For chain operations: `$chain-system link <name>`, `$chain-system load <name>`, `$chain-system list`.
-- For persona workflows: `$dev-experts <persona>`, `$bug-hunters <role>`, `$research-experts <role>`.
+- For persona workflows: `$dev-experts <persona>`, `$bug-hunters <role>`, `$alpha-squad <role>`, `$mft-research-experts <role>`.
 
 If Codex was already running, restart it to reload the skills.
 
 Global (user-scoped) install for any repo:
 
 ```bash
-git clone git@github.com:DeevsDeevs/agent-system.git ~/src/agent-system
-mkdir -p ~/.codex/skills
-for d in 97-dev anti-ai-slop datetime golang-pro polars-expertise arxiv-search chain-system dev-experts bug-hunters research-experts cost-status; do
-  ln -s ~/src/agent-system/$d ~/.codex/skills/$d
-done
+curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \
+  | bash -s -- --non-interactive --platform codex
+```
+
+Install selected skills only:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \
+  | bash -s -- --non-interactive --platform codex --skills dev-experts,bug-hunters
 ```
 
 Installer (interactive by default):
