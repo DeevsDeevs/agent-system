@@ -4,34 +4,51 @@ Deevs' plugin marketplace for Claude Code with workflow chains, terminal control
 
 ## Installation
 
-Use the installer for all platforms (Claude Code, Codex, or both):
+Use the installer for all platforms (Claude Code, Codex, or both). Interactive by default:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \
   | bash -s --
 ```
 
-The installer is interactive by default — it will ask for your platform and preferences. It clones the repo, fetches any external dependencies (e.g. NautilusTrader docs for the nautilus-docs skill), and sets everything up.
+The installer clones the repo, fetches any external dependencies (e.g. NautilusTrader docs — only when the nautilus-docs skill is selected), and sets everything up.
 
 ### Non-interactive
 
 ```bash
-# Claude Code
+# Claude Code — all skills
 curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \
   | bash -s -- --non-interactive --platform claude
 
-# Codex
+# Codex — all skills
 curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \
   | bash -s -- --non-interactive --platform codex
 
-# Both
+# Both platforms
 curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \
   | bash -s -- --non-interactive --platform both
 ```
 
+Install selected skills only:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/scripts/install.sh \
+  | bash -s -- --non-interactive --platform codex --skills dev-experts,bug-hunters
+```
+
 ### Flags
 
-`--platform claude|codex|both`, `--repo-ref <tag|branch|commit>`, `--repo <url>`, `--clone-dir <path>`, `--target <path>`, `--mode symlink|copy`, `--skills a,b,c`, `--non-interactive`, `--uninstall`
+| Flag | Description |
+|------|-------------|
+| `--platform claude\|codex\|both` | Target platform |
+| `--skills a,b,c` | Install only these skills (default: all) |
+| `--repo-ref <tag\|branch\|commit>` | Checkout specific ref |
+| `--repo <url>` | Custom repo URL |
+| `--clone-dir <path>` | Where to clone (default: `~/src/agent-system`) |
+| `--target <path>` | Codex skills dir (default: `~/.codex/skills`) |
+| `--mode symlink\|copy` | Codex install mode |
+| `--non-interactive` | Skip prompts |
+| `--uninstall` | Remove installed skills |
 
 ### Uninstall
 

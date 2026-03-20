@@ -173,18 +173,12 @@ ensure_repo() {
     git -C "$REPO_DIR" checkout "$REPO_REF"
   fi
 
-  fetch_nautilus_docs
 }
 
 fetch_nautilus_docs() {
   local docs_dir="$REPO_DIR/nautilus-docs/references/docs"
 
   if [[ -d "$docs_dir" ]]; then
-    return
-  fi
-
-  # Skip if nautilus-docs skill doesn't exist in this checkout
-  if [[ ! -f "$REPO_DIR/nautilus-docs/SKILL.md" ]]; then
     return
   fi
 
@@ -202,6 +196,15 @@ fetch_nautilus_docs() {
 
   mkdir -p "$(dirname "$docs_dir")"
   mv "$temp/docs" "$docs_dir"
+}
+
+fetch_skill_deps() {
+  collect_skills
+  for skill in "${SKILLS_LIST[@]}"; do
+    if [[ "$skill" == "nautilus-docs" ]]; then
+      fetch_nautilus_docs
+    fi
+  done
 }
 
 collect_skills() {
@@ -224,10 +227,10 @@ collect_skills() {
 
 install_codex() {
   ensure_repo
+  fetch_skill_deps
 
   mkdir -p "$TARGET"
 
-  collect_skills
   for skill in "${SKILLS_LIST[@]}"; do
     local src dst
     src="$REPO_DIR/$skill"
@@ -288,6 +291,7 @@ uninstall_codex() {
 
 install_claude() {
   ensure_repo
+  fetch_skill_deps
 
   cat <<EOC
 
