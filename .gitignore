@@ -1,2 +1,4 @@
 .claude/
 .tmp/
+.env
+nautilus-docs/references/docs/
