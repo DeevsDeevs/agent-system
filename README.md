@@ -41,12 +41,12 @@ curl -fsSL https://raw.githubusercontent.com/DeevsDeevs/agent-system/main/script
 | Flag | Description |
 |------|-------------|
 | `--platform claude\|codex\|both` | Target platform |
-| `--skills a,b,c` | Install only these skills (default: all) |
+| `--skills a,b,c` | Install only these skills (default: all, codex only) |
 | `--repo-ref <tag\|branch\|commit>` | Checkout specific ref |
 | `--repo <url>` | Custom repo URL |
 | `--clone-dir <path>` | Where to clone (default: `~/src/agent-system`) |
 | `--target <path>` | Codex skills dir (default: `~/.codex/skills`) |
-| `--mode symlink\|copy` | Codex install mode |
+| `--mode symlink\|copy` | Install mode (default: symlink) |
 | `--non-interactive` | Skip prompts |
 | `--uninstall` | Remove installed skills |
 

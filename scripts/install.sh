@@ -33,7 +33,7 @@ USAGE
 PLATFORM="codex"
 REPO_URL="https://github.com/deevsDeevs/agent-system.git"
 CLONE_DIR="$HOME/src/agent-system"
-TARGET="${CODEX_HOME:-$HOME/.codex}/skills"
+TARGET=""
 MODE="symlink"
 SKILLS_CSV=""
 SKILLS_LIST=()
@@ -129,24 +129,25 @@ run_interactive() {
   fi
 
   if [[ "$PLATFORM" == "codex" || "$PLATFORM" == "both" ]]; then
-    prompt TARGET "Codex skills target dir" "$TARGET"
     prompt SKILLS_CSV "Skills (comma-separated, blank = all)" "$SKILLS_CSV"
-    local advanced="n"
-    ask_yn advanced "Show advanced options? (y/N)" "N"
-    if [[ "$advanced" == "y" || "$advanced" == "Y" ]]; then
-      prompt MODE "Mode (symlink|copy)" "$MODE"
+    prompt TARGET "Codex skills target dir" "${TARGET:-${CODEX_HOME:-$HOME/.codex}/skills}"
+  fi
 
-      local repo_dir_input=""
-      prompt repo_dir_input "Local repo dir (blank to clone)" "$REPO_DIR"
-      if [[ -n "$repo_dir_input" ]]; then
-        REPO_DIR="$repo_dir_input"
-      else
-        prompt REPO_URL "Repo URL" "$REPO_URL"
-        prompt CLONE_DIR "Clone dir" "$CLONE_DIR"
-      fi
+  local advanced="n"
+  ask_yn advanced "Show advanced options? (y/N)" "N"
+  if [[ "$advanced" == "y" || "$advanced" == "Y" ]]; then
+    prompt MODE "Mode (symlink|copy)" "$MODE"
 
-      prompt REPO_REF "Repo ref (tag/branch/commit, optional)" "$REPO_REF"
+    local repo_dir_input=""
+    prompt repo_dir_input "Local repo dir (blank to clone)" "$REPO_DIR"
+    if [[ -n "$repo_dir_input" ]]; then
+      REPO_DIR="$repo_dir_input"
+    else
+      prompt REPO_URL "Repo URL" "$REPO_URL"
+      prompt CLONE_DIR "Clone dir" "$CLONE_DIR"
     fi
+
+    prompt REPO_REF "Repo ref (tag/branch/commit, optional)" "$REPO_REF"
   fi
 }
 
@@ -162,6 +163,7 @@ ensure_repo() {
   if [[ -z "$REPO_DIR" ]]; then
     if [[ -d "$CLONE_DIR/.git" ]]; then
       REPO_DIR="$CLONE_DIR"
+      git -C "$REPO_DIR" fetch --all --prune
     else
       git clone "$REPO_URL" "$CLONE_DIR"
       REPO_DIR="$CLONE_DIR"
@@ -169,10 +171,16 @@ ensure_repo() {
   fi
 
   if [[ -n "$REPO_REF" ]]; then
-    git -C "$REPO_DIR" fetch --tags --prune
     git -C "$REPO_DIR" checkout "$REPO_REF"
+    git -C "$REPO_DIR" pull --ff-only 2>/dev/null || true
   fi
+}
 
+cleanup_repo() {
+  if [[ -d "$CLONE_DIR/.git" ]]; then
+    rm -rf "$CLONE_DIR"
+    echo "Removed cloned repo: $CLONE_DIR"
+  fi
 }
 
 fetch_nautilus_docs() {
@@ -182,20 +190,21 @@ fetch_nautilus_docs() {
     return
   fi
 
-  echo "Fetching NautilusTrader docs..."
-
-  local temp
-  temp=$(mktemp -d)
-  trap "rm -rf '$temp'" RETURN
-
-  git clone --filter=blob:none --sparse --depth 1 \
-    https://github.com/nautechsystems/nautilus_trader.git "$temp"
-  git -C "$temp" sparse-checkout set docs/
-
-  rm -rf "$temp/docs/api_reference"
-
-  mkdir -p "$(dirname "$docs_dir")"
-  mv "$temp/docs" "$docs_dir"
+  local fetch_script="$REPO_DIR/nautilus-docs/scripts/fetch-docs.sh"
+  if [[ -x "$fetch_script" ]]; then
+    bash "$fetch_script"
+  else
+    echo "Fetching NautilusTrader docs..."
+    local temp
+    temp=$(mktemp -d)
+    trap "rm -rf '$temp'" RETURN
+    git clone --filter=blob:none --sparse --depth 1 \
+      https://github.com/nautechsystems/nautilus_trader.git "$temp"
+    git -C "$temp" sparse-checkout set docs/
+    rm -rf "$temp/docs/api_reference"
+    mkdir -p "$(dirname "$docs_dir")"
+    mv "$temp/docs" "$docs_dir"
+  fi
 }
 
 fetch_skill_deps() {
@@ -229,6 +238,7 @@ install_codex() {
   ensure_repo
   fetch_skill_deps
 
+  TARGET="${TARGET:-${CODEX_HOME:-$HOME/.codex}/skills}"
   mkdir -p "$TARGET"
 
   for skill in "${SKILLS_LIST[@]}"; do
@@ -250,79 +260,113 @@ install_codex() {
   printf '\nDone. Restart Codex to reload skills.\n'
 }
 
-uninstall_codex() {
-  if [[ -z "$SKILLS_CSV" ]]; then
-    ensure_repo
-  elif [[ -n "$REPO_REF" ]]; then
-    echo "Warning: --repo-ref is ignored when --skills is provided for uninstall." >&2
+uninstall_from() {
+  local target_dir="$1"
+
+  if [[ ! -d "$target_dir" ]]; then
+    echo "Nothing to uninstall — $target_dir does not exist."
+    return
   fi
 
-  collect_skills
-  for skill in "${SKILLS_LIST[@]}"; do
-    local dst link_target
-    dst="$TARGET/$skill"
+  local skills_to_remove=()
+  if [[ -n "$SKILLS_CSV" ]]; then
+    IFS=',' read -r -a skills_to_remove <<< "$SKILLS_CSV"
+  else
+    for entry in "$target_dir"/*/; do
+      [[ -f "${entry}SKILL.md" ]] && skills_to_remove+=("$(basename "$entry")")
+    done
+  fi
+
+  for skill_name in "${skills_to_remove[@]}"; do
+    local dst="$target_dir/$skill_name"
     if [[ -L "$dst" ]]; then
-      if [[ -n "$REPO_DIR" ]]; then
-        link_target="$(readlink "$dst")"
-        if [[ "$link_target" == "$REPO_DIR"* ]]; then
-          rm -f "$dst"
-          echo "Removed $dst"
-        else
-          echo "Skipping $dst (symlink not pointing to repo)" >&2
-        fi
-      else
-        rm -f "$dst"
-        echo "Removed $dst"
-      fi
-    elif [[ -d "$dst" ]]; then
-      if [[ -f "$dst/SKILL.md" ]]; then
-        rm -rf "$dst"
-        echo "Removed $dst"
-      else
-        echo "Skipping $dst (no SKILL.md)" >&2
-      fi
+      rm -f "$dst"
+      echo "Removed $dst"
+    elif [[ -d "$dst" && -f "$dst/SKILL.md" ]]; then
+      rm -rf "$dst"
+      echo "Removed $dst"
     else
       echo "Not found: $dst"
     fi
   done
+}
 
+uninstall_codex() {
+  TARGET="${TARGET:-${CODEX_HOME:-$HOME/.codex}/skills}"
+  uninstall_from "$TARGET"
+  cleanup_repo
   printf '\nDone. Restart Codex to reload skills.\n'
 }
 
 install_claude() {
-  ensure_repo
-  fetch_skill_deps
+  collect_skills
+  clean_plugin_cache
 
-  cat <<EOC
+  local claude_target="$HOME/.claude/skills"
+  local plugin_skills=()
+  local local_skills=()
 
-Run the following commands inside Claude Code:
+  for skill in "${SKILLS_LIST[@]}"; do
+    if [[ "$skill" == "nautilus-docs" ]]; then
+      local_skills+=("$skill")
+    else
+      plugin_skills+=("$skill")
+    fi
+  done
 
-/plugin marketplace add ${REPO_URL}${REPO_REF:+#${REPO_REF}}
-/plugin install chain-system@deevs-agent-system
-/plugin install dev-experts@deevs-agent-system
-/plugin install bug-hunters@deevs-agent-system
-/plugin install research-experts@deevs-agent-system
-/plugin install cost-status@deevs-agent-system
-/plugin install arxiv-search@deevs-agent-system
+  # Skills with external deps: need the repo + docs fetch + symlink
+  if [[ ${#local_skills[@]} -gt 0 ]]; then
+    ensure_repo
+    fetch_nautilus_docs
+    mkdir -p "$claude_target"
+    for skill in "${local_skills[@]}"; do
+      local src skill_name dst
+      src="$REPO_DIR/$skill"
+      skill_name="$(basename "$skill")"
+      dst="$claude_target/$skill_name"
+      ln -sfn "$src" "$dst"
+      echo "Installed $skill_name -> $dst"
+    done
+  fi
 
-Note: These are Claude Code commands and will not run in a shell.
-Repo cloned to: ${REPO_DIR} (docs fetched)
-EOC
+  # Regular skills: plugin system handles them
+  if [[ ${#plugin_skills[@]} -gt 0 ]]; then
+    local ref_suffix="${REPO_REF:+#${REPO_REF}}"
+    printf '\nRun inside Claude Code:\n\n'
+    printf '  /plugin marketplace add %s%s\n\n' "$REPO_URL" "$ref_suffix"
+    for skill in "${plugin_skills[@]}"; do
+      printf '  /plugin install %s@deevs-agent-system\n' "$(basename "$skill")"
+    done
+    printf '\n'
+  fi
+
+  printf 'Done. Restart Claude Code to reload skills.\n'
 }
 
 uninstall_claude() {
-  cat <<'EOC'
-Run the following commands inside Claude Code:
+  uninstall_from "$HOME/.claude/skills"
+  clean_plugin_cache
+  cleanup_repo
+  printf '\nDone. Restart Claude Code to reload.\n'
+}
 
-/plugin uninstall chain-system@deevs-agent-system
-/plugin uninstall dev-experts@deevs-agent-system
-/plugin uninstall bug-hunters@deevs-agent-system
-/plugin uninstall research-experts@deevs-agent-system
-/plugin uninstall cost-status@deevs-agent-system
-/plugin uninstall arxiv-search@deevs-agent-system
-
-Note: These are Claude Code commands and will not run in a shell.
-EOC
+clean_plugin_cache() {
+  local plugins_dir="$HOME/.claude/plugins"
+  local marketplace="deevs-agent-system"
+  if [[ -d "$plugins_dir/cache/$marketplace" || -d "$plugins_dir/marketplaces/$marketplace" ]]; then
+    rm -rf "$plugins_dir/cache/$marketplace" "$plugins_dir/marketplaces/$marketplace"
+    if command -v jq &>/dev/null; then
+      [[ -f "$plugins_dir/installed_plugins.json" ]] && \
+        jq ".plugins |= with_entries(select(.key | test(\"@${marketplace}\$\") | not))" \
+          "$plugins_dir/installed_plugins.json" > "$plugins_dir/installed_plugins.json.tmp" && \
+        mv "$plugins_dir/installed_plugins.json.tmp" "$plugins_dir/installed_plugins.json"
+      [[ -f "$plugins_dir/known_marketplaces.json" ]] && \
+        jq "del(.\"$marketplace\")" \
+          "$plugins_dir/known_marketplaces.json" > "$plugins_dir/known_marketplaces.json.tmp" && \
+        mv "$plugins_dir/known_marketplaces.json.tmp" "$plugins_dir/known_marketplaces.json"
+    fi
+    echo "Cleaned old plugin cache"
+  fi
 }
 
 case "$PLATFORM" in
