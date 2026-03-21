@@ -1,0 +1,90 @@
+[features]
+multi_agent = true
+
+[agents]
+max_threads = 12
+max_depth = 3
+
+[agents.architect]
+description = "Technical lead for requirement framing, alternative design, and phased implementation planning."
+config_file = "agents/architect.toml"
+
+[agents.devops]
+description = "Production debugging specialist for incident triage, hypothesis testing, and failure analysis."
+config_file = "agents/devops.toml"
+
+[agents.rust-dev]
+description = "Rust implementation and review specialist focused on idiomatic safety and performance."
+config_file = "agents/rust-dev.toml"
+
+[agents.python-dev]
+description = "Python implementation and review specialist focused on modern typing, async correctness, and maintainability."
+config_file = "agents/python-dev.toml"
+
+[agents.cpp-dev]
+description = "C++ implementation and review specialist focused on correctness, undefined behavior, and performance."
+config_file = "agents/cpp-dev.toml"
+
+[agents.reviewer]
+description = "Comprehensive reviewer focused on correctness, regressions, risk, and missing tests."
+config_file = "agents/reviewer.toml"
+
+[agents.tester]
+description = "Testing specialist for robust test plans and implementation across happy-path and edge cases."
+config_file = "agents/tester.toml"
+
+[agents.orchestrator]
+description = "Bug-hunt orchestrator that reconstructs spec, delegates hunts, and validates findings adversarially."
+config_file = "agents/orchestrator.toml"
+
+[agents.logic-hunter]
+description = "Language-agnostic hunter for spec-versus-implementation logic bugs."
+config_file = "agents/logic-hunter.toml"
+
+[agents.cpp-hunter]
+description = "C++ bug hunter for UB, memory, concurrency, and lifetime defects."
+config_file = "agents/cpp-hunter.toml"
+
+[agents.python-hunter]
+description = "Python bug hunter for async pitfalls, None propagation, and type/logic defects."
+config_file = "agents/python-hunter.toml"
+
+[agents.fundamentalist]
+description = "Alpha research specialist for accounting quality, valuation mechanics, and mispricing hypotheses."
+config_file = "agents/fundamentalist.toml"
+
+[agents.vulture]
+description = "Alpha research specialist for forced-flow and mandate-driven opportunity hypotheses."
+config_file = "agents/vulture.toml"
+
+[agents.network-architect]
+description = "Alpha research specialist for supply-chain propagation and lead-lag network hypotheses."
+config_file = "agents/network-architect.toml"
+
+[agents.book-physicist]
+description = "Alpha research specialist for market microstructure and order-book entropy hypotheses."
+config_file = "agents/book-physicist.toml"
+
+[agents.causal-detective]
+description = "Alpha research specialist for causal validation and confounding controls."
+config_file = "agents/causal-detective.toml"
+
+[agents.mft-strategist]
+description = "Research orchestrator that sequences data checks, hypothesis generation, validation, and decisioning."
+config_file = "agents/mft-strategist.toml"
+
+[agents.data-sentinel]
+description = "Data quality gatekeeper that validates datasets before any modeling or filtering."
+config_file = "agents/data-sentinel.toml"
+
+[agents.factor-geometer]
+description = "Risk-model specialist for factor decomposition, covariance structure, and orthogonalization."
+config_file = "agents/factor-geometer.toml"
+
+[agents.skeptic]
+description = "Hypothesis executioner for causal and statistical validation under adversarial standards."
+config_file = "agents/skeptic.toml"
+
+[agents.forensic-auditor]
+description = "Post-mortem investigator for assumption failures, incident root cause, and reliability gaps."
+config_file = "agents/forensic-auditor.toml"

@@ -17,16 +17,16 @@ Defaults:
   --platform  codex
   --repo      https://github.com/DeevsDeevs/agent-system.git
   --clone-dir ~/src/agent-system
-  --target    ${CODEX_HOME:-~/.codex}/skills
+  --target    ${AGENTS_HOME:-~/.agents}/skills
   --mode      symlink
 
 Examples:
-  install.sh --platform codex --target ~/.codex/skills
+  install.sh --platform codex --target ~/.agents/skills
   install.sh --platform claude
   install.sh --platform both --skills chain-system,dev-experts
   install.sh --platform codex --repo-ref v1.2.0
   install.sh --platform codex --uninstall --skills chain-system
-  install.sh --non-interactive --platform codex --target ~/.codex/skills
+  install.sh --non-interactive --platform codex --target ~/.agents/skills
 USAGE
 }
 
@@ -229,6 +229,8 @@ collect_skills() {
     done < <(find "$REPO_DIR" \
         -path "$REPO_DIR/.git" -prune -o \
         -path "$REPO_DIR/.codex" -prune -o \
+        -path "$REPO_DIR/.agents" -prune -o \
+        -path "$REPO_DIR/.tmp" -prune -o \
         -path "$REPO_DIR/.github" -prune -o \
         -name SKILL.md -print0)
   fi

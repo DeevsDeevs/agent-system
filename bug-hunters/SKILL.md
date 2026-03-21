@@ -17,8 +17,11 @@ Use a single skill with role selection. If the user specifies a hunter, use that
 ## Workflow
 
 1. Read `README.md` and follow the “hunt, don’t fix” rule.
-2. Choose mode:
+2. Spawn a child agent with `agent_type` equal to the selected role (`orchestrator`, `logic-hunter`, `cpp-hunter`, `python-hunter`).
+3. If no role is specified, default to `orchestrator`.
+4. Choose mode:
    - Logic-first when the problem is algorithm/spec correctness.
    - Code-first when the problem is language-specific failures or UB.
-3. Use adversarial validation and only report MEDIUM+ confidence findings.
-4. Present a bug report, not remediation.
+5. Pass mode and scope in the spawn message, then use `wait` for completion.
+6. Use adversarial validation and only report MEDIUM+ confidence findings.
+7. Present a bug report, not remediation.
