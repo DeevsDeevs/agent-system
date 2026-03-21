@@ -8,7 +8,9 @@ description: >
 
 # NautilusTrader v1.224.0
 
-**MANDATORY**: Before writing or debugging NautilusTrader code, READ the matching doc from the navigator below. If no entry matches, **grep** `${CLAUDE_SKILL_DIR}/references/docs/` for the class/method/config name. Never guess signatures or constructors.
+> **If `references/docs/` does not exist**, run `bash scripts/fetch-docs.sh` from this skill's directory before proceeding.
+
+**MANDATORY**: Before writing or debugging NautilusTrader code, READ the matching doc from the navigator below. If no entry matches, **grep** `references/docs/` for the class/method/config name. Never guess signatures or constructors.
 
 **MUST READ** before any NautilusTrader work: [architecture.md](references/docs/concepts/architecture.md) (system diagram, data/execution flow, threading model, component FSM) and [actors.md](references/docs/concepts/actors.md) (lifecycle, callbacks, data handler mapping).
 
@@ -92,7 +94,7 @@ description: >
 
 ### Search Strategy
 
-When the navigator doesn't cover your need, grep `${CLAUDE_SKILL_DIR}/references/docs/` for the class, method, or config name. **Concepts docs** have working code examples with correct signatures. **Integration docs** have venue-specific configs, supported features, and gotchas. Read BEFORE writing code — never invent an API call.
+When the navigator doesn't cover your need, grep `references/docs/` for the class, method, or config name. **Concepts docs** have working code examples with correct signatures. **Integration docs** have venue-specific configs, supported features, and gotchas. Read BEFORE writing code — never invent an API call.
 
 ## Supporting Files
 
