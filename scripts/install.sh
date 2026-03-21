@@ -38,7 +38,7 @@ MODE="symlink"
 SKILLS_CSV=""
 SKILLS_LIST=()
 REPO_DIR=""
-REPO_REF="nautilus-v2"
+REPO_REF=""
 UNINSTALL="false"
 NON_INTERACTIVE="false"
 
@@ -190,21 +190,16 @@ fetch_nautilus_docs() {
     return
   fi
 
-  local fetch_script="$REPO_DIR/nautilus-docs/scripts/fetch-docs.sh"
-  if [[ -x "$fetch_script" ]]; then
-    bash "$fetch_script"
-  else
-    echo "Fetching NautilusTrader docs..."
-    local temp
-    temp=$(mktemp -d)
-    trap "rm -rf '$temp'" RETURN
-    git clone --filter=blob:none --sparse --depth 1 \
-      https://github.com/nautechsystems/nautilus_trader.git "$temp"
-    git -C "$temp" sparse-checkout set docs/
-    rm -rf "$temp/docs/api_reference"
-    mkdir -p "$(dirname "$docs_dir")"
-    mv "$temp/docs" "$docs_dir"
-  fi
+  echo "Fetching NautilusTrader docs..."
+  local temp
+  temp=$(mktemp -d)
+  trap "rm -rf '$temp'" RETURN
+  git clone --filter=blob:none --sparse --depth 1 \
+    https://github.com/nautechsystems/nautilus_trader.git "$temp"
+  git -C "$temp" sparse-checkout set docs/
+  rm -rf "$temp/docs/api_reference"
+  mkdir -p "$(dirname "$docs_dir")"
+  mv "$temp/docs" "$docs_dir"
 }
 
 fetch_skill_deps() {
