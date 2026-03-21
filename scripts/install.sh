@@ -31,14 +31,14 @@ USAGE
 }
 
 PLATFORM="codex"
-REPO_URL="https://github.com/deevsDeevs/agent-system.git"
+REPO_URL="https://github.com/DeevsDeevs/agent-system.git"
 CLONE_DIR="$HOME/src/agent-system"
 TARGET=""
 MODE="symlink"
 SKILLS_CSV=""
 SKILLS_LIST=()
 REPO_DIR=""
-REPO_REF=""
+REPO_REF="nautilus-v2"
 UNINSTALL="false"
 NON_INTERACTIVE="false"
 
@@ -128,8 +128,8 @@ run_interactive() {
     UNINSTALL="false"
   fi
 
+  prompt SKILLS_CSV "Skills (comma-separated, blank = all)" "$SKILLS_CSV"
   if [[ "$PLATFORM" == "codex" || "$PLATFORM" == "both" ]]; then
-    prompt SKILLS_CSV "Skills (comma-separated, blank = all)" "$SKILLS_CSV"
     prompt TARGET "Codex skills target dir" "${TARGET:-${CODEX_HOME:-$HOME/.codex}/skills}"
   fi
 
@@ -208,9 +208,8 @@ fetch_nautilus_docs() {
 }
 
 fetch_skill_deps() {
-  collect_skills
   for skill in "${SKILLS_LIST[@]}"; do
-    if [[ "$skill" == "nautilus-docs" ]]; then
+    if [[ "$(basename "$skill")" == "nautilus-docs" ]]; then
       fetch_nautilus_docs
     fi
   done
@@ -238,6 +237,7 @@ collect_skills() {
 
 install_codex() {
   ensure_repo
+  collect_skills
   fetch_skill_deps
 
   TARGET="${TARGET:-${CODEX_HOME:-$HOME/.codex}/skills}"
@@ -301,60 +301,36 @@ uninstall_codex() {
 }
 
 install_claude() {
+  ensure_repo
   collect_skills
-  clean_plugin_cache
+  fetch_skill_deps
 
-  local claude_target="$HOME/.claude/skills"
-  local plugin_skills=()
-  local local_skills=()
+  local clone_abs marketplace
+  clone_abs="$(cd "$REPO_DIR" && pwd)"
+  marketplace="$(basename "$clone_abs")"
 
+  clean_plugin_cache "$marketplace"
+
+  printf 'Run inside Claude Code:\n\n'
+  printf '  /plugin marketplace add %s\n\n' "$clone_abs"
   for skill in "${SKILLS_LIST[@]}"; do
-    if [[ "$skill" == "nautilus-docs" ]]; then
-      local_skills+=("$skill")
-    else
-      plugin_skills+=("$skill")
-    fi
+    printf '  /plugin install %s@%s\n' "$(basename "$skill")" "$marketplace"
   done
-
-  # Skills with external deps: need the repo + docs fetch + symlink
-  if [[ ${#local_skills[@]} -gt 0 ]]; then
-    ensure_repo
-    fetch_nautilus_docs
-    mkdir -p "$claude_target"
-    for skill in "${local_skills[@]}"; do
-      local src skill_name dst
-      src="$REPO_DIR/$skill"
-      skill_name="$(basename "$skill")"
-      dst="$claude_target/$skill_name"
-      ln -sfn "$src" "$dst"
-      echo "Installed $skill_name -> $dst"
-    done
-  fi
-
-  # Regular skills: plugin system handles them
-  if [[ ${#plugin_skills[@]} -gt 0 ]]; then
-    local ref_suffix="${REPO_REF:+#${REPO_REF}}"
-    printf '\nRun inside Claude Code:\n\n'
-    printf '  /plugin marketplace add %s%s\n\n' "$REPO_URL" "$ref_suffix"
-    for skill in "${plugin_skills[@]}"; do
-      printf '  /plugin install %s@deevs-agent-system\n' "$(basename "$skill")"
-    done
-    printf '\n'
-  fi
-
-  printf 'Done. Restart Claude Code to reload skills.\n'
+  printf '\nDone. Restart Claude Code to reload skills.\n'
 }
 
 uninstall_claude() {
-  uninstall_from "$HOME/.claude/skills"
-  clean_plugin_cache
+  local marketplace
+  marketplace="$(basename "$CLONE_DIR")"
+  clean_plugin_cache "$marketplace"
   cleanup_repo
-  printf '\nDone. Restart Claude Code to reload.\n'
+  printf '\nDone. Remove any installed plugins inside Claude Code with:\n'
+  printf '  /plugin marketplace remove %s\n' "$marketplace"
 }
 
 clean_plugin_cache() {
+  local marketplace="$1"
   local plugins_dir="$HOME/.claude/plugins"
-  local marketplace="deevs-agent-system"
   if [[ -d "$plugins_dir/cache/$marketplace" || -d "$plugins_dir/marketplaces/$marketplace" ]]; then
     rm -rf "$plugins_dir/cache/$marketplace" "$plugins_dir/marketplaces/$marketplace"
     if command -v jq &>/dev/null; then
@@ -367,7 +343,7 @@ clean_plugin_cache() {
           "$plugins_dir/known_marketplaces.json" > "$plugins_dir/known_marketplaces.json.tmp" && \
         mv "$plugins_dir/known_marketplaces.json.tmp" "$plugins_dir/known_marketplaces.json"
     fi
-    echo "Cleaned old plugin cache"
+    echo "Cleaned plugin cache for $marketplace"
   fi
 }
 
