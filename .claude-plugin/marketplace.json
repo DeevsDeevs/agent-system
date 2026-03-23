@@ -105,6 +105,11 @@
       "description": "Hierarchical microstructure knowledge base for trading venues: exchange mechanics, order books, auctions, Reg NMS, Chinese futures (CTP), feed handlers, execution models",
       "source": "./venue-expert",
       "skills": ["./"]
+    },
+    {
+      "name": "skill-activation-hooks",
+      "description": "Shell-based keyword matching hooks that inject skill/agent reminders into user prompts",
+      "source": "./skill-activation-hooks"
     }
   ]
 }

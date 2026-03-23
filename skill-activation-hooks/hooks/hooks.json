@@ -1,0 +1,17 @@
+{
+  "description": "Weighted keyword matching for skill activation on user prompts",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/activate.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
