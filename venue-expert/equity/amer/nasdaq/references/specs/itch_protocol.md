@@ -12,6 +12,25 @@ ITCH is a high-performance, low-latency protocol for market data dissemination. 
 
 **Official specification:** https://www.nasdaqtrader.com/content/technicalsupport/specifications/dataproducts/NQTVITCHSpecification.pdf
 
+## Version History
+
+| Version | Spec Date | Key Changes | Compat |
+|---------|-----------|-------------|--------|
+| ITCH 1.00 | Jan 19, 2000 | Session mgmt to higher protocol; Broken Trade; timestamps hundredths of sec | Breaking |
+| ITCH 2.00 | Nov 5, 2001 | Price 6+4 implied digits; timestamps → ms; shares 9→6 digits | Breaking |
+| ITCH 2.0a | Feb 24, 2006 | References INET→NASDAQ; attributed Add Order (F); Halt/Resume | Additive |
+| ITCH 3.00 | Jul 11, 2006 | Separate Seconds/Milliseconds msgs; Stock Directory, NOII, Type C/D/Q | Breaking |
+| ITCH 3.10 | Oct 20, 2008 | Order Ref/Match ID expanded to 12B; Order Replace added | Additive |
+| ITCH 4.00 | Oct 21, 2008 | All numerics → binary (from ASCII); ns timestamps (Seconds+ns field); SoupBinTCP | Breaking |
+| ITCH 4.10 | Jan 26, 2010 | Symbol 6→8 chars; NYSE/MKT/Arca Market Category; Reg SHO (Jul 2010); RPI (Nov 2012) | Breaking (widths) |
+| ITCH 5.00 | Jul 10, 2013 | Unified 6B ns timestamp; Stock Locate (2B) + Tracking Number (2B) all msgs; MWCB/IPO/LULD msgs | Breaking (all offsets) |
+
+**Version detection:** Encoded in directory path (`ITCHFiles_v5`, `ITCHFiles_v41`) and filename (`SMMDDYY-v#.txt.gz`). BinaryFILE format (2-byte big-endian length + payload) is version-agnostic — no header indicates ITCH version.
+
+**ITCH 5.0 historical data available from April 8, 2014** in Nasdaq Data Store. Exact ITCH 4.1 sunset undocumented but falls between Jul 2013 spec and early 2014.
+
+**FPGA feed:** MoldUDP64 only (10Gb/40Gb at Carteret). Software and FPGA carry identical ITCH 5.0 payloads in guaranteed identical order.
+
 ## Protocol Characteristics
 
 ### Message Format
@@ -140,6 +159,40 @@ Prices stored as integers with implied decimal:
 - **Price (4):** 4 bytes, divide by 10000 for dollars
 - Example: 1234500 = $123.45
 
+### Sub-Penny Price Encoding
+
+**Price(4):** 4-byte unsigned big-endian, 4 implied decimal places (value = price x 10,000).
+
+| Price | Integer | Hex | Context |
+|-------|---------|-----|---------|
+| $100.00 | 1,000,000 | 0x000F4240 | Standard penny |
+| $100.005 | 1,000,050 | 0x000F4272 | Midpoint of $100.00/$100.01 |
+| $100.0025 | 1,000,025 | 0x000F4259 | Under half-penny tick regime |
+| $0.0001 | 1 | 0x00000001 | Minimum non-zero (sub-dollar) |
+| $200,000.0000 | 2,000,000,000 | 0x77359400 | Maximum Price(4) |
+
+**Price(8):** 8 implied decimals. Only in MWCB Decline Level Message (Type V) — Level 1/2/3 fields. All other message types use Price(4).
+
+**Midpoint execution reporting:**
+- Midpoint peg orders do NOT generate Add Order messages on ITCH
+- Against displayed order: Type C (Executed with Price) contains sub-penny midpoint price
+- Two non-displayed match: Type P (Trade Non-Cross) reports match price
+- Both use Price(4), fully sub-penny capable to $0.0001
+
+**Half-penny tick:** SEC Rule 612 amendment (Sep 2024) introduces $0.005 tick for liquid stocks, effective Nov 2025 (delayed to Nov 2026). Midpoint between half-penny levels (e.g., $100.0025 = integer 1,000,025) already representable in Price(4).
+
+| Message | Price Field | Bytes | Sub-Penny | Notes |
+|---------|-------------|-------|-----------|-------|
+| A/F (Add) | Price | 4 | Yes (displayed at penny) | Rule 612 constrains displayed |
+| E (Executed) | — | — | N/A | Uses original Add price |
+| C (Exec w/ Price) | Execution Price | 4 | **Yes** | Midpoint/non-display |
+| U (Replace) | Price | 4 | Yes | New price |
+| P (Trade) | Price | 4 | **Yes** | Non-displayable matches |
+| Q (Cross) | Cross Price | 4 | Typically penny | Auction clearing |
+| I (NOII) | Near/Far/Ref | 4 each | Yes | Indicative |
+| V (MWCB) | Levels | **8 each** | Yes | Only Price(8) in ITCH 5.0 |
+| J (LULD) | Ref/Upper/Lower | 4 each | Yes | Collar prices |
+
 ### Timestamp Encoding
 
 6-byte timestamp:
@@ -217,6 +270,34 @@ Maintain:
 - 8-byte integer; theoretical wraparound at ~18 quintillion
 - In practice, never wraps within a day
 - Numbers reset each trading day
+
+### Corporate Action Handling
+
+ITCH order books are **stateless across days** — all orders cancelled overnight, reference numbers day-unique, Stock Locates assigned daily.
+
+**Forward splits:** Invisible in ITCH. No split message exists. New Type R with post-split data at day start; all prior orders already cancelled. Stock opens via normal Opening Cross. Example: AAPL 4:1 (Aug 28, 2020) — fresh Stock Directory, new orders at ~$127 vs prior ~$500.
+
+**Reverse splits:** Mandatory halt since Nov 2023 (Rule 4120(a)(14)).
+1. Day before: Type H halt (M1 Corporate Action) ~7:50 PM
+2. Effective date: Type R (post-split) → halted → NOII (Cross Type "H") → Quotation (State "Q") → Trading (State "T") at 9:00 AM → Cross Trade (Type Q)
+- CUSIP changes (visible in Daily List, not ITCH)
+- All orders cancelled per FINRA Rule 5330(b)
+
+**Symbol changes:** No ITCH cross-reference. Old symbol absent from Type R; new symbol appears. Use Nasdaq Daily List for mapping. ITCH carries no CUSIP/ISIN (unlike Nasdaq Nordic ITCH which includes ISIN).
+
+**IPOs:** Type K (IPO Quoting Period) → halt reason IPO1 → quotation-only (IPOQ) → NOII → Cross Type "H" (not "O"). Can occur any time during day.
+
+**Spin-offs:** Zero ITCH indication. New entity appears as fresh Type R on first trading day. Parent ex-date price drop unexplained in protocol.
+
+| Action | ITCH Messages | Orders | Detection |
+|--------|--------------|--------|-----------|
+| Forward split | Type R (new day) | Cancelled overnight | Daily List for ratios |
+| Reverse split | Type H (M1), R, I, Q, H (resume) | Cancelled 8 PM; halt 7:50 PM; resume 9 AM | CUSIP change via Daily List |
+| Symbol change | Type R (new symbol) | Old dead; new fresh | Daily List for mapping |
+| IPO | Type R (IPO=Y), H (IPO1), K, I, Q | Accepted during quotation-only | Type K IPO Price |
+| Spin-off | Type R (new entity) | Standard overnight cancel | No ITCH link; use Daily List + CRSP |
+
+**LOBSTER:** Event Type 7 for halts (Price=-1 halt, 0 quote resume, 1 trade resume). No halt reason code. Unadjusted raw prices. Data from Jan 6, 2009.
 
 ### Timestamp Edge Cases
 
@@ -336,6 +417,29 @@ Peak message rates:
 8. [ ] Build recovery mechanism
 9. [ ] Validate with known prints
 10. [ ] Performance test at peak rates
+
+## Validation Checklist Reference
+
+Full 45-check validation architecture documented in `../../equity_amer.md` § Data Validation Checklist.
+
+**Key checks for ITCH implementors:**
+
+| Priority | Check | Severity |
+|----------|-------|----------|
+| 1 | Session ID constant for entire day | Critical |
+| 2 | Sequence number strict monotonic, no gaps/duplicates | Critical |
+| 3 | Timestamp non-decreasing (>1ms regression = corruption) | Critical |
+| 4 | Every E/C/X/D/U references valid active Order Ref from prior A/F | Critical |
+| 5 | No negative remaining quantities | Critical |
+| 6 | No crossed book during continuous trading (State "T") | Critical |
+| 7 | System Event ordering: O→S→Q→M→E→C exactly once each | Critical |
+| 8 | Stock Directory complete before first trade | Critical |
+| 9 | Order NOT restored after Type B (broken trade) | Critical |
+| 10 | Gap retransmission verified before further processing | Critical |
+
+**Processing order:** Transport → Timestamp → Reference Data → State Machine → Order Lifecycle → Auction → Trade Breaks → Volume → Corporate Actions → Best Practices.
+
+Severity distribution: 13 Critical, 19 High, 13 Medium.
 
 ## Official Resources
 

@@ -11,6 +11,7 @@
 | CZCE | Agricultural, chemical | Cotton, sugar, methanol, PTA |
 | CFFEX | Financial | Stock index, treasury futures |
 | INE | International | Crude oil (Yuan-denominated) |
+| GFEX | Industrial materials | Industrial silicon, lithium carbonate |
 
 **Note:** China operates separate domestic (CNY) and international (INE) markets with different access rules.
 
