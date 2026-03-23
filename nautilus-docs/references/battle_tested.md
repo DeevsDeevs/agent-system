@@ -229,12 +229,16 @@ Pre-aggregated top 10 levels — lower overhead than full book subscription for 
 DataActor is data-only. For submitting orders, use `Strategy` from `nautilus-trading`:
 
 ```rust
+use std::ops::{Deref, DerefMut};
 use nautilus_common::actor::{DataActor, DataActorCore};
+use nautilus_model::data::TradeTick;
+use nautilus_model::identifiers::InstrumentId;
 use nautilus_trading::strategy::{Strategy, StrategyConfig, StrategyCore};
 
 #[derive(Debug)]
 struct MyStrategy {
     core: StrategyCore,  // wraps DataActorCore internally
+    instrument_id: InstrumentId,
 }
 
 // CRITICAL: Deref target is DataActorCore, NOT StrategyCore.
@@ -248,10 +252,19 @@ impl DerefMut for MyStrategy {
     fn deref_mut(&mut self) -> &mut Self::Target { &mut self.core }
 }
 
-// DataActor impl — data callbacks + order submission
 impl DataActor for MyStrategy {
-    fn on_start(&mut self) -> anyhow::Result<()> { Ok(()) }
-    fn on_stop(&mut self) -> anyhow::Result<()> { Ok(()) }
+    fn on_start(&mut self) -> anyhow::Result<()> {
+        self.subscribe_trades(self.instrument_id, None, None);
+        Ok(())
+    }
+    fn on_trade(&mut self, trade: &TradeTick) -> anyhow::Result<()> {
+        log::info!("trade px={}", trade.price.as_f64());
+        Ok(())
+    }
+    fn on_stop(&mut self) -> anyhow::Result<()> {
+        self.unsubscribe_trades(self.instrument_id, None, None);
+        Ok(())
+    }
 }
 
 impl Strategy for MyStrategy {
@@ -260,7 +273,7 @@ impl Strategy for MyStrategy {
 }
 ```
 
-Constructor: `StrategyCore::new(StrategyConfig { strategy_id: Some("MY-001".into()), ..Default::default() })`.
+Constructor: `MyStrategy { core: StrategyCore::new(StrategyConfig { strategy_id: Some("MY-001".into()), ..Default::default() }), instrument_id }`.
 
 Key event fields:
 - `PositionOpened`: `entry` (OrderSide), `side` (PositionSide), `quantity`, `last_px`, `avg_px_open`, `currency`

@@ -185,7 +185,10 @@ impl DataActor for MyActor {
         log::info!("px={} qty={}", trade.price.as_f64(), trade.size.as_f64());
         Ok(())
     }
-    fn on_stop(&mut self) -> anyhow::Result<()> { Ok(()) } // MUST implement — warns if missing
+    fn on_stop(&mut self) -> anyhow::Result<()> {
+        self.unsubscribe_trades(self.instrument_id, None, None);
+        Ok(())
+    }
 }
 
 // Constructor:
