@@ -12,6 +12,8 @@ description: >
 
 **MUST READ** before any NautilusTrader work: [architecture.md](references/docs/concepts/architecture.md) (system diagram, data/execution flow, threading model, component FSM) and [actors.md](references/docs/concepts/actors.md) (lifecycle, callbacks, data handler mapping).
 
+**NEVER clone or modify NautilusTrader source**. Use extension points (DataActor/Strategy), `[patch]` in Cargo.toml for adapter fixes, or the built-in data catalog for persistence. See [battle_tested.md § Debugging Live Issues](references/battle_tested.md) for the full debugging playbook.
+
 ## Doc Navigator
 
 ### Concepts
@@ -96,7 +98,7 @@ When the navigator doesn't cover your need, grep `references/docs/` for the clas
 
 ## Supporting Files
 
-- **[battle_tested.md](references/battle_tested.md)** — Load when: Rust Strategy pattern, credentials, patching deps, on_start() ordering, market making, backtest config, venue gotchas, backtest→live migration, hot path performance, state persistence, fill/latency metrics, log rotation, custom indicators, data pipeline validation.
+- **[battle_tested.md](references/battle_tested.md)** — Load when: **debugging live issues** (step 1: read the error body), Rust Strategy pattern, credentials, patching deps, on_start() ordering, market making, backtest config, venue gotchas, backtest→live migration, hot path performance, state persistence, fill/latency metrics, log rotation, custom indicators, data pipeline validation.
 - **[REBUILD.md](references/REBUILD.md)** — Meta-prompt for regenerating this skill when NautilusTrader API changes.
 
 ## Rust Standalone Binary

@@ -222,6 +222,64 @@ Pre-aggregated top 10 levels — lower overhead than full book subscription for 
 - No `modify_order` support
 - Binary outcomes only — `YES`/`NO` tokens
 
+## Debugging Live Issues
+
+### Step 1: Read the actual error
+
+Most wasted debugging time comes from treating errors as opaque. The server is almost always telling you exactly what's wrong.
+
+```bash
+# HTTP errors: ALWAYS read the response body, not just the status code
+curl -v 'https://fapi.binance.com/fapi/v1/...' -H 'X-MBX-APIKEY: ...' 2>&1
+
+# Nautilus logs: grep ERROR first
+grep "ERROR" logs/trader.log | head -20
+
+# Rust: use {:?} (Debug), not {} (Display) — Debug includes inner error chain
+log::error!("Failed: {error:?}");  # shows full chain
+log::error!("Failed: {error}");    # may hide root cause
+```
+
+If a Nautilus error says "400 Bad Request" — **that is not enough information to debug**. Get the response body. One `curl -v` is worth 10 rounds of guessing.
+
+### Step 2: Venue-specific API key rules
+
+Binance has **per-product API keys**. A futures Ed25519 key is NOT valid for spot. Check:
+- Spot key → spot endpoints only
+- Futures/Linear key → futures endpoints only
+- You may have separate keys in `.env`: `BINANCE_SPOT_API_KEY`, `BINANCE_LINEAR_API_KEY`
+
+**Ed25519 encrypted keys**: Binance Ed25519 private keys can be password-encrypted (PKCS#8). NautilusTrader's `SigningCredential` needs the unencrypted key. If your `.env` has a `_DECRYPTED` variant, use that.
+
+### Step 3: NEVER modify NautilusTrader source
+
+When something doesn't work (missing feature, adapter bug, data type not supported):
+
+1. **Use extension points**: wrap missing functionality in a DataActor or Strategy
+2. **Use `[patch]` in Cargo.toml**: fork, fix, point to your branch (see "Patching Nautilus dependencies" below)
+3. **Use the data catalog**: `nautilus-persistence` writes Parquet natively — don't write custom Parquet loaders
+
+**DO NOT**: clone the NautilusTrader repo, modify adapter source, and build locally. This creates an unmaintainable fork that diverges immediately and breaks on the next update.
+
+### Common runtime traps
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| "Invalid symbol" on subscribe | Symbol doesn't exist on that venue/product | Check symbol list — not all coins have futures (SHIB, PEPE, LEO) |
+| "Invalid X-MBX-APIKEY header" | Wrong API key for the endpoint (spot key on futures) | Use the correct per-product key |
+| WebSocket reconnecting repeatedly | Too many subscriptions per connection (Binance limit ~1024 streams) | Reduce symbols or split across connections |
+| Signature validation error | Ed25519 key misdetected as HMAC, or encrypted key used | Check `SigningCredential` detection, use unencrypted key |
+| SBE decode failure | Exchange upgraded schema version (e.g. v2→v3) | Check exchange API changelog, update Nautilus |
+| 0 instruments loaded | Missing `load_ids` in `InstrumentProviderConfig` | Add `load_ids=frozenset({"SYMBOL.VENUE"})` |
+| Catalog empty after run | Run too short for feather flush, or wrong catalog path | Run longer (>60s), check `catalog_path` in config |
+| `subscribe_funding_rates()` no data | Not all adapters implement the feed (Binance doesn't stream it natively) | Use `BinanceFuturesMarkPriceUpdate` which contains funding_rate |
+
+### Binance funding rate workaround
+
+Binance doesn't stream funding rates as a separate feed. They're embedded in `BinanceFuturesMarkPriceUpdate`. To capture:
+- Subscribe to mark price updates — funding rate arrives as a field
+- Or poll the REST endpoint via a timer-based actor (`queue_for_executor` + async HTTP)
+
 ## Rust Live Trading
 
 ### Strategy pattern (for order management)
