@@ -12,7 +12,7 @@ description: >
 
 **MUST READ** before any NautilusTrader work: [architecture.md](references/docs/concepts/architecture.md) (system diagram, data/execution flow, threading model, component FSM) and [actors.md](references/docs/concepts/actors.md) (lifecycle, callbacks, data handler mapping).
 
-**NEVER clone or modify NautilusTrader source**. Use extension points (DataActor/Strategy), `[patch]` in Cargo.toml for adapter fixes, or the built-in data catalog for persistence. See [battle_tested.md § Debugging Live Issues](references/battle_tested.md) for the full debugging playbook.
+**Do not build on a private NautilusTrader fork**. Extend via composition (DataActor/Strategy traits), use `[patch]` for temporary bug fixes (with upstream PR), or fork+modify only when contributing back. Cloning to read source or run tests is fine. See [battle_tested.md § Step 3](references/battle_tested.md) for the full decision tree.
 
 ## Doc Navigator
 

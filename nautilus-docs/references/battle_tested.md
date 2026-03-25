@@ -251,15 +251,92 @@ Binance has **per-product API keys**. A futures Ed25519 key is NOT valid for spo
 
 **Ed25519 encrypted keys**: Binance Ed25519 private keys can be password-encrypted (PKCS#8). NautilusTrader's `SigningCredential` needs the unencrypted key. If your `.env` has a `_DECRYPTED` variant, use that.
 
-### Step 3: NEVER modify NautilusTrader source
+### Step 3: Extending NautilusTrader without modifying source
 
-When something doesn't work (missing feature, adapter bug, data type not supported):
+When NautilusTrader is missing a feature or an adapter does not behave the way you need, follow this decision tree. The architecture smell to avoid is building on a private fork without upstreaming -- not cloning the repo itself. Cloning to read source, run tests, or prepare a PR is perfectly normal.
 
-1. **Use extension points**: wrap missing functionality in a DataActor or Strategy
-2. **Use `[patch]` in Cargo.toml**: fork, fix, point to your branch (see "Patching Nautilus dependencies" below)
-3. **Use the data catalog**: `nautilus-persistence` writes Parquet natively — don't write custom Parquet loaders
+**Decision tree -- "I need something NautilusTrader does not provide":**
 
-**DO NOT**: clone the NautilusTrader repo, modify adapter source, and build locally. This creates an unmaintainable fork that diverges immediately and breaks on the next update.
+#### 1. Compose via DataActor or Strategy (first choice, 90% of cases)
+
+NautilusTrader's extension surface is trait-based. `DataActor` and `Strategy` are traits you implement on your own structs. They give you lifecycle callbacks (`on_start`, `on_stop`), data callbacks (`on_trade`, `on_quote`, `on_mark_price`, `on_book_deltas`, `on_funding_rate`, `on_data`, ...), timer events, and the signal/custom-data pipeline. This is composition, not inheritance -- your struct owns a `DataActorCore` or `StrategyCore` and delegates via `Deref`.
+
+Use this when:
+- An adapter streams data you need to reshape (e.g., use `subscribe_funding_rates` / `on_funding_rate` for funding data — the adapter handles the underlying source format)
+- You need to combine multiple data feeds into a derived signal
+- You need periodic REST polling (timer + async HTTP in Python via `queue_for_executor`, or timer + `reqwest` in a spawned task in Rust)
+- You want to publish custom data types for downstream consumers
+
+Rust example -- subscribing to funding rates:
+
+```rust
+use nautilus_model::data::FundingRateUpdate;
+
+impl DataActor for FundingRateCapture {
+    fn on_start(&mut self) -> anyhow::Result<()> {
+        self.subscribe_funding_rates(self.instrument_id, None, None);
+        Ok(())
+    }
+
+    fn on_funding_rate(&mut self, update: &FundingRateUpdate) -> anyhow::Result<()> {
+        // FundingRateUpdate has: instrument_id, rate (Decimal), interval, next_funding_ns
+        log::info!("{} rate={}", update.instrument_id, update.rate);
+        Ok(())
+    }
+
+    fn on_stop(&mut self) -> anyhow::Result<()> {
+        self.unsubscribe_funding_rates(self.instrument_id, None, None);
+        Ok(())
+    }
+}
+```
+
+Note: whether funding rate data actually arrives depends on adapter support. Binance embeds it in mark price stream at the adapter level — the DataActor callback fires if the adapter parses it out. If the adapter doesn't support it, subscribe to mark prices as a fallback and check what fields arrive.
+
+This is idiomatic Rust composition: your struct implements the trait, the runtime calls your callbacks. No source modification needed.
+
+#### 2. Cargo `[patch]` for adapter bugs (temporary fix while upstreaming)
+
+If an adapter has an actual bug (wrong signature encoding, missing WebSocket message handling, incorrect field parsing), fork on GitHub, fix the bug on a branch, and point your `Cargo.toml` at your fork:
+
+```toml
+[patch.'https://github.com/nautechsystems/nautilus_trader.git']
+nautilus-binance = { git = "https://github.com/YOUR-USER/nautilus_trader.git", branch = "fix/binance-sig-encoding" }
+```
+
+Only list the crate(s) you modified. Cargo resolves transitive deps automatically. This is not a private fork -- it is a temporary patch with a clear intent to upstream via PR.
+
+Rules:
+- The branch name should describe the fix (`fix/binance-ws-reconnect`, not `my-changes`)
+- Open an upstream PR immediately or as soon as the fix is validated
+- Remove the `[patch]` once the fix is merged and released
+- Never use `[patch]` for feature additions -- that belongs in category 3
+
+#### 3. Fork + modify for upstream contribution (the right way to add features)
+
+When NautilusTrader genuinely lacks functionality that belongs in the core (new adapter message type, new data feed, new order type support), the correct path is:
+
+1. Clone the repo
+2. Implement the feature on a branch
+3. Run the existing test suite, add tests for your change
+4. Open a PR upstream
+5. Use `[patch]` to consume your branch while the PR is in review
+
+This is how open source works. The smell is NOT cloning or modifying source -- it is building on a local fork without upstreaming. A private fork with adapter modifications that you never PR diverges immediately and breaks on the next Nautilus update.
+
+#### 4. Cloning to read source or run tests (always fine)
+
+Cloning the NautilusTrader repo to read adapter source, understand internal behavior, run tests, or check trait signatures is completely normal development practice. The repo is the best documentation for edge cases.
+
+#### What NOT to do
+
+Do not clone the repo, modify adapter internals to add missing functionality, build locally, and treat that as your production dependency. This is the architecture smell. Concretely, the failure mode looks like:
+
+1. "Binance does not stream funding rates" -- correct observation
+2. Clone repo, add funding rate streaming to the Binance adapter -- wrong response
+3. Build from local path, deploy -- unmaintainable; breaks on next Nautilus version
+
+The correct response to step 1 is category 1 above: write a `DataActor` that subscribes to `MarkPriceUpdate` (which contains funding rate data) and extracts what you need. No source modification required.
 
 ### Common runtime traps
 
@@ -272,13 +349,11 @@ When something doesn't work (missing feature, adapter bug, data type not support
 | SBE decode failure | Exchange upgraded schema version (e.g. v2→v3) | Check exchange API changelog, update Nautilus |
 | 0 instruments loaded | Missing `load_ids` in `InstrumentProviderConfig` | Add `load_ids=frozenset({"SYMBOL.VENUE"})` |
 | Catalog empty after run | Run too short for feather flush, or wrong catalog path | Run longer (>60s), check `catalog_path` in config |
-| `subscribe_funding_rates()` no data | Not all adapters implement the feed (Binance doesn't stream it natively) | Use `BinanceFuturesMarkPriceUpdate` which contains funding_rate |
+| `subscribe_funding_rates()` no data | Not all adapters implement the feed (Binance doesn't stream it natively) | Use `MarkPriceUpdate` which contains funding_rate (see Step 3 above) |
 
-### Binance funding rate workaround
+### Binance funding rate
 
-Binance doesn't stream funding rates as a separate feed. They're embedded in `BinanceFuturesMarkPriceUpdate`. To capture:
-- Subscribe to mark price updates — funding rate arrives as a field
-- Or poll the REST endpoint via a timer-based actor (`queue_for_executor` + async HTTP)
+In Rust, `subscribe_funding_rates` / `on_funding_rate` is the first-class path — the Binance adapter parses funding from its mark price stream internally. In Python, funding arrives via `BinanceFuturesMarkPriceUpdate` (contains mark, index, AND funding_rate). As a fallback, poll the REST endpoint via a timer-based actor (`queue_for_executor` + async HTTP).
 
 ## Rust Live Trading
 
@@ -354,14 +429,14 @@ Ed25519 signatures are base64 containing `+`, `/`, `=`. Some adapter HTTP client
 
 ### Patching Nautilus dependencies
 
-Fork on GitHub, push fix to a branch, use Cargo `[patch]`:
+See "Step 3: Extending NautilusTrader without modifying source" above for the full decision tree. Quick reference for Cargo `[patch]`:
 
 ```toml
 [patch.'https://github.com/nautechsystems/nautilus_trader.git']
 nautilus-{venue} = { git = "https://github.com/YOUR-USER/nautilus_trader.git", branch = "fix/my-fix" }
 ```
 
-Only list the crate(s) you modified. Cargo resolves transitive deps automatically. Submit upstream PR when the fix is general.
+Only list the crate(s) you modified. Cargo resolves transitive deps automatically. Open an upstream PR, then remove the `[patch]` once the fix is merged and released.
 
 ### Rust adapter maturity gaps
 
