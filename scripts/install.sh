@@ -258,6 +258,52 @@ uninstall_codex() {
   printf '\nDone. Restart Codex to reload skills.\n'
 }
 
+install_claude_hooks() {
+  local project_dir="${1:-.}"
+  local settings_file="$project_dir/.claude/settings.json"
+  local hook_cmd="bash chain-system/hooks/verify-chain-link.sh"
+
+  mkdir -p "$project_dir/.claude"
+
+  # Build the hook entry
+  local hook_entry
+  hook_entry=$(cat <<'HOOKJSON'
+{
+  "matcher": "Write|Edit",
+  "hooks": [
+    {
+      "type": "command",
+      "command": "bash \"$CLAUDE_PROJECT_DIR\"/chain-system/hooks/verify-chain-link.sh"
+    }
+  ]
+}
+HOOKJSON
+)
+
+  if [[ -f "$settings_file" ]]; then
+    # Check if hook already registered
+    if jq -e '.hooks.PostToolUse[]? | select(.hooks[]?.command == "bash chain-system/hooks/verify-chain-link.sh")' "$settings_file" >/dev/null 2>&1; then
+      echo "Hook already registered in $settings_file"
+      return 0
+    fi
+    # Merge: append to existing PostToolUse array (or create it)
+    local tmp
+    tmp=$(mktemp)
+    jq --argjson entry "$hook_entry" '
+      .hooks //= {} |
+      .hooks.PostToolUse //= [] |
+      .hooks.PostToolUse += [$entry]
+    ' "$settings_file" > "$tmp" && mv "$tmp" "$settings_file"
+    echo "Hook added to existing $settings_file"
+  else
+    # Create new settings file with just the hook
+    echo '{}' | jq --argjson entry "$hook_entry" '
+      .hooks.PostToolUse = [$entry]
+    ' > "$settings_file"
+    echo "Created $settings_file with verification hook"
+  fi
+}
+
 print_claude_instructions() {
   cat <<'EOC'
 Run the following commands inside Claude Code:
@@ -297,12 +343,21 @@ case "$PLATFORM" in
       uninstall_codex
     else
       install_codex
+      # Also register hook if chain-system is among installed skills
+      for skill in "${SKILLS_LIST[@]}"; do
+        if [[ "$skill" == *chain-system* ]]; then
+          install_claude_hooks "."
+          break
+        fi
+      done
     fi
     ;;
   claude)
     if [[ "$UNINSTALL" == "true" ]]; then
       print_claude_uninstall
     else
+      install_claude_hooks "."
+      printf '\n'
       print_claude_instructions
     fi
     ;;
@@ -313,6 +368,7 @@ case "$PLATFORM" in
       print_claude_uninstall
     else
       install_codex
+      install_claude_hooks "."
       printf '\n'
       print_claude_instructions
     fi

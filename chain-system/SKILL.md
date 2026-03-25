@@ -29,7 +29,7 @@ Default to `.claude/chains` to remain compatible with the existing Claude chain-
 
 ### `link`
 
-Create a new chain link summarizing the current work.
+Create a new chain link summarizing the current work, then verify its quality.
 
 Steps:
 1. Build a concise but complete summary using this structure:
@@ -47,7 +47,15 @@ Steps:
 4. Generate timestamp in local time: `date '+%Y-%m-%d-%H%M'`.
 5. Write the summary to:
    `.claude/chains/<chain-name>/<timestamp>-<slug>.md`
-6. Write only the summary (no analysis), then tell the user the file path and how to load it.
+6. Write only the summary (no analysis).
+7. **Verify** (automatic — enforced by PostToolUse hook, not by the agent):
+   - When the file is written, the `verify-chain-link.sh` hook fires automatically.
+   - The hook spawns an isolated CLI process (`claude --print --bare`) with only the chain link content.
+   - The isolated process answers 10 verification questions and scores them 0-100.
+   - If average score >= 85: write succeeds, benchmark shown.
+   - If average score < 85: write is **blocked** (exit 2). Gaps feed back to the agent.
+   - Agent must address the gaps and re-save — which re-triggers the hook.
+   - This continues until the chain link passes verification.
 
 Use the same file format each time so `load` can extract summary and next step reliably.
 

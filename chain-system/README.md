@@ -11,11 +11,13 @@ Manage conversation "chains" - structured context across multiple sessions. Each
 ## Commands
 
 ### `/chain-link [chain-name]`
-Saves current conversation chunk as a chain link.
+Saves current conversation chunk as a chain link, then benchmarks it.
 
 **Captures**: User requests, code changes (files/lines), unresolved bugs with solutions attempted, pending tasks, next step.
 
 **Saves to**: `.claude/chains/[chain-name]/[timestamp]-[slug].md`
+
+**Benchmark**: After saving, spawns a clean agent with no prior context that reads ONLY the chain link and answers 10 verification questions. Scores 0-100 per question. If average < 85, the link is iteratively improved (up to 3 attempts) by filling gaps the clean agent couldn't answer. Shows final score breakdown.
 
 ### `/chain-load [chain-name]`
 Loads most recent chain link to continue work.
@@ -37,6 +39,30 @@ Lists all available chains with link count and most recent work.
 /plugin marketplace add git@github.com:DeevsDeevs/agent-system.git
 /plugin install chain-system@deevs-agent-system
 ```
+
+### Verification Hook
+
+Add the following to your project's `.claude/settings.json` to enable automatic chain link verification:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash chain-system/hooks/verify-chain-link.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+When enabled, every chain link write is verified by an isolated CLI process. If the benchmark score is below 85/100, the write is blocked and gaps are fed back to the agent for correction.
 
 ## File Structure
 

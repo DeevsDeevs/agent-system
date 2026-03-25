@@ -113,11 +113,37 @@ Create a slug (e.g., `implement-auth-handler`) and readable summary (e.g., "Impl
 </plan>
 ```
 
-## Final Step
+## Save Step
 
 Create directory and save file:
 1. Create directory: `mkdir -p .claude/chains/[chain-name]` (substitute actual chain name)
 2. Generate timestamp using local time: `date '+%Y-%m-%d-%H%M'` (e.g., `2025-11-24-0230`)
 3. Write to: `.claude/chains/[chain-name]/[timestamp]-[slug].md`
 4. Save only the content inside `<plan>` tags to the file
-5. Inform user: file path and how to load with `/chain-load [chain-name]`
+
+## Verification (Automatic via Hook)
+
+Verification is **not a manual step** — it is enforced by a `PostToolUse` hook on `Write|Edit`. When you save the chain link file to `.claude/chains/**/*.md`, the hook automatically:
+
+1. Detects the file is a chain link
+2. Runs `chain-system/scripts/chain-verify.sh` — spawns an **isolated CLI process** (`claude --print --bare`) with zero shared context
+3. The isolated process reads ONLY the chain link content and answers 10 verification questions
+4. Scores each answer 0-100
+
+**If score >= 85**: Hook exits 0, write succeeds. Benchmark score is shown.
+
+**If score < 85**: Hook exits 2, **write is blocked**. The gaps are fed back to you as feedback. You must:
+- Read the gap analysis in the hook feedback
+- Re-examine the conversation for the missing information
+- Rewrite the chain link addressing the specific gaps
+- Save again (which re-triggers the hook automatically)
+
+This loop continues until the chain link passes or you've addressed all available information from the conversation.
+
+### Setup
+
+The hook must be registered in `.claude/settings.json` (see Installation section in README). The hook script lives at `chain-system/hooks/verify-chain-link.sh` and calls `chain-system/scripts/chain-verify.sh`.
+
+### Why a hook and not instructions?
+
+Subagents (Agent tool) share the parent conversation context — they already know the answers and would pass every time, making verification meaningless. Instructions in markdown can be skipped or forgotten. The hook is a **hard gate**: the file literally cannot be saved unless the isolated verifier confirms a fresh session could resume from it.
