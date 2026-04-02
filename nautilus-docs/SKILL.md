@@ -205,6 +205,7 @@ impl MyActor {
 ```
 
 ## Common Hallucinations
+<!-- verified: v1.224.0 — run tests/nautilus-verify/verify.sh after version bump -->
 
 ### Python
 
@@ -232,7 +233,7 @@ impl MyActor {
 | `on_timer()` as callback | `clock.set_timer(callback=handler)` |
 | `order.order_side` | `order.side` — events use `event.order_side` |
 | `request_bars(bar_type)` one arg | Requires `start`: `request_bars(bar_type, start=datetime(...))` |
-| `GreeksCalculator(cache, clock, logger)` | Only 2 args: `GreeksCalculator(cache, clock)` |
+| `GreeksCalculator(cache, clock, logger)` | Only 2 args: `GreeksCalculator(cache, clock)`. Import from `nautilus_trader.model.greeks`, not `indicators.greeks_calculator` |
 | `SyntheticInstrument(sym, prec, comps, formula)` | 6 required args — also needs `ts_event`, `ts_init` |
 | `from nautilus_trader.core.nautilus_pyo3` wrong path | `from nautilus_trader.core.nautilus_pyo3 import black_scholes_greeks` |
 | `BacktestEngine.add_venue(venue=BacktestVenueConfig(...))` | Takes positional args. `BacktestVenueConfig` is for `BacktestRunConfig` only |

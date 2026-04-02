@@ -524,7 +524,7 @@ Nautilus creates one log file per run. For rotation, use external logrotate or c
 ## Custom Indicator Development
 
 ```python
-from nautilus_trader.indicators.base.indicator import Indicator
+from nautilus_trader.indicators.base import Indicator
 
 class SpreadEMA(Indicator):
     def __init__(self, period: int):
@@ -539,15 +539,13 @@ class SpreadEMA(Indicator):
         if len(self._values) > self.period:
             self._values.pop(0)
         self.value = sum(self._values) / len(self._values)
+        # _set_initialized inherited from Cython Indicator base — do NOT override
         self._set_initialized(len(self._values) >= self.period)
-
-    def _set_initialized(self, value: bool) -> None:
-        self.initialized = value
 
     def reset(self) -> None:
         self._values.clear()
         self.value = 0.0
-        self.initialized = False
+        self._set_initialized(False)
 ```
 
 Register: `self.register_indicator_for_quote_ticks(instrument_id, spread_ema)` in `on_start`.
