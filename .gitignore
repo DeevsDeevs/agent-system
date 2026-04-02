@@ -1,2 +1,8 @@
 .claude/
 .tmp/
+.env
+nautilus-docs/references/docs/
+tests/nautilus-verify/target/
+tests/nautilus-verify/.pytest_cache/
+tests/nautilus-verify/Cargo.lock
+__pycache__/
