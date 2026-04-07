@@ -1,48 +1,21 @@
 # Battle-Tested Patterns & Tricks
 
-Non-obvious knowledge from live testing NautilusTrader v1.224.0. These patterns are verified against real exchanges and won't be found in official docs.
+Non-obvious knowledge from live testing NautilusTrader v1.224.0. **Only patterns not covered in official docs.** For anything below marked with a doc link, read the doc first — it has more detail.
 
-## Critical Ordering Rules
+## Covered in Official Docs (read these first)
 
-### on_start() must follow this exact sequence
-
-```python
-def on_start(self) -> None:
-    # 1. Cache instrument FIRST — None if not loaded, crashes later
-    self.instrument = self.cache.instrument(self.config.instrument_id)
-    if self.instrument is None:
-        self.log.error(f"Not found: {self.config.instrument_id}")
-        return
-
-    # 2. Register indicators BEFORE subscribing
-    self.register_indicator_for_bars(bar_type, self.ema)
-
-    # 3. Subscribe AFTER instrument + indicators ready
-    self.subscribe_bars(bar_type)
-```
-
-Wrong order = silent failures: indicators never receive data, subscriptions produce 0 callbacks.
-
-### Data loading order for backtest
-
-```python
-# Load multiple instruments with deferred sorting (faster)
-engine.add_data(ticks_btc, sort=False)
-engine.add_data(ticks_eth, sort=False)
-engine.sort_data()  # single O(n log n) sort at the end
-```
-
-### Bar timestamp correction
-
-If bar data uses opening timestamps (common in CSV exports), set `ts_init_delta` to bar duration:
-
-```python
-bars = BarDataWrangler(bar_type=bar_type, instrument=inst).process(
-    data=df, ts_init_delta=60_000_000_000  # 1 minute in nanoseconds
-)
-```
-
-Without this: look-ahead bias — strategy sees bar data before the bar closes.
+| Gotcha | Where |
+|--------|-------|
+| `on_start()` must be: cache → indicators → subscribe | [strategies.md](docs/concepts/strategies.md) |
+| `sort=False` + `sort_data()` for multi-instrument backtest | [backtesting.md](docs/concepts/backtesting.md) |
+| `ts_init_delta` for bar open→close timestamps (look-ahead bias) | [backtesting.md](docs/concepts/backtesting.md), [data.md](docs/concepts/data.md) |
+| `F_LAST` flag mandatory on last delta in batch | [data.md](docs/concepts/data.md) |
+| FillModel: only `prob_fill_on_limit`, `prob_slippage`, `random_seed` | [backtesting.md](docs/concepts/backtesting.md) |
+| Binance `-PERP` suffix for futures | [binance.md](docs/integrations/binance.md) |
+| dYdX: `is_testnet=True`, no `modify_order`, IOC limit orders | [dydx.md](docs/integrations/dydx.md) |
+| Deribit: `is_testnet=True` | [deribit.md](docs/integrations/deribit.md) |
+| Polymarket: no `modify_order`, binary outcomes | [polymarket.md](docs/integrations/polymarket.md) |
+| Log rotation: `LoggingConfig(log_directory=, log_file_format=)` | [logging.md](docs/concepts/logging.md) |
 
 ## Execution Tricks
 
@@ -114,6 +87,8 @@ def on_signal(self, signal) -> None:
     if type(signal).__name__ == "SignalMomentum":
         self.momentum = signal.value
 ```
+
+Note: the official docs say "differentiate using `signal.value`" — this is misleading. `type(signal).__name__` works and is more precise when publishing multiple distinct signal types. The `name` param to `publish_signal` is not stored as `.name` on the object, but it IS baked into the generated class name.
 
 ### Custom data for structured payloads
 
@@ -208,7 +183,7 @@ Pre-aggregated top 10 levels — lower overhead than full book subscription for 
 
 ### dYdX
 
-- Market orders implemented as aggressive limit: buy at `oracle_price × 1.01`, sell at `× 0.99`
+- Market orders implemented as aggressive limit (IOC): buy at `oracle_price × 1.05`, sell at `× 0.95` (5% buffer, `DEFAULT_MARKET_ORDER_SLIPPAGE = 0.05`). Unfilled slippage not consumed.
 - Config: `is_testnet=True` (NOT `testnet=True`)
 - No `modify_order` support
 

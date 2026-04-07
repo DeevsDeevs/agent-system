@@ -80,33 +80,46 @@ grep -r "pub fn builder" "$CHECKOUT/crates/live/src/"
 grep -A 20 "pub struct BinanceDataClientConfig" "$CHECKOUT/crates/adapters/binance/src/config.rs"
 ```
 
-## Step 4: Run the Verification Suite
+## Step 4: Rebuild Anti-Hallucination Tables
 
-The `tests/nautilus-verify/` suite mechanically tests every hallucination row and pattern:
+This is the highest-value part of the skill. Each row prevents a specific mistake Claude makes repeatedly.
+
+**How to maintain**:
+
+1. **Test existing rows** — for each hallucination, verify the "Reality" column is still correct:
+   ```python
+   # Python hallucinations — test in a venv with nautilus_trader installed
+   from nautilus_trader.common.actor import Actor  # still correct?
+   from nautilus_trader.indicators import ExponentialMovingAverage  # still correct?
+   ```
+
+2. **Discover new hallucinations** — ask Claude to write code for common tasks WITHOUT the skill, then diff against what actually compiles/runs. Common sources:
+   - New config struct fields that Claude will guess wrong
+   - Renamed enums or moved types
+   - Changed method signatures (added/removed args)
+   - New features that Claude will confuse with old patterns
+
+3. **Remove stale rows** — if a hallucinated API now exists (e.g., a missing method was added), remove the row.
+
+4. **Rust hallucinations** — rebuild by attempting to compile a standalone binary:
+   ```bash
+   cd my_trading_system && cargo build 2>&1 | grep "error\[E"
+   ```
+   Every compilation error that comes from a wrong import path, missing trait, or wrong struct field is a hallucination row candidate.
+
+## Step 5: Verify Working Patterns
+
+The DataActor pattern and LiveNode wiring in SKILL.md must compile. Test:
 
 ```bash
-# Run everything (Rust compile tests + Python tests)
-./tests/nautilus-verify/verify.sh
-
-# Or individually:
-cd tests/nautilus-verify && cargo test      # Rust: 22 tests
-cd tests/nautilus-verify && ../../.venv/bin/python -m pytest python/ -v  # Python: 50 tests
+cd my_trading_system && cargo build --release 2>&1
 ```
 
-Failures = stale rows. Fix the test to match the new API, then update the corresponding
-hallucination table row in SKILL.md and patterns in battle_tested.md.
-
-## Step 5: Discover New Hallucinations
-
-Ask Claude to write code for common tasks WITHOUT the skill, then diff against what
-actually compiles/runs. Common sources:
-- New config struct fields that Claude will guess wrong
-- Renamed enums or moved types
-- Changed method signatures (added/removed args)
-- New features that Claude will confuse with old patterns
-
-Add new test cases to the appropriate file in `tests/nautilus-verify/` and new rows
-to the hallucination tables in SKILL.md.
+If it fails, the Rust section needs updating. Common breakage:
+- `DataActor` trait method signatures changed
+- `LiveNode::builder()` API changed
+- `BinanceDataClientConfig` fields renamed
+- New required fields added to configs (no more `..Default::default()`)
 
 ---
 
@@ -215,10 +228,6 @@ context7. If they can't, the skill has gaps.
 
 ## Versioning
 
-After rebuild:
-1. Update the version tag in `tests/nautilus-verify/Cargo.toml` (all git dep `tag = "vX.Y.Z"` lines)
-2. Update `tests/nautilus-verify/VERSION`
-3. Update the `<!-- verified: vX.Y.Z -->` comment in SKILL.md hallucination tables
-4. Run `./tests/nautilus-verify/verify.sh` — fix any failures, update SKILL.md rows
+After rebuild, update the `<!-- verified: vX.Y.Z -->` comment in SKILL.md hallucination tables.
 
 Track what version the anti-hallucination table was last verified against. Stale tables are worse than no table — they give false confidence.

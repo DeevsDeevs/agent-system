@@ -77,6 +77,8 @@ description: >
 | Coding standards | [coding_standards.md](references/docs/developer_guide/coding_standards.md) |
 | Benchmarking | [benchmarking.md](references/docs/developer_guide/benchmarking.md), [criterion_template.rs](references/docs/dev_templates/criterion_template.rs), [iai_template.rs](references/docs/dev_templates/iai_template.rs) |
 | FFI | [ffi.md](references/docs/developer_guide/ffi.md) |
+| Documentation | [docs.md](references/docs/developer_guide/docs.md) |
+| Releases | [releases.md](references/docs/developer_guide/releases.md) |
 
 ### Tutorials
 
@@ -205,7 +207,7 @@ impl MyActor {
 ```
 
 ## Common Hallucinations
-<!-- verified: v1.224.0 — run tests/nautilus-verify/verify.sh after version bump -->
+<!-- verified: v1.224.0 -->
 
 ### Python
 
