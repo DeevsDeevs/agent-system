@@ -1,2 +1,5 @@
 .claude/
 .tmp/
+.env
+nautilus-docs/references/docs/
+__pycache__/

@@ -105,6 +105,12 @@
       "description": "Hierarchical microstructure knowledge base for trading venues: exchange mechanics, order books, auctions, Reg NMS, Chinese futures (CTP), feed handlers, execution models",
       "source": "./venue-expert",
       "skills": ["./"]
+    },
+    {
+      "name": "nautilus-docs",
+      "description": "Official NautilusTrader documentation — concepts, API reference, integration guides, tutorials",
+      "source": "./nautilus-docs",
+      "skills": ["./"]
     }
   ]
 }
