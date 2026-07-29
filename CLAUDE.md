@@ -70,6 +70,11 @@ Use the **venue-expert** skill for exchange-specific context. Invoke it when:
 - Debugging trading system issues (feed, order, session problems)
 - Needing venue mechanics: order types, matching rules, session times, data formats, regulatory quirks
 
+## Research Integrity
+
+- **Approval ≠ truth**: user approval sets objectives, budget, risk tolerance. It never upgrades the confidence of a factual claim — evidence does.
+- **Anti-ritual**: any "always X" default (Data Sentinel first, Double ML, fixed thresholds) may be skipped with a stated reason. Method follows the decision context: literature questions have no dataset; descriptive work needs no causal estimator.
+
 ## Testing
 - Tests will be specified when needed
 - Don't assume - ask if testing is required
