@@ -1,2 +1,6 @@
 .claude/
 .tmp/
+.DS_Store
+.obsidian/
+/research/
+.tdd/
