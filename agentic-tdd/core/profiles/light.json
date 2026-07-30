@@ -1,0 +1,36 @@
+{
+	"mode": "light",
+	"routing": {
+		"requires_validated_oracle_covering_delta": true,
+		"semantic_novelty_allowed": false,
+		"stateful_or_concurrent_change_allowed": false,
+		"semantic_ambiguity_escalates_to": "full"
+	},
+	"planning": {
+		"independent_role_briefs": "optional",
+		"maximum_revisions": 1,
+		"new_oracle_research": false
+	},
+	"loop": {
+		"mechanical_iterations": "unrestricted_within_budget",
+		"semantic_replans": 1,
+		"maximum_repair_rounds": 1,
+		"recursive_semantic_decomposition": false
+	},
+	"assessment": {
+		"protected_acceptance_tests": "required",
+		"required_check_ids": ["acceptance-tests"],
+		"mutation_testing": false,
+		"broad_fuzzing": false,
+		"replay": "when_stateful_or_protocol_related",
+		"sanitizers": "applicable_subset"
+	},
+	"external_challenge": {
+		"maximum_total": 1,
+		"invocation": "optional_tripwire_based"
+	},
+	"release": {
+		"reviewer": "mandatory",
+		"shadow_mode": "normally_not_required"
+	}
+}

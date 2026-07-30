@@ -1,0 +1,35 @@
+{
+	"mode": "full",
+	"planning": {
+		"independent_role_briefs": "risk_based",
+		"maximum_revisions": 3,
+		"new_oracle_research": true,
+		"oracle_triangulation": "high_risk_logic"
+	},
+	"loop": {
+		"mechanical_iterations": "unrestricted_within_budget",
+		"semantic_replans": 2,
+		"maximum_repair_rounds": 3,
+		"recursive_decomposition": "allowed_with_signed_subcontracts"
+	},
+	"assessment": {
+		"protected_acceptance_tests": "required",
+		"required_check_ids": ["build", "acceptance-tests"],
+		"properties_and_metamorphic": "applicable",
+		"differential_testing": "applicable",
+		"deterministic_replay": "required_when_stateful",
+		"mutation_testing": "high_risk_core_only",
+		"fuzzing": "protocol_or_parser_changes",
+		"sanitizers": "applicable_subset",
+		"performance_protocol": "required_for_hot_path"
+	},
+	"external_challenge": {
+		"maximum_per_phase_version": 1,
+		"invocation": "optional_tripwire_based"
+	},
+	"release": {
+		"reviewer": "mandatory",
+		"shadow_mode": "required_for_critical_state_changes",
+		"rollout_and_rollback": "risk_based"
+	}
+}

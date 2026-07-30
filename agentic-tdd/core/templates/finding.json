@@ -1,0 +1,25 @@
+{
+	"id": "A-001",
+	"phase": "assess",
+	"finder_role": "tester-qa",
+	"severity": "major",
+	"class": "implementation",
+	"claim": "Precise falsifiable statement.",
+	"violated_requirement": {
+		"artifact": "contract.json",
+		"clause": "INV-001"
+	},
+	"evidence": {
+		"repository_locations": [],
+		"commands": [],
+		"traces": [],
+		"sources": []
+	},
+	"minimal_counterexample": null,
+	"discriminating_check": {
+		"type": "replay",
+		"description": "Exact check that would confirm or reject the claim."
+	},
+	"route": "LOOP",
+	"status": "OPEN"
+}

@@ -283,6 +283,31 @@ arxiv_search "protein folding" --max-papers 5
 /plugin install arxiv-search@deevs-agent-system
 ```
 
+### agentic-tdd
+
+Phase-based, resumable agentic TDD workflow: `PLAN → LOOP → ASSESS → RELEASE`.
+
+**Core**: A zero-dependency gate engine (`core/scripts/tdd-engine.mjs`) validates every state transition, artifact hash, budget, and protected test file; the orchestrator spawns fresh-context role subagents (architect, logic-hunter, developer, tester-qa, release-reviewer, external-challenger) whose reports are schema-shaped, never prose-driven. Workflow state lives in the target repo under gitignored `.tdd/<feature>/` and is resumable from files alone.
+
+**Quick start**:
+```bash
+/tdd plan my-feature      # intake, contract, oracle, risks, frozen plan
+/tdd loop my-feature      # protected tests locked, then implementation
+/tdd assess my-feature    # fresh-context falsification on the exact candidate commit
+/tdd release my-feature   # mandatory fresh-context release reviewer
+/tdd status my-feature
+```
+
+**Use when**: correctness-critical features that justify contract-first TDD with protected evidence — especially stateful, concurrent, numerical, or latency-sensitive changes (`cpp-hft` profile).
+
+**Dependencies**: node >= 22, git. Canonical `core/` source lives in `deevs-pi-kit/skills/agentic-tdd/core/`; this copy is a byte-identical mirror.
+
+**Details**: [agentic-tdd/SKILL.md](agentic-tdd/SKILL.md)
+
+```bash
+/plugin install agentic-tdd@deevs-agent-system
+```
+
 ## Agent Color Scheme
 
 Universal color scheme across all agent plugins:
