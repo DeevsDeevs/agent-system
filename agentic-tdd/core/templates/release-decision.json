@@ -1,0 +1,24 @@
+{
+	"feature": "my-feature",
+	"candidate_commit": null,
+	"assessment_run": null,
+	"reviewer_report": null,
+	"decision": "RELEASE_BLOCKED",
+	"blockers": [],
+	"waivers": [
+		{
+			"id": "W-001",
+			"finding": null,
+			"authorized_by": "user-or-owner",
+			"rationale": null,
+			"scope": null,
+			"expires": "YYYY-MM-DD",
+			"monitoring": null,
+			"follow_up_issue": null
+		}
+	],
+	"rollout_plan": null,
+	"rollback_plan": null,
+	"monitoring_plan": null,
+	"closed_at": null
+}

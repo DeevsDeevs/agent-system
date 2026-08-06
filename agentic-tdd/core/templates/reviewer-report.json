@@ -1,0 +1,14 @@
+{
+	"decision": "INSUFFICIENT_EVIDENCE",
+	"candidate_tree": "exact tree hash from engine status",
+	"assessment_run": null,
+	"integrity_checks": [],
+	"evidence_gaps": [],
+	"scope_deviations": [],
+	"residual_risks": [],
+	"routed_findings": [],
+	"provenance": {
+		"model_or_agent": null,
+		"fresh_context": true
+	}
+}

@@ -1,0 +1,15 @@
+{
+	"id": "UQ-P-001",
+	"phase": "plan",
+	"class": "BLOCKING_DOMAIN",
+	"question": "Precise decision requested from the user.",
+	"why_it_matters": "Effect on contract, implementation, tests, risk, or release.",
+	"options": [
+		{ "id": "option-a", "consequence": "Consequence A" },
+		{ "id": "option-b", "consequence": "Consequence B" }
+	],
+	"recommended_option": "option-a",
+	"recommendation_basis": [],
+	"affected_artifacts": [],
+	"consequence_if_unanswered": "planning_stops"
+}

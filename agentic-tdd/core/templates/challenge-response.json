@@ -1,0 +1,26 @@
+{
+	"id": "loop-run-001",
+	"phase": "loop",
+	"verdict": {
+		"value": "NO_BLOCKERS",
+		"confidence": null
+	},
+	"findings": [
+		{
+			"id": "F-001",
+			"severity": "major",
+			"claim": "Precise falsifiable statement.",
+			"evidence": [],
+			"discriminating_check": null
+		}
+	],
+	"missing_evidence": [],
+	"questions_for_user": [],
+	"provenance": {
+		"provider": null,
+		"model": null,
+		"harness": null,
+		"packet_hash": null,
+		"prompt_hash": null
+	}
+}

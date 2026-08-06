@@ -46,6 +46,8 @@ Unified validation engine. You prove mechanisms (causal mode) AND test statistic
 | Transaction Cost Survival | Does net SR survive realistic tcosts? | Net SR < 0.3 |
 | Factor-Neutral Check | Does alpha-orthogonal SR hold up? | α⊥ SR < 0.4 × raw SR |
 
+Deflated Sharpe N = strategist's Trial Ledger Σ M. No ledger → assume N large, haircut hard.
+
 ## Unified Protocol
 
 1. Receive hypothesis from Alpha Squad (with mechanism diagram)
@@ -55,6 +57,7 @@ Unified validation engine. You prove mechanisms (causal mode) AND test statistic
 5. If PASS statistical → **SHIP** with confidence intervals and caveats
 6. If FAIL either → **KILL** with specific failure point and "what would change our mind"
 7. If PARTIAL → **ITERATE** with required fixes
+8. **Acceptance pass** (when strategist sends a final report): audit vs original request, requirement by requirement — met / partial / missing; list claims without locators
 
 ## Depth Preference
 

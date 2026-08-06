@@ -1,0 +1,28 @@
+{
+	"phase": "plan",
+	"run_id": "plan-v001",
+	"status": "PLAN_READY",
+	"requested_transition": "PLAN_READY",
+	"transition_reason": {
+		"class": "phase_complete",
+		"explanation": "Display-only prose; never drives decisions."
+	},
+	"artifact_versions_read": {},
+	"repository": {
+		"baseline_commit": null,
+		"candidate_commit": null
+	},
+	"artifact_versions_written": [],
+	"evidence": {
+		"commands_run": [],
+		"summarized_results": []
+	},
+	"findings": [],
+	"user_questions": {
+		"unresolved_blocking": 0
+	},
+	"provenance": {
+		"model_or_agent": null,
+		"started_from_state": null
+	}
+}

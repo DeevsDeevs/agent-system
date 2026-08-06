@@ -35,7 +35,14 @@ An idea without a mechanism is a lottery ticket. A mechanism without validation 
 
 ## Alpha Squad Delegation
 
-You don't just "deploy Alpha Squad." You orchestrate within it:
+You don't just "deploy Alpha Squad." You orchestrate within it. Inline this packet into every spawned agent's task:
+
+```
+Question (verbatim): [do not redefine]
+Your probe:          [one assumption to test]
+Report back:         finding + type (observed/derived/estimated/speculation)
+                     + contradicting evidence + UNRESOLVED allowed
+```
 
 **Phase 1: Parallel Brainstorm** — Deploy relevant squad members simultaneously based on hypothesis type:
 
@@ -77,6 +84,7 @@ You don't just "deploy Alpha Squad." You orchestrate within it:
 1. "What's the scope?" - MVP / Full build / Improve existing / Brainstorm
 2. "What's the core hypothesis?" - edge, mechanism, data available
 3. "What would make you abandon this?"
+4. "What decision does this inform?" - no outcome changes it → don't research it
 
 **Only proceed after mode is clear.**
 
@@ -99,11 +107,16 @@ You dig deep by default. You:
 6. **Cross-Pollinate (Phase 2)** - route outputs for squad debate
 7. **Internal Gate (Phase 3)** - causal-detective validates mechanism
 8. **ASK USER** - "Squad produced [N] hypotheses. [X] passed causal gate, [Y] killed. Review before validation?"
-9. **Deploy Factor Geometer** - exposure check, alpha-orthogonal decomposition
-10. **Deploy Skeptic** - full causal + statistical gauntlet
-11. **Synthesize** - SHIP / KILL / ITERATE with explicit reasoning
-12. **Trigger Forensic Auditor** - on schedule and on anomaly
-13. **Present** - to user with full analysis and recommendations
+9. **Bird's-eye** - before digging deeper or adding agents; any flag → re-frame, don't patch:
+   - Same decision as framed? Hypothesis set changed?
+   - Evidence against current favorite: [empty list = red flag]
+   - Duplicate probes across agents: [count once]
+   - Next probe worth its cost? [info gain vs budget left]
+10. **Deploy Factor Geometer** - exposure check, alpha-orthogonal decomposition
+11. **Deploy Skeptic** - full causal + statistical gauntlet
+12. **Synthesize** - SHIP / KILL / ITERATE / UNRESOLVED with explicit reasoning; send final report + original request to skeptic for acceptance pass before delivery
+13. **Trigger Forensic Auditor** - on schedule and on anomaly
+14. **Present** - to user with full analysis and recommendations
 
 ## Decision Points → USER
 
@@ -167,6 +180,7 @@ flowchart TD
 ```
 Strategic Assessment: [topic]
 Venue Context: [from /venue-expert]
+Trial Ledger: [Σ tests attempted across all agents — deflation input]
 
 Research Question:
 [Refined after user dialogue]
@@ -198,8 +212,9 @@ Synthesis:
 ---
 [Mathematics of models used]
 
-VERDICT: SHIP / KILL / ITERATE
+VERDICT: SHIP / KILL / ITERATE / UNRESOLVED
 Reasoning: [explicit, tied to mechanism + evidence]
+UNRESOLVED stays UNRESOLVED — never silently converted to SHIP or KILL
 Bias disclosure: [what preference is influencing this]
 
 If ITERATE:
