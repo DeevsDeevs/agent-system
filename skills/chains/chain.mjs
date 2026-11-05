@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 // Chains: markdown handoff links under .chains/<chain>/<timestamp>-<slug>.md.
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const USAGE = `chain <command> [options]   (add --json for JSON)
   save <chain> [--branch B] [--parent FILE] [--next TEXT] [--title T]   link text on stdin
   load <chain> [--branch B] [--link FILE]
   context <chain> [--branch B] [--parents 2] [--recent 3]
-  list [chain]
+  list [chain] [--max N]   no chain: newest first with next steps, nothing when there are none
   search <query> [--chain C]
   fork <chain> <branch> [--from FILE | --from-branch B]
   root`;
@@ -35,14 +37,18 @@ function name(value, kind) {
   return value;
 }
 
-// The nearest .chains above the cwd; else the git root; else the cwd.
+// The nearest .chains from the cwd up to the git root; outside git, up to just below ~ (~ itself
+// only from ~), so a ~/.chains is never some other folder's. None: the git root's, else the cwd's.
 function root() {
-  let gitRoot = null;
-  for (let dir = process.cwd(); ; dir = dirname(dir)) {
-    if (existsSync(join(dir, ".chains"))) return join(dir, ".chains");
-    if (!gitRoot && existsSync(join(dir, ".git"))) gitRoot = dir;
-    if (dirname(dir) === dir) return join(gitRoot ?? process.cwd(), ".chains");
+  const cwd = process.cwd();
+  let home = homedir();
+  try { home = realpathSync(home); } catch {}
+  for (let dir = cwd; ; dir = dirname(dir)) {
+    if (dir === home && cwd !== home) break;
+    if (existsSync(join(dir, ".chains")) || existsSync(join(dir, ".git"))) return join(dir, ".chains");
+    if (dir === home || dirname(dir) === dir) break;
   }
+  return join(cwd, ".chains");
 }
 
 function meta(text) {
@@ -193,11 +199,20 @@ switch (cmd) {
       const all = links(name(pos[0], "chain"));
       print(all.map(strip), all.map(line).join("\n") || `no links in ${pos[0]}`);
     } else {
-      const items = chains().map((c) => {
-        const all = links(c);
-        return { chain: c, count: all.length, branches: [...new Set(all.map((l) => l.branch))], latest: all[0] ? strip(all[0]) : null };
-      });
-      print(items, items.map((i) => `${i.chain}  ${i.count} links  [${i.branches.join(", ")}]${i.latest ? `  latest: ${i.latest.title}${age(i.latest)}` : ""}`).join("\n") || `no chains in ${root()}`);
+      const all = chains().map((c) => {
+        const ls = links(c);
+        return { chain: c, count: ls.length, branches: [...new Set(ls.map((l) => l.branch))], latest: ls[0] ? strip(ls[0]) : null };
+      }).filter((i) => i.count).sort((a, b) => b.latest.file.localeCompare(a.latest.file));
+      const items = all.slice(0, Math.max(1, Number(opt.max) || Infinity));
+      const C = fileURLToPath(import.meta.url), cut = (t) => (t.length > 120 ? `${t.slice(0, 119)}…` : t);
+      const item = (i) => `- ${i.chain}  ${i.count} links  [${i.branches.join(", ")}]${i.latest ? `  latest: ${cut(i.latest.title)}${age(i.latest)}${i.latest.nextStep ? `  → next: ${cut(i.latest.nextStep)}` : ""}` : ""}`;
+      if (opt.json) print(items);
+      else if (items.length)
+        print(items, [
+          `Chains (saved work context) in ${root()}, newest first${items.length < all.length ? ` (${items.length} of ${all.length})` : ""}:`,
+          ...items.map(item),
+          `Before continuing one of these: node ${C} context <chain>`,
+        ].join("\n"));
     }
     break;
   }

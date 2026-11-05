@@ -13,7 +13,7 @@ Run the bundled script from this skill's folder (Node is on PATH):
 
 ```sh
 C=<this skill's folder>/chain.mjs
-node $C list                         # chains here, link counts, latest titles
+node $C list [--max N]               # chains here, newest first, with next steps (sessions start with this)
 node $C list <chain>                 # its links, newest first
 node $C load <chain>                 # newest link on main (--branch B, --link FILE)
 node $C context <chain>              # newest link + 2 parents + recent titles: for resuming or a delegate
@@ -22,7 +22,8 @@ node $C save <chain> --next "…" < link.md     # parent = the branch's newest l
 node $C fork <chain> <branch>        # prints the parent for the branch's first save
 ```
 
-`.chains` is found by walking up from the current folder; a new one goes at the git root.
+`.chains` is found by walking up from the current folder, no further than the git root (outside
+git, no further than just below `~`); a new one goes at the git root, else in the current folder.
 `--json` on any command gives JSON. Chain and branch names: letters, digits, `.`, `_`, `-`.
 
 ## When to load
