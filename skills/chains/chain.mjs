@@ -216,7 +216,8 @@ function remind(opt) {
   const file = join(dir, session);
   let state;
   try { state = JSON.parse(readFileSync(file, "utf8")); } catch {
-    state = { first: since > 0 && since < now ? since : now, reminded: false };
+    // A session older than 6h when the hook first sees it (e.g. resumed days later) counts from now.
+    state = { first: since < now && now - since < 6 * 3_600_000 ? since : now, reminded: false };
     writeFileSync(file, JSON.stringify(state));
   }
   if (newestLink() >= state.first) return;

@@ -84,6 +84,8 @@ test("remind: once per session, only after --after minutes with no link saved", 
   assert.equal(chain(["remind", "--session", "s1", "--after", "30"]), "", "too early");
   assert.match(chain(["remind", "--session", "s1"]), /^\[chains reminder\] About 0 min of work .* chains skill now; otherwise ignore this\.\n$/);
   assert.equal(chain(["remind", "--session", "s1"]), "", "only once");
+  assert.match(chain(["remind", "--session", "old", "--since", String(Date.now() - 2 * 86_400_000)]), /About 0 min/, "an old session counts from the first call");
+  assert.match(chain(["remind", "--session", "recent", "--since", String(Date.now() - 2 * 3_600_000)]), /About 120 min/, "a recent start counts from the start");
 
   chain(["remind", "--session", "s2", "--after", "30"], "", home);
   chain(["save", "work"], "# Saved\n", join(repo, "pkg/app"));
