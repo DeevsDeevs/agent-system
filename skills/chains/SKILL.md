@@ -25,6 +25,8 @@ node $C fork <chain> <branch>        # prints the parent for the branch's first 
 `.chains` is found by walking up from the current folder, no further than the git root (outside
 git, no further than just below `~`); a new one goes at the git root, else in the current folder.
 `--json` on any command gives JSON. Chain and branch names: letters, digits, `.`, `_`, `-`.
+A `[chains reminder]` comes from the end-of-turn hooks (`node $C remind`), once a session has worked
+30 minutes with no link: save one if the work is worth keeping, otherwise just finish.
 
 ## When to load
 
