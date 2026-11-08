@@ -71,3 +71,32 @@ test("the root stops at the git root, and outside git below ~; list is the start
   assert.match(chain(repo, ["list", "--max", "1"]), /newest first \(1 of 2\):\n- work .*\nBefore continuing/);
   assert.deepEqual(JSON.parse(chain(repo, ["list", "--json"])).map((c) => c.chain), ["work", "old"]);
 });
+
+test("remind: once per session, only after --after minutes with no link saved", () => {
+  const home = realpathSync(mkdtempSync(join(tmpdir(), "chains-remind-")));
+  const repo = join(home, "repo");
+  mkdirSync(join(repo, ".git"), { recursive: true });
+  mkdirSync(join(repo, "pkg/app"), { recursive: true });
+  mkdirSync(join(home, "elsewhere"));
+  const env = { ...process.env, HOME: home, XDG_STATE_HOME: join(home, "state"), CHAINS_REMIND_AFTER: "0" };
+  const chain = (args, input = "", cwd = repo) => execFileSync("node", [CHAIN, ...args], { cwd, env, input, encoding: "utf8" });
+
+  assert.equal(chain(["remind", "--session", "s1", "--after", "30"]), "", "too early");
+  assert.match(chain(["remind", "--session", "s1"]), /^\[chains reminder\] About 0 min of work .* chains skill now; otherwise ignore this\.\n$/);
+  assert.equal(chain(["remind", "--session", "s1"]), "", "only once");
+
+  chain(["remind", "--session", "s2", "--after", "30"], "", home);
+  chain(["save", "work"], "# Saved\n", join(repo, "pkg/app"));
+  assert.equal(chain(["remind", "--session", "s2"], "", home), "", "a link saved since the session started, in a .chains below the cwd");
+  chain(["remind", "--session", "s3", "--after", "30"]);
+  chain(["save", "nested"], "# Nested\n", join(home, "elsewhere"));
+  assert.match(chain(["remind", "--session", "s3"]), /chains reminder/, "a link outside this folder doesn't count");
+
+  const stop = (input) => chain(["remind", "--hook", "claude-stop"], JSON.stringify({ cwd: repo, transcript_path: "/nonexistent", ...input }));
+  assert.deepEqual(JSON.parse(stop({ session_id: "c1" })), { decision: "block", reason: JSON.parse(stop({ session_id: "c2" })).reason });
+  assert.equal(stop({ session_id: "c1" }), "");
+  assert.equal(stop({ session_id: "c3", stop_hook_active: true }), "");
+  assert.match(chain(["remind", "--hook", "claude-precompact"], JSON.stringify({ session_id: "p1", cwd: repo })), /^End the summary with this line, verbatim: "\[chains reminder\]/);
+  assert.equal(chain(["remind", "--hook", "claude-stop"], "not json"), "");
+  assert.equal(chain(["remind"]), "");
+});

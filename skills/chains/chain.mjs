@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Chains: markdown handoff links under .chains/<chain>/<timestamp>-<slug>.md.
-import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,6 +12,7 @@ const USAGE = `chain <command> [options]   (add --json for JSON)
   list [chain] [--max N]   no chain: newest first with next steps, nothing when there are none
   search <query> [--chain C]
   fork <chain> <branch> [--from FILE | --from-branch B]
+  remind --session ID [--after 30] [--since MS] | --hook claude-stop|claude-precompact   hook JSON on stdin
   root`;
 const NAME = /^[\p{L}\p{N}][\p{L}\p{N}._-]{0,79}$/u;
 const LINK = /^[\p{L}\p{N}][\p{L}\p{N}._-]*\.md$/u;
@@ -168,6 +169,66 @@ function search(query, chain) {
   return hits.sort((a, b) => b.score - a.score).slice(0, 20);
 }
 
+const STAMP = /^(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})(\d{2})(\d{3})?/;
+
+// Newest link time (ms) in the list root and in any .chains up to 3 folders below the cwd.
+function newestLink() {
+  const roots = new Set([root()]);
+  const walk = (dir, depth) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      if (!e.isDirectory()) continue;
+      if (e.name === ".chains") roots.add(join(dir, e.name));
+      else if (depth < 3 && !e.name.startsWith(".") && e.name !== "node_modules") try { walk(join(dir, e.name), depth + 1); } catch {}
+    }
+  };
+  walk(process.cwd(), 0);
+  let newest = 0;
+  for (const r of roots) {
+    if (!existsSync(r)) continue;
+    for (const c of readdirSync(r, { withFileTypes: true })) {
+      if (!c.isDirectory()) continue;
+      for (const f of readdirSync(join(r, c.name))) {
+        const m = LINK.test(f) && STAMP.exec(f);
+        if (m) newest = Math.max(newest, new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6], +(m[7] ?? 0)).getTime());
+      }
+    }
+  }
+  return newest;
+}
+
+// One reminder per session, once it has run `after` minutes with no link saved since it started.
+// Prints nothing and exits 0 on any problem: hooks call it after every turn.
+function remind(opt) {
+  let since = Number(opt.since) || 0;
+  const hook = opt.hook ? JSON.parse(readFileSync(0, "utf8")) : null;
+  if (hook) {
+    if (hook.stop_hook_active) return;
+    if (hook.cwd) process.chdir(hook.cwd);
+    opt.session ??= hook.session_id;
+    try { since = statSync(hook.transcript_path).birthtimeMs; } catch {}
+  }
+  const session = String(opt.session ?? "").replace(/[^\w.-]/g, "_").slice(0, 128);
+  if (!session) return;
+  const dir = join(process.env.XDG_STATE_HOME || join(homedir(), ".local/state"), "chains", "remind");
+  mkdirSync(dir, { recursive: true });
+  const now = Date.now();
+  for (const f of readdirSync(dir)) try { if (now - statSync(join(dir, f)).mtimeMs > 7 * 86_400_000) unlinkSync(join(dir, f)); } catch {}
+  const file = join(dir, session);
+  let state;
+  try { state = JSON.parse(readFileSync(file, "utf8")); } catch {
+    state = { first: since > 0 && since < now ? since : now, reminded: false };
+    writeFileSync(file, JSON.stringify(state));
+  }
+  if (newestLink() >= state.first) return;
+  const minutes = Math.round((now - state.first) / 60_000);
+  if (opt.hook === "claude-precompact")
+    return void process.stdout.write(`End the summary with this line, verbatim: "[chains reminder] No chain link was saved before this compaction. If this session's work is worth keeping, save a link with the chains skill before continuing."\n`);
+  if (state.reminded || minutes < Number(opt.after ?? process.env.CHAINS_REMIND_AFTER ?? 30)) return;
+  writeFileSync(file, JSON.stringify({ ...state, reminded: true }));
+  const text = `[chains reminder] About ${minutes} min of work since this session started and no chain link saved. If any of it is worth keeping, save a link with the chains skill now; otherwise ignore this.`;
+  process.stdout.write(`${opt.hook === "claude-stop" ? JSON.stringify({ decision: "block", reason: text }) : text}\n`);
+}
+
 const { pos: [cmd, ...pos], opt } = parseArgs(process.argv.slice(2));
 const print = (data, text) => process.stdout.write(`${opt.json ? JSON.stringify(data, null, 2) : text}\n`);
 
@@ -216,6 +277,9 @@ switch (cmd) {
     }
     break;
   }
+  case "remind":
+    try { remind(opt); } catch {}
+    break;
   case "search": {
     const hits = search(pos.join(" "), opt.chain);
     print(hits, hits.map((h) => `${h.chain}/${h.file}:${h.line}  ${h.snippet}`).join("\n") || "no matches");
