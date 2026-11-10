@@ -2,7 +2,8 @@
 
 Start one when you want a different model's view (Codex reviewing Claude's diff), work
 that should stay watchable and steerable in Herdr, or a helper that outlives your turn.
-For quick sub-tasks inside your turn, your own subagents are cheaper.
+For quick sub-tasks inside your turn, your own subagents are cheaper. For several workers,
+result files and cleanup, or a scripted fan-out or pipeline, use the `hc-flow` skill.
 
 ```sh
 hc templates                                   # ready-made roles, if any fit
