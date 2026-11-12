@@ -26,8 +26,9 @@ return await agent(`Merge these reviews, drop duplicates and anything unproven:\
   - `schema`: a JSON schema. The worker writes one JSON object; the runner checks that it's
     an object with the required keys.
   - `args`: extra CLI args for the harness, for example `['--permission-mode', 'acceptEdits']`
-    for claude. The runner adds no permission flags of its own, only `--add-dir <run dir>`
-    for claude and codex so they can write the result file, and `--no-daemon` for codex.
+    for claude. claude starts with `--permission-mode auto` unless `args` sets a mode; the
+    runner adds no other permission flags, only `--add-dir <run dir>` for claude and codex
+    so they can write the result file, and `--no-daemon` for codex.
   - `timeout`: seconds for the whole agent (default 1800). `phase`: shown in its start line.
 - A worker that is `blocked`, or not ready within 60 s (a trust or login prompt), is left
   running for the person. The runner prints `BLOCKED <name> <address>: <screen>`, lists it

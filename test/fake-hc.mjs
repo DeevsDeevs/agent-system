@@ -35,10 +35,18 @@ else if (cmd === "run") {
     process.stderr.write(`${JSON.stringify({ error: { kind: "spawn_failed", message: `no folder ${cwd}` } })}\n`);
     process.exit(3);
   }
+  // Like hc: a parent is looked up on the machine the worker runs on, and a child ends with
+  // its parent unless --outlive-parent.
+  const parentFlag = flag("--parent");
+  if (on && parentFlag) {
+    process.stderr.write(`${JSON.stringify({ error: { kind: "not_found", message: `no terminal "${parentFlag}"` } })}\n`);
+    process.exit(3);
+  }
+  const parent = parentFlag ?? (argv.includes("--no-parent") ? null : process.env.HC_TERMINAL_ID);
   const address = on ? `${on}/${name}` : name;
   const live = readdirSync(terms).length + 1;
   appendFileSync(join(dir, "live.log"), `${live}\n`);
-  save(address, { name, status: name.includes("notready") ? null : "idle", argv: argv.slice(argv.indexOf("--") + 1), sends: 0 });
+  save(address, { name, status: name.includes("notready") ? null : "idle", argv: argv.slice(argv.indexOf("--") + 1), sends: 0, parent, dies: !!parent && !argv.includes("--outlive-parent") });
   out({ address, name, state: "live" });
 } else if (cmd === "wait") {
   const address = argv[argv.indexOf("--json") + 1];
@@ -67,6 +75,11 @@ else if (cmd === "run") {
 } else if (cmd === "read") process.stdout.write(`screen of ${argv[1]}\n`);
 else if (cmd === "rm") rmSync(path(argv[1]), { force: true });
 else if (cmd === "kill") {}
+// Test-only: the terminal argv[1] ended; its children that end with it go too.
+else if (cmd === "_ended") for (const f of readdirSync(terms)) {
+  const t = JSON.parse(readFileSync(join(terms, f), "utf8"));
+  if (t.dies && t.parent === argv[1]) rmSync(join(terms, f));
+}
 else if (cmd === "exec") process.stdout.write(execFileSync(argv[argv.indexOf("--") + 1], argv.slice(argv.indexOf("--") + 2), { encoding: "utf8" }));
 else if (cmd === "file" && argv[1] === "read") {
   const file = argv.at(-1);

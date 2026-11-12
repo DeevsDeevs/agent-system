@@ -18,7 +18,8 @@ shape is a script: a fan-out, a pipeline, a panel with a schema.
 
 ```sh
 R=~/.local/state/hc-flow/<run>; mkdir -p $R               # result files for this run
-hc run --bg --name <run>-<role> --cwd <dir> pi             # or: claude, codex --no-daemon; --on <machine>
+hc run --bg --name <run>-<role> --cwd <dir> pi             # or: claude --permission-mode auto --add-dir $R,
+                                                           #     codex --no-daemon --add-dir $R; --on <machine>
 hc wait <run>-<role>                                       # ready: it reports idle
 hc send <run>-<role> "<brief>"
 hc wait <run>-<role>                                       # the turn your send started
@@ -36,9 +37,9 @@ hc kill <run>-<role>; hc rm <run>-<role>                   # once you accept the
   person. `blocked` at any point means the same. Tell the person what it's asking; never
   answer a permission or trust prompt for them, and never use `send --force`.
 - Model: `--model <m>` on all three (`pi --model provider/id`, `claude --model`, `codex
-  --no-daemon --model`). Leave it out for the harness default. Keep each harness's
-  permission mode as the person set it; claude and codex need `--add-dir $R` to write
-  result files there.
+  --no-daemon --model`). Leave it out for the harness default. Start claude with
+  `--permission-mode auto`; keep pi's and codex's permissions as the person set them.
+  claude and codex need `--add-dir $R` to write result files there.
 
 **The brief.** Put in the whole task: the exact scope (files, what not to touch), the
 requirement text word for word rather than paraphrased, and context. Hand context over with

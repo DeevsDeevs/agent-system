@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFile, spawn } from "node:child_process";
+import { execFile, execFileSync, spawn } from "node:child_process";
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -31,20 +31,22 @@ const named = (calls, cmd) => calls.filter((c) => c[0] === cmd).map((c) => (cmd 
 test("parallel, pipeline and schema results; harness flags; every worker removed", async () => {
   const t = setup(`export const meta = { name: 'demo', description: 'a "test" {run}' }
 phase('Scan')
-const [a, b] = await parallel([() => agent('FAKE:ok:alpha', { label: 'a' }), () => agent('FAKE:ok:beta', { label: 'b', harness: 'codex', model: 'm1' })])
+const [a, b, c] = await parallel([() => agent('FAKE:ok:alpha', { label: 'a' }), () => agent('FAKE:ok:beta', { label: 'b', harness: 'codex', model: 'm1' }), () => agent('FAKE:ok:gamma', { harness: 'claude' })])
 const piped = await pipeline([1, 2], (n) => agent('FAKE:json:{"n":' + n + '}', { harness: 'claude', args: ['--permission-mode', 'acceptEdits'], schema: { type: 'object', required: ['n'], properties: { n: { type: 'number' } } } }), (r) => r.n * 10)
-return { a, b, piped, args, meta: meta.name }`, { FAKE_LEAD: "t0" });
+return { a, b, c, piped, args, meta: meta.name }`, { FAKE_LEAD: "t0" });
   const r = await flow(t, "--args", '{"x":1}');
   assert.equal(r.code, 0, r.stdout + r.stderr);
-  assert.deepEqual(t.result(), { name: "demo", run: t.result().run, ok: true, result: { a: "alpha", b: "beta", piped: [10, 20], args: { x: 1 }, meta: "demo" }, blocked: [] });
+  assert.deepEqual(t.result(), { name: "demo", run: t.result().run, ok: true, result: { a: "alpha", b: "beta", c: "gamma", piped: [10, 20], args: { x: 1 }, meta: "demo" }, blocked: [] });
   assert.match(r.stdout, /== Scan\n/);
   assert.match(r.stdout, /run dir /);
   const calls = t.calls(), runs = calls.filter((c) => c[0] === "run");
-  assert.deepEqual(runs.map((c) => c.slice(c.indexOf("--") + 1)[0]).sort(), ["claude", "claude", "codex", "pi"]);
+  assert.deepEqual(runs.map((c) => c.slice(c.indexOf("--") + 1)[0]).sort(), ["claude", "claude", "claude", "codex", "pi"]);
+  const plain = runs.find((c) => c.includes("claude") && !c.includes("acceptEdits"));
+  assert.deepEqual(plain.slice(plain.indexOf("--") + 1, plain.indexOf("--") + 4), ["claude", "--permission-mode", "auto"]);
   const codex = runs.find((c) => c.includes("codex"));
   assert.deepEqual(codex.slice(codex.indexOf("--") + 1, codex.indexOf("--") + 5), ["codex", "--no-daemon", "--model", "m1"]);
   assert.ok(codex.includes("--add-dir") && codex.includes(t.dir));
-  assert.ok(runs.filter((c) => c.includes("claude")).every((c) => c.includes("acceptEdits")));
+  assert.ok(runs.filter((c) => c.includes("acceptEdits")).length === 2 && runs.filter((c) => c.includes("acceptEdits")).every((c) => !c.includes("auto")), "a script's mode replaces the default");
   assert.ok(!runs.find((c) => c[c.indexOf("--") + 1] === "pi").includes("--add-dir"), "pi has no --add-dir");
   assert.ok(runs.every((c) => c.includes("--parent") && c.includes("t0") && c.includes("--no-notify")), "workers belong to the runner's parent");
   assert.ok(runs.every((c) => c[c.indexOf("--name") + 1].length <= 32));
@@ -95,23 +97,38 @@ throw new Error('boom')`);
   assert.ok(Math.max(...live) <= 2, `live: ${live}`);
 });
 
-test("remote workers write and read their result on that machine", async () => {
+test("remote workers: result read on that machine; a blocked one outlives the runner", async () => {
   const t = setup(`export const meta = { name: 'far', description: 'remote' }
-return await agent('FAKE:ok:far away', { on: 'box', cwd: '/srv' })`);
+return await parallel([() => agent('FAKE:ok:far away', { on: 'box', cwd: '/srv' }), () => agent('FAKE:blocked', { on: 'box', label: 'stuck' })])`, { FAKE_LEAD: "t0" });
   const r = await flow(t);
   assert.equal(r.code, 0, r.stdout + r.stderr);
-  assert.equal(t.result().result, "far away");
-  const calls = t.calls(), run = calls.find((c) => c[0] === "run");
-  assert.ok(run.includes("--on") && run.includes("box") && run.includes("/srv"));
+  assert.deepEqual(t.result().result, ["far away", null]);
+  const calls = t.calls(), runs = calls.filter((c) => c[0] === "run");
+  assert.ok(runs.every((c) => c.includes("--on") && c.includes("box")));
+  assert.ok(runs.some((c) => c.includes("/srv")));
   assert.ok(calls.some((c) => c[0] === "exec" && c.includes("box")));
   assert.ok(calls.some((c) => c[0] === "file" && c.includes("--on")));
   assert.ok(existsSync(join(t.root, "state", "hc-flow")), "the remote run dir is made through hc exec");
-  assert.deepEqual(named(calls, "rm"), ["box/" + named(calls, "run")[0]]);
+  const ran = named(calls, "run").map((n) => "box/" + n);
+  assert.deepEqual(named(calls, "rm"), ran.filter((a) => !a.endsWith("stuck")));
+  // The runner's terminal ends: the blocked worker stays for the person.
+  execFileSync("hc", ["_ended", "t1"], { env: t.env });
+  assert.ok(existsSync(join(t.root, "hc", "t", ran.find((a) => a.endsWith("stuck")).replace("/", "_") + ".json")));
+});
+
+test("with no lead, a blocked local worker outlives the runner", async () => {
+  const t = setup(`export const meta = { name: 'solo', description: 'no lead' }
+return await agent('FAKE:blocked', { label: 'stuck' })`);
+  const r = await flow(t);
+  assert.equal(r.code, 1, r.stdout + r.stderr);
+  const [name] = named(t.calls(), "run");
+  execFileSync("hc", ["_ended", "t1"], { env: t.env });
+  assert.ok(existsSync(join(t.root, "hc", "t", name + ".json")));
 });
 
 test("Ctrl-C removes the workers the runner started", async () => {
   const t = setup(`export const meta = { name: 'stop', description: 'stop' }
-await parallel([() => agent('FAKE:slow', { label: 'one' }), () => agent('FAKE:slow', { label: 'two' })])`);
+await parallel([() => agent('FAKE:slow', { label: 'one' }), () => agent('FAKE:slow', { label: 'two', on: 'box' })])`, { FAKE_LEAD: "t0" });
   // Its own process group, signalled whole, as a terminal's Ctrl-C does: the runner's hc calls get it too.
   const child = spawn("node", [FLOW, "run", join(t.root, "script.js"), "--dir", t.dir], { env: t.env, detached: true });
   let stdout = "", armed = null;
@@ -119,11 +136,14 @@ await parallel([() => agent('FAKE:slow', { label: 'one' }), () => agent('FAKE:sl
     stdout += d;
     if (!armed && (stdout.match(/start /g) ?? []).length === 2) armed = setTimeout(() => process.kill(-child.pid, "SIGINT"), 300);
   });
+  const fallback = setTimeout(() => process.kill(-child.pid, "SIGINT"), 5000); // a worker that never starts fails, not hangs
   const code = await new Promise((done) => child.on("exit", done));
+  clearTimeout(fallback);
   assert.equal(code, 130, stdout);
   assert.match(stdout, /stopped \(SIGINT\): removing 2 worker/);
   assert.equal(t.result().error, "stopped by SIGINT");
-  assert.deepEqual(named(t.calls(), "rm").sort(), named(t.calls(), "run").sort());
+  const ran = t.calls().filter((c) => c[0] === "run").map((c) => (c.includes("--on") ? "box/" : "") + c[c.indexOf("--name") + 1]);
+  assert.deepEqual(named(t.calls(), "rm").sort(), ran.sort());
 });
 
 test("a script without the meta literal first is refused", async () => {

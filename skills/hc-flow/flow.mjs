@@ -91,10 +91,13 @@ async function main(argv) {
   let count = 0, active = 0, stopping = false;
   const queue = [];
 
-  // Workers belong to whoever started the runner, so one left blocked outlives the runner's exit.
+  // A worker left blocked must outlive the runner: locally it belongs to whoever started the
+  // runner; elsewhere (the lead's address means nothing there) and with no lead it stays the
+  // runner's child but doesn't end with it.
   const self = process.env.HC_TERMINAL_ID;
   const lead = self ? (await hcJson(["get", "--json", self]).catch(() => ({}))).parent : null;
-  const parentArgs = lead ? ["--parent", lead, "--no-notify"] : [];
+  const outlive = ["--outlive-parent", "--no-notify"];
+  const parentArgs = (on) => (lead && !on ? ["--parent", lead, "--no-notify"] : outlive);
 
   const remove = async (address) => {
     live.delete(address);
@@ -123,10 +126,12 @@ async function main(argv) {
     const name = uniqueName(label);
     const where = opts.on ? await remoteDir(opts.on) : dir;
     const file = `${where}/${name}.${opts.schema ? "json" : "md"}`;
-    const argv = [harness, ...HARNESSES[harness], ...(opts.model ? ["--model", opts.model] : []), ...(harness === "pi" ? [] : ["--add-dir", where]), ...(opts.args ?? [])];
+    // claude starts in auto mode unless the script picks a mode; trust prompts stay the person's.
+    const mode = harness === "claude" && !(opts.args ?? []).some((a) => String(a).startsWith("--permission-mode")) ? ["--permission-mode", "auto"] : [];
+    const argv = [harness, ...HARNESSES[harness], ...mode, ...(opts.model ? ["--model", opts.model] : []), ...(harness === "pi" ? [] : ["--add-dir", where]), ...(opts.args ?? [])];
     const cwd = opts.on ? opts.cwd : resolve(opts.cwd ?? process.cwd());
     if (!opts.on && !existsSync(cwd)) throw new Error(`${name}: no folder ${cwd}`);
-    const started = await hcJson(["run", "--bg", "--json", "--name", name, ...(opts.on ? ["--on", opts.on] : []), ...(cwd ? ["--cwd", cwd] : []), ...parentArgs, "--", ...argv]).catch((e) => {
+    const started = await hcJson(["run", "--bg", "--json", "--name", name, ...(opts.on ? ["--on", opts.on] : []), ...(cwd ? ["--cwd", cwd] : []), ...parentArgs(opts.on), "--", ...argv]).catch((e) => {
       throw new Error(`${name}: ${e.message}`);
     });
     const address = started.address;
