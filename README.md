@@ -6,6 +6,7 @@ Skills I use in every coding agent: Claude Code, Codex and pi, on every machine.
 |---|---|
 | [chains](skills/chains) | Markdown handoffs in `.chains/` that survive sessions, compaction and agent switches. Ships `chain.mjs` (Node, no dependencies). |
 | [hc](skills/hc) | Run servers, builds and other agents through [herdr-core](https://herdr.dev), and reach other machines. |
+| [hc-flow](skills/hc-flow) | Multi-agent work as real pi, Claude Code and Codex sessions in hc terminals: by hand, or scripted with `flow.mjs` (`agent`/`parallel`/`pipeline`, Node, no dependencies). |
 | [diagnose](skills/diagnose) | A debugging loop: reproduce, hypothesize, probe, fix with a regression check. |
 | [codebase-orientation](skills/codebase-orientation) | Map an unfamiliar code area just enough to act safely. |
 | [validation-review](skills/validation-review) | A bounded test-and-review pass with a ship verdict. |

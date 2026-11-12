@@ -13,7 +13,8 @@ it before anything not covered here.
 
 | Work | Use |
 |---|---|
-| A sub-task inside your turn: research, a review pass, a workflow | your own subagents / workflows, not hc |
+| A sub-task inside your turn: research, a review pass | your own subagents, if your harness has them |
+| Several agents, a pipeline or panel of them, or agents on another harness or machine | the `hc-flow` skill (by hand or `flow.mjs`) |
 | A server, build, test suite, CI watch, anything slow | `hc run --bg`, then `hc wait` |
 | Another agent or model as a peer you or the person can steer | `hc run --bg <agent>` (see `peers.md`) |
 | A command or file on another machine | `hc exec` / `hc file` / `hc run --on` (see `remote.md`) |
