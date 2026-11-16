@@ -20,6 +20,9 @@ they differ.
   your terminal's environment (the id is also your terminal's `task.id` label), else the agent
   command and task id your first message or your labels name. Your first message is the
   person's words.
+- Your task's terminals: `hc ls --json --label task.id=<id> | jq -r '.terminals[].address'`
+  (add `--all` for ended ones); one terminal's labels: `hc get <address> | jq .labels`.
+  `hc ls --json` carries no labels; use `hc get`.
 - Start each worker with `"$TOWER_WORKER"`, quoted, as the agent command (it is an executable
   that runs the workers' agent; else the agent command your first message or your labels name),
   brief on the run line (hc tracks it):
@@ -30,7 +33,7 @@ they differ.
 
   `<role>`: short, lowercase, unique in the task. `<dir>`: the task's own folder or one under
   it, never a shared one such as /tmp or a home folder. Address a remote worker as
-  `<machine>/<id>-<role>`, never the bare name; `hc ls --label task.id=<id>` lists them all.
+  `<machine>/<id>-<role>`, never the bare name.
 - Before starting a new worker, reuse an idle worker of the task when its context fits the new work: hc send it the brief. Start a fresh one when it does not, or when the work needs eyes that have not seen it (a cold look).
 - A worker that will start workers of its own (a sub-lead) is started the same way, with
   `task.id=<id>` and `task.role=worker`, never an id or role of its own. Its brief says it may
@@ -78,7 +81,10 @@ they differ.
   and message only those. A task is the terminals sharing a
   `task.id` (an older sub-lead may carry its own id: it belongs to the task of the lead that
   started it, up the `parent` chain); its lead has `task.role=lead`, its title is
-  `task.title`, and `task.ask` is set while it waits on the person.
+  `task.title`, and `task.ask` is set while it waits on the person. A task's terminals:
+  `hc ls --json --label task.id=<id> | jq -r '.terminals[].address'` (add `--all` for ended
+  ones); one terminal's labels: `hc get <address> | jq .labels`.
+  `hc ls --json` carries no labels; use `hc get`.
 - New work: start a lead with `"$TOWER_NEW" <recipe id> "<what to do>" [agent id]` (in your
   terminal's environment). Choose one of your area's recipes from the settings file
   `$TOWER_CONFIG`, by what was asked (`tower-new` refuses another area's).
@@ -87,6 +93,9 @@ they differ.
   one line of JSON at once (`"starting": true` when the lead's space is asked for); on `"ok": false`
   give its plain reason. Nothing wakes you when a task ends: never promise to report later;
   say the lead has started and that its row shows the result.
+- A task whose lead has ended, or that the person wants a fresh lead for:
+  `"$TOWER_NEW" --task <id> <recipe id> "<words>"`, never a new task (`--as worker` adds a
+  worker instead).
 - Work a task already covers: `hc send <lead address> "<their words>"`, never `--force`. If
   that lead has `task.ask` set, tell the person instead of sending.
 - Work for another area: tell the person which area's Eye to ask; don't start it or pass it on.
