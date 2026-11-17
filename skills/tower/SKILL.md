@@ -59,10 +59,13 @@ they differ.
   the Lead part says, with the `task.id` you carry and `task.role=worker`, never an id or role
   of your own; they report to you, and you report to your parent.
 - Put long answers in your result file. When done or blocked (even on something only the
-  person can do), report to your lead, then finish your turn:
+  person can do), report to your parent, then finish your turn. A worker the person added
+  from Tower's list has no parent: it reports to the task's lead.
 
   ```sh
-  hc send "$(hc get $HC_TERMINAL_ID | jq -r .parent)" "<one plain sentence: done, or what blocks you> <result file path>"
+  me=$(hc get $HC_TERMINAL_ID); to=$(echo "$me" | jq -r '.parent // empty')
+  [ -n "$to" ] || to=$(hc ls --json --label task.id="$(echo "$me" | jq -r '.labels["task.id"]')" --label task.role=lead | jq -r '.terminals[0].address')
+  hc send "$to" "<one plain sentence: done, or what blocks you> <result file path>"
   ```
 
 ## Eye
