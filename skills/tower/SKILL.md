@@ -23,6 +23,19 @@ they differ.
 - Your task's terminals: `hc ls --json --label task.id=<id> | jq -r '.terminals[].address'`
   (add `--all` for ended ones); one terminal's labels: `hc get <address> | jq .labels`.
   `hc ls --json` carries no labels; use `hc get`.
+- Name your task once you understand it, before your first worker, and again only when its mission
+  changes, never for a step. A name: one to four words, the object first and the kind of work last
+  ("Parser fuzz review", "Invoice export fix", "Cache to Redis"); a verb leads only when it is the
+  work ("Fix login redirect"); no filler or pronouns, articles, ids, dates, numbers or words for
+  the process (agents, workers, lead, port, setup); a misheard word in the request is not copied
+  when the right one is plain. Set it with this one line, on any machine (it leaves a name the
+  person gave alone):
+
+  ```sh
+  hc get $HC_TERMINAL_ID | jq -e '.labels["task.by"] // "" | test("^(raw|llm|eye|lead)$")' >/dev/null && hc label $HC_TERMINAL_ID "task.title=<Name>" task.by=lead
+  ```
+
+  Never rename or move the task's folder.
 - Start each worker with `"$TOWER_WORKER"`, quoted, as the agent command (it is an executable
   that runs the workers' agent; else the agent command your first message or your labels name),
   brief on the run line (hc tracks it):
@@ -31,7 +44,8 @@ they differ.
   hc run --bg --outlive-parent --label task.id=<id> --label task.role=worker --name <id>-<role> --cwd <dir> [--on <machine>] <agent command> "<brief>"
   ```
 
-  `<role>`: short, lowercase, unique in the task. `<dir>`: the task's own folder or one under
+  `<role>`: short, lowercase, unique in the task, and says what the worker works on (`snow-gear`,
+  `api-review`), not a step or a counter (`port`, `r7`). `<dir>`: the task's own folder or one under
   it, never a shared one such as /tmp or a home folder. Address a remote worker as
   `<machine>/<id>-<role>`, never the bare name.
 - Before starting a new worker, reuse an idle worker of the task when its context fits the new work: hc send it the brief. Start a fresh one when it does not, or when the work needs eyes that have not seen it (a cold look).
@@ -89,14 +103,21 @@ they differ.
   `hc ls --json --label task.id=<id> | jq -r '.terminals[].address'` (add `--all` for ended
   ones); one terminal's labels: `hc get <address> | jq .labels`.
   `hc ls --json` carries no labels; use `hc get`.
-- New work: start a lead with `"$TOWER_NEW" <recipe id> "<what to do>" [agent id]` (in your
-  terminal's environment). Choose one of your area's recipes from the settings file
+- New work: start a lead with `"$TOWER_NEW" --title "<Name>" <recipe id> "<what to do>" [agent id]`
+  (in your terminal's environment). Choose one of your area's recipes from the settings file
   `$TOWER_CONFIG`, by what was asked (`tower-new` refuses another area's).
   Pass the person's request on as they said it, whole and unchanged, as the words: don't
   answer it, reword it or split it yourself; a question it asks belongs to the lead. It prints
   one line of JSON at once (`"starting": true` when the lead's space is asked for); on `"ok": false`
   give its plain reason. Nothing wakes you when a task ends: never promise to report later;
   say the lead has started and that its row shows the result.
+- Name every task you start (naming a task you start is not renaming): one to four words, the
+  object first and the kind of work last ("Parser fuzz review", "Invoice export fix", "Cache to
+  Redis"); a verb leads only when it is the work ("Fix login redirect"); no filler or pronouns,
+  articles, ids, dates, numbers or words for the process (agents, workers, lead, port, setup); a
+  misheard word in the request is not copied when the right one is plain. When the person gave the
+  name, pass their words and add `--yours`.
+- Asked to rename a task: `hc label <lead address> "task.title=<Name>" task.by=you`.
 - A task whose lead has ended, or that the person wants a fresh lead for:
   `"$TOWER_NEW" --task <id> <recipe id> "<words>"`, never a new task (`--as worker` adds a
   worker instead).
