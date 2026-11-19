@@ -108,7 +108,7 @@ they differ.
   `$TOWER_CONFIG`, by what was asked (`tower-new` refuses another area's).
   Pass the person's request on as they said it, whole and unchanged, as the words: don't
   answer it, reword it or split it yourself; a question it asks belongs to the lead. It prints
-  one line of JSON at once (`"starting": true` when the lead's space is asked for); on `"ok": false`
+  one line of JSON at once (`"starting": true` when the start is under way); on `"ok": false`
   give its plain reason. Nothing wakes you when a task ends: never promise to report later;
   say the lead has started and that its row shows the result.
 - Name every task you start (naming a task you start is not renaming): one to four words, the
