@@ -9,10 +9,10 @@ const USAGE = `chain <command> [options]   (add --json for JSON)
   save <chain> [--branch B] [--parent FILE] [--next TEXT] [--title T]   link text on stdin
   load <chain> [--branch B] [--link FILE]
   context <chain> [--branch B] [--parents 2] [--recent 3]
-  list [chain] [--max N]   no chain: newest first with next steps, nothing when there are none
+  list [chain] [--max N] [--hook agy-start]   no chain: newest first with next steps, nothing when there are none
   search <query> [--chain C]
   fork <chain> <branch> [--from FILE | --from-branch B]
-  remind --session ID [--after 30] [--since MS] | --hook claude-stop|claude-precompact   hook JSON on stdin
+  remind --session ID [--after 30] [--since MS] | --hook claude-stop|claude-precompact|agy-stop   hook JSON on stdin
   root`;
 const NAME = /^[\p{L}\p{N}][\p{L}\p{N}._-]{0,79}$/u;
 const LINK = /^[\p{L}\p{N}][\p{L}\p{N}._-]*\.md$/u;
@@ -202,10 +202,11 @@ function remind(opt) {
   let since = Number(opt.since) || 0;
   const hook = opt.hook ? JSON.parse(readFileSync(0, "utf8")) : null;
   if (hook) {
-    if (hook.stop_hook_active) return;
+    // Antigravity also runs its stop hook after a cancel or an error: remind only at a normal end.
+    if (hook.stop_hook_active || hook.continuationActive || (hook.terminationReason ?? "NO_TOOL_CALL") !== "NO_TOOL_CALL") return;
     if (hook.cwd) process.chdir(hook.cwd);
-    opt.session ??= hook.session_id;
-    try { since = statSync(hook.transcript_path).birthtimeMs; } catch {}
+    opt.session ??= hook.session_id ?? hook.conversationId;
+    try { since = statSync(hook.transcript_path ?? hook.transcriptPath).birthtimeMs; } catch {}
   }
   const session = String(opt.session ?? "").replace(/[^\w.-]/g, "_").slice(0, 128);
   if (!session) return;
@@ -227,7 +228,8 @@ function remind(opt) {
   if (state.reminded || minutes < Number(opt.after ?? process.env.CHAINS_REMIND_AFTER ?? 30)) return;
   writeFileSync(file, JSON.stringify({ ...state, reminded: true }));
   const text = `[chains reminder] About ${minutes} min of work since this session started and no chain link saved. If any of it is worth keeping, save a link with the chains skill now; otherwise ignore this.`;
-  process.stdout.write(`${opt.hook === "claude-stop" ? JSON.stringify({ decision: "block", reason: text }) : text}\n`);
+  const decision = { "claude-stop": "block", "agy-stop": "continue" }[opt.hook];
+  process.stdout.write(`${decision ? JSON.stringify({ decision, reason: text }) : text}\n`);
 }
 
 const { pos: [cmd, ...pos], opt } = parseArgs(process.argv.slice(2));
@@ -261,6 +263,9 @@ switch (cmd) {
       const all = links(name(pos[0], "chain"));
       print(all.map(strip), all.map(line).join("\n") || `no links in ${pos[0]}`);
     } else {
+      // Antigravity runs a hook in the folder of its hooks.json and takes a JSON object back.
+      const agy = opt.hook === "agy-start";
+      if (agy) try { process.chdir(JSON.parse(readFileSync(0, "utf8")).cwd); } catch { break; }
       const all = chains().map((c) => {
         const ls = links(c);
         return { chain: c, count: ls.length, branches: [...new Set(ls.map((l) => l.branch))], latest: ls[0] ? strip(ls[0]) : null };
@@ -268,13 +273,13 @@ switch (cmd) {
       const items = all.slice(0, Math.max(1, Number(opt.max) || Infinity));
       const C = fileURLToPath(import.meta.url), cut = (t) => (t.length > 120 ? `${t.slice(0, 119)}…` : t);
       const item = (i) => `- ${i.chain}  ${i.count} links  [${i.branches.join(", ")}]${i.latest ? `  latest: ${cut(i.latest.title)}${age(i.latest)}${i.latest.nextStep ? `  → next: ${cut(i.latest.nextStep)}` : ""}` : ""}`;
+      const text = [
+        `Chains (saved work context) in ${root()}, newest first${items.length < all.length ? ` (${items.length} of ${all.length})` : ""}:`,
+        ...items.map(item),
+        `Before continuing one of these: node ${C} context <chain>`,
+      ].join("\n");
       if (opt.json) print(items);
-      else if (items.length)
-        print(items, [
-          `Chains (saved work context) in ${root()}, newest first${items.length < all.length ? ` (${items.length} of ${all.length})` : ""}:`,
-          ...items.map(item),
-          `Before continuing one of these: node ${C} context <chain>`,
-        ].join("\n"));
+      else if (items.length) process.stdout.write(`${agy ? JSON.stringify({ injectSteps: [{ systemMessage: { systemMessage: text } }] }) : text}\n`);
     }
     break;
   }

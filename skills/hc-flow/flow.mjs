@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 // hc-flow runner: a script of agent() / parallel() / pipeline() calls where every agent is a real
-// harness (pi, claude, codex) in its own hc terminal. Node stdlib only.
+// harness (pi, claude, codex, agy) in its own hc terminal. Node stdlib only.
 import { execFile } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 
 const USAGE = "usage: node flow.mjs run <script.js> [--args JSON] [--max 4] [--dir DIR]";
-const HARNESSES = { pi: [], claude: [], codex: ["--no-daemon"] };
+const HARNESSES = { pi: [], claude: [], codex: ["--no-daemon"], agy: [] };
 const READY_SECONDS = 60;
 const DEFAULT_TIMEOUT = 1800;
 
@@ -128,9 +128,11 @@ async function main(argv) {
     const file = `${where}/${name}.${opts.schema ? "json" : "md"}`;
     // claude starts in auto mode unless the script picks a mode; trust prompts stay the person's.
     const mode = harness === "claude" && !(opts.args ?? []).some((a) => String(a).startsWith("--permission-mode")) ? ["--permission-mode", "auto"] : [];
-    const argv = [harness, ...HARNESSES[harness], ...mode, ...(opts.model ? ["--model", opts.model] : []), ...(harness === "pi" ? [] : ["--add-dir", where]), ...(opts.args ?? [])];
     const cwd = opts.on ? opts.cwd : resolve(opts.cwd ?? process.cwd());
     if (!opts.on && !existsSync(cwd)) throw new Error(`${name}: no folder ${cwd}`);
+    // agy trusts exact folders only and would ask in every new one: trust this one for this session, nothing saved.
+    const trust = harness === "agy" && cwd && !(opts.args ?? []).some((a) => String(a).startsWith("--settings")) ? ["--settings", JSON.stringify({ trustedWorkspaces: [opts.on ? cwd : realpathSync(cwd)] })] : [];
+    const argv = [harness, ...HARNESSES[harness], ...mode, ...trust, ...(opts.model ? ["--model", opts.model] : []), ...(harness === "pi" ? [] : ["--add-dir", where]), ...(opts.args ?? [])];
     const started = await hcJson(["run", "--bg", "--json", "--name", name, ...(opts.on ? ["--on", opts.on] : []), ...(cwd ? ["--cwd", cwd] : []), ...parentArgs(opts.on), "--", ...argv]).catch((e) => {
       throw new Error(`${name}: ${e.message}`);
     });
@@ -200,7 +202,7 @@ async function main(argv) {
 
   async function agent(prompt, opts = {}) {
     if (typeof prompt !== "string" || !prompt.trim()) throw new Error("agent() needs a prompt");
-    if (!HARNESSES[opts.harness ?? "pi"]) throw new Error(`unknown harness ${opts.harness}: pi, claude or codex`);
+    if (!HARNESSES[opts.harness ?? "pi"]) throw new Error(`unknown harness ${opts.harness}: pi, claude, codex or agy`);
     const label = opts.label ?? `${opts.harness ?? "pi"}-${++count}`;
     if (active < max) active++;
     else await new Promise((go) => queue.push(go));

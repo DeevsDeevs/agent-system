@@ -1,12 +1,12 @@
 # agent-system
 
-Skills I use in every coding agent: Claude Code, Codex and pi, on every machine.
+Skills I use in every coding agent: Claude Code, Codex, pi and Antigravity, on every machine.
 
 | Skill | What it does |
 |---|---|
 | [chains](skills/chains) | Markdown handoffs in `.chains/` that survive sessions, compaction and agent switches. Ships `chain.mjs` (Node, no dependencies). |
 | [hc](skills/hc) | Run servers, builds and other agents through [herdr-core](https://herdr.dev), and reach other machines. |
-| [hc-flow](skills/hc-flow) | Multi-agent work as real pi, Claude Code and Codex sessions in hc terminals: by hand, or scripted with `flow.mjs` (`agent`/`parallel`/`pipeline`, Node, no dependencies). |
+| [hc-flow](skills/hc-flow) | Multi-agent work as real pi, Claude Code, Codex and Antigravity sessions in hc terminals: by hand, or scripted with `flow.mjs` (`agent`/`parallel`/`pipeline`, Node, no dependencies). |
 | [tower](skills/tower) | Rules for the Eye, task leads and workers of Tower, a [Herdr](https://herdr.dev) mod that shows agents' work as tasks. |
 | [diagnose](skills/diagnose) | A debugging loop: reproduce, hypothesize, probe, fix with a regression check. |
 | [codebase-orientation](skills/codebase-orientation) | Map an unfamiliar code area just enough to act safely. |
@@ -17,11 +17,12 @@ Skills I use in every coding agent: Claude Code, Codex and pi, on every machine.
 ## Install
 
 ```sh
-npx skills add DeevsDeevs/agent-system -g -a claude-code -a codex -a pi
+npx skills add DeevsDeevs/agent-system -g -a claude-code -a codex -a pi -a antigravity-cli
 npx skills update -g
 ```
 
-Claude Code reads `~/.claude/skills`, Codex and pi read `~/.agents/skills`.
+Claude Code reads `~/.claude/skills`, Codex and pi read `~/.agents/skills`, Antigravity
+reads `~/.gemini/config/skills`.
 
 The old plugins (dev-experts, venue-expert, mft-research-experts and the rest) are on the
 [`legacy`](https://github.com/DeevsDeevs/agent-system/tree/legacy) branch.

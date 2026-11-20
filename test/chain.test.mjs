@@ -70,6 +70,8 @@ test("the root stops at the git root, and outside git below ~; list is the start
   assert.match(chain(at("ws/repo/src"), ["list", "--max", "5"]), new RegExp(`^Chains \\(saved work context\\) in ${join(repo, ".chains")}, newest first:\n- work  1 links  \\[main\\]  latest: Fresh \\(0d\\)  → next: ship it\n- old  1 links  \\[main\\]  latest: Old idea \\(\\d+d, stale\\)  → next: check the cache\nBefore continuing one of these: node .*chain\\.mjs context <chain>\n$`));
   assert.match(chain(repo, ["list", "--max", "1"]), /newest first \(1 of 2\):\n- work .*\nBefore continuing/);
   assert.deepEqual(JSON.parse(chain(repo, ["list", "--json"])).map((c) => c.chain), ["work", "old"]);
+  assert.match(JSON.parse(chain(at("ws"), ["list", "--max", "1", "--hook", "agy-start"], JSON.stringify({ cwd: join(repo, "src") }))).injectSteps[0].systemMessage.systemMessage, /^Chains .*\n- work /, "Antigravity's session start: the hook's own folder is not the session's");
+  assert.equal(chain(repo, ["list", "--hook", "agy-start"], JSON.stringify({ cwd: at("no/such/folder") })), "", "a hook prints nothing on any problem");
 });
 
 test("remind: once per session, only after --after minutes with no link saved", () => {
@@ -100,5 +102,10 @@ test("remind: once per session, only after --after minutes with no link saved", 
   assert.equal(stop({ session_id: "c3", stop_hook_active: true }), "");
   assert.match(chain(["remind", "--hook", "claude-precompact"], JSON.stringify({ session_id: "p1", cwd: repo })), /^End the summary with this line, verbatim: "\[chains reminder\]/);
   assert.equal(chain(["remind", "--hook", "claude-stop"], "not json"), "");
+  const agy = (input) => chain(["remind", "--hook", "agy-stop"], JSON.stringify({ cwd: repo, transcriptPath: "/nonexistent", ...input }));
+  assert.match(JSON.stringify(JSON.parse(agy({ conversationId: "a1" }))), /^\{"decision":"continue","reason":"\[chains reminder\]/);
+  assert.equal(agy({ conversationId: "a2", continuationActive: true }), "");
+  assert.equal(agy({ conversationId: "a3", terminationReason: "USER_CANCELED" }), "", "no reminder after a cancel");
+  assert.match(agy({ conversationId: "a3", terminationReason: "NO_TOOL_CALL" }), /continue/);
   assert.equal(chain(["remind"]), "");
 });
