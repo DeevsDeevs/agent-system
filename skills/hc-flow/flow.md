@@ -19,7 +19,7 @@ return await agent(`Merge these reviews, drop duplicates and anything unproven:\
 - `agent(prompt, opts)` starts one worker, briefs it, and resolves with its result file's
   text (with `schema`, the parsed object). It rejects with the reason when the worker errors,
   exits, times out or writes no valid result after one retry. Options:
-  - `harness`: `'pi'` (default), `'claude'` or `'codex'`. `model`: the harness's own model
+  - `harness`: `'pi'` (default), `'claude'`, `'codex'` or `'agy'` (Antigravity). `model`: the harness's own model
     string; omit for its default.
   - `cwd` (default: the runner's), `on` (an hc machine), `label` (the terminal is named
     `<run>-<label>`).
@@ -27,8 +27,11 @@ return await agent(`Merge these reviews, drop duplicates and anything unproven:\
     an object with the required keys.
   - `args`: extra CLI args for the harness, for example `['--permission-mode', 'acceptEdits']`
     for claude. claude starts with `--permission-mode auto` unless `args` sets a mode; the
-    runner adds no other permission flags, only `--add-dir <run dir>` for claude and codex
-    so they can write the result file, and `--no-daemon` for codex.
+    runner adds no other permission flags, only `--add-dir <run dir>` for claude, codex and
+    agy so they can write the result file, and `--no-daemon` for codex. agy trusts exact
+    folders only, so the runner trusts its `cwd` for that session (`--settings`, nothing
+    saved) unless `args` has its own `--settings`. With `on`, give `cwd` as the folder's
+    real path there: it is trusted as written, and without a `cwd` nothing is.
   - `timeout`: seconds for the whole agent (default 1800). `phase`: shown in its start line.
 - A worker that is `blocked`, or not ready within 60 s (a trust or login prompt), is left
   running for the person. The runner prints `BLOCKED <name> <address>: <screen>`, lists it

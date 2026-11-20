@@ -31,16 +31,19 @@ const named = (calls, cmd) => calls.filter((c) => c[0] === cmd).map((c) => (cmd 
 test("parallel, pipeline and schema results; harness flags; every worker removed", async () => {
   const t = setup(`export const meta = { name: 'demo', description: 'a "test" {run}' }
 phase('Scan')
-const [a, b, c] = await parallel([() => agent('FAKE:ok:alpha', { label: 'a' }), () => agent('FAKE:ok:beta', { label: 'b', harness: 'codex', model: 'm1' }), () => agent('FAKE:ok:gamma', { harness: 'claude' })])
+const [d, a, b, c] = await parallel([() => agent('FAKE:ok:delta', { label: 'd', harness: 'agy' }), () => agent('FAKE:ok:alpha', { label: 'a' }), () => agent('FAKE:ok:beta', { label: 'b', harness: 'codex', model: 'm1' }), () => agent('FAKE:ok:gamma', { harness: 'claude' })])
 const piped = await pipeline([1, 2], (n) => agent('FAKE:json:{"n":' + n + '}', { harness: 'claude', args: ['--permission-mode', 'acceptEdits'], schema: { type: 'object', required: ['n'], properties: { n: { type: 'number' } } } }), (r) => r.n * 10)
-return { a, b, c, piped, args, meta: meta.name }`, { FAKE_LEAD: "t0" });
+return { a, b, c, d, piped, args, meta: meta.name }`, { FAKE_LEAD: "t0" });
   const r = await flow(t, "--args", '{"x":1}');
   assert.equal(r.code, 0, r.stdout + r.stderr);
-  assert.deepEqual(t.result(), { name: "demo", run: t.result().run, ok: true, result: { a: "alpha", b: "beta", c: "gamma", piped: [10, 20], args: { x: 1 }, meta: "demo" }, blocked: [] });
+  assert.deepEqual(t.result(), { name: "demo", run: t.result().run, ok: true, result: { a: "alpha", b: "beta", c: "gamma", d: "delta", piped: [10, 20], args: { x: 1 }, meta: "demo" }, blocked: [] });
   assert.match(r.stdout, /== Scan\n/);
   assert.match(r.stdout, /run dir /);
   const calls = t.calls(), runs = calls.filter((c) => c[0] === "run");
-  assert.deepEqual(runs.map((c) => c.slice(c.indexOf("--") + 1)[0]).sort(), ["claude", "claude", "claude", "codex", "pi"]);
+  assert.deepEqual(runs.map((c) => c.slice(c.indexOf("--") + 1)[0]).sort(), ["agy", "claude", "claude", "claude", "codex", "pi"]);
+  const agy = runs.find((c) => c.includes("agy")), agyArgv = agy.slice(agy.indexOf("--") + 1);
+  assert.deepEqual([agyArgv[1], agyArgv[3]], ["--settings", "--add-dir"]);
+  assert.ok(existsSync(JSON.parse(agyArgv[2]).trustedWorkspaces[0]), "agy trusts its own folder for the session");
   const plain = runs.find((c) => c.includes("claude") && !c.includes("acceptEdits"));
   assert.deepEqual(plain.slice(plain.indexOf("--") + 1, plain.indexOf("--") + 4), ["claude", "--permission-mode", "auto"]);
   const codex = runs.find((c) => c.includes("codex"));

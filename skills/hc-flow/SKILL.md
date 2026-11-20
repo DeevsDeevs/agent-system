@@ -1,6 +1,6 @@
 ---
 name: hc-flow
-description: "Multi-agent work through hc: start real pi, Claude Code or Codex sessions as hc terminals (watchable in Herdr, any model, any hc machine), brief them, collect their results and clean up, by hand or with a scripted runner (flow.mjs: agent/parallel/pipeline). Use for fan-out, review panels, pipelines of agents, or work on another machine; from pi it is the only way to run other agents."
+description: "Multi-agent work through hc: start real pi, Claude Code, Codex or Antigravity (agy) sessions as hc terminals (watchable in Herdr, any model, any hc machine), brief them, collect their results and clean up, by hand or with a scripted runner (flow.mjs: agent/parallel/pipeline). Use for fan-out, review panels, pipelines of agents, or work on another machine; from pi it is the only way to run other agents."
 ---
 
 # hc-flow
@@ -19,7 +19,8 @@ shape is a script: a fan-out, a pipeline, a panel with a schema.
 ```sh
 R=~/.local/state/hc-flow/<run>; mkdir -p $R               # result files for this run
 hc run --bg --name <run>-<role> --cwd <dir> pi             # or: claude --permission-mode auto --add-dir $R,
-                                                           #     codex --no-daemon --add-dir $R; --on <machine>
+                                                           #     codex --no-daemon --add-dir $R,
+                                                           #     agy --add-dir $R; --on <machine>
 hc wait <run>-<role>                                       # ready: it reports idle
 hc send <run>-<role> "<brief>"
 hc wait <run>-<role>                                       # the turn your send started
@@ -36,10 +37,14 @@ hc kill <run>-<role>; hc rm <run>-<role>                   # once you accept the
 - If the ready wait times out, `hc read` the screen: a trust or login prompt needs the
   person. `blocked` at any point means the same. Tell the person what it's asking; never
   answer a permission or trust prompt for them, and never use `send --force`.
-- Model: `--model <m>` on all three (`pi --model provider/id`, `claude --model`, `codex
-  --no-daemon --model`). Leave it out for the harness default. Start claude with
-  `--permission-mode auto`; keep pi's and codex's permissions as the person set them.
-  claude and codex need `--add-dir $R` to write result files there.
+- Model: `--model <m>` on all four (`pi --model provider/id`, `claude --model`, `codex
+  --no-daemon --model`, `agy --model`). Leave it out for the harness default. Start claude
+  with `--permission-mode auto`; keep pi's, codex's and agy's permissions as the person set
+  them. claude, codex and agy need `--add-dir $R` to write result files there.
+- agy asks to trust every folder it has not run in, also below a trusted one. To start it in
+  a folder you made for the run without the question:
+  `agy --settings '{"trustedWorkspaces":["<real path of dir>"]}'` (this session only, nothing
+  saved).
 
 **The brief.** Put in the whole task: the exact scope (files, what not to touch), the
 requirement text word for word rather than paraphrased, and context. Hand context over with

@@ -1,6 +1,6 @@
 ---
 name: chains
-description: "Save, load, fork and search .chains links: work context that survives sessions, compaction and handoffs between agents (Claude Code, Codex, pi). Use on 'continue', 'resume', 'pick up', 'where were we', 'save progress', before a long task switch, and when handing work to another agent."
+description: "Save, load, fork and search .chains links: work context that survives sessions, compaction and handoffs between agents (Claude Code, Codex, pi, Antigravity). Use on 'continue', 'resume', 'pick up', 'where were we', 'save progress', before a long task switch, and when handing work to another agent."
 ---
 
 # Chains
