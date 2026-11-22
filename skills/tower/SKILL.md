@@ -55,7 +55,11 @@ they differ.
 - A brief gives: goal, what the worker owns, what it must not touch, when it is done, a
   result file path it can write. End it: "When done or blocked, hc send one plain sentence and
   the result path to your parent (the parent field of hc get for your own terminal), then
-  finish your turn. You are a worker on task <id>; use the tower skill if you have it."
+  finish your turn; if your parent has ended, runs no agent (status null), is a shell or carries
+  task.was=lead, send it to the task's lead instead: hc ls --json --label task.id=<id> --label
+  task.role=lead | jq -r '[.terminals[] | select(.status != null)][0].address // empty'; if that
+  prints nothing, to a parent hc get cannot read; with no one, send nothing, keep the result file
+  and say so. You are a worker on task <id>; use the tower skill if you have it."
 - After starting workers, `hc read` each once: a folder-trust or sign-in prompt stalls a new
   worker without telling you. Routine prompts (trusting the folder you chose): answer with
   `hc keys`. Permissions, sign-ins, anything that deletes or sends: ask the person.
@@ -66,6 +70,33 @@ they differ.
   where the task stands, what happens now. Details after.
 - At a milestone save a chain link (`chains`), its next step opening with a plain sentence.
 - When the work is done, say so; leave ending the workers to the person.
+- A new lead whose first message says the earlier lead still runs: before anything else hc send
+  it this one message:
+
+  ```sh
+  hc send <its address> "A new lead, $HC_TERMINAL_ID, has taken over this task. Save a chain link with where the task stands, what waits on the person, which workers run and what each was asked, and hc send me only the chain's name. Then stop leading: clear your task.ask, start no more workers, send nothing to the person on your own, and stay to answer my questions. Pass on to the task's lead (now me) all that reaches you about this task: workers' reports, hc's notes on them, a chain's name from the lead before you, and what the person types to you (tell them a new lead leads this task)."
+  ```
+
+  Wait with `hc wait <its address> --timeout 100`, at most twice, then load that chain
+  (`chains`), and any chain name passed on to you later.
+- A new lead whose earlier lead has ended, is blocked on the person, or did not answer: go on from
+  the task's terminals (`hc read` each) and the newest chain in the task's folder, and say so to
+  the person in your first report. Never answer a blocked earlier lead's prompt (no `hc keys`, no
+  `hc send --force`): set `task.ask` asking the person to end it or answer its prompt and tell
+  you; on the next turn, send it the message above if it still runs.
+- A new lead sets `task.ask` again for what still waits on the person: the question your first
+  message quotes, or one in the chain.
+- Workers you did not start are not your children: find them with
+  `hc ls --json --label task.id=<id> --label task.role=worker | jq -r '.terminals[].address'` and
+  wait on them by address, `hc wait <address> --timeout 100` (a message to you also ends it).
+  After every wait, `hc get` each of them and handle what you see as for your own. The earlier lead (`task.was=lead`) is not a worker to brief or reuse: it answers
+  questions only.
+- Told that a new lead has taken over: do the handover it asks for, then stop leading:
+  `hc label $HC_TERMINAL_ID task.ask=`, start no more workers, send nothing to the person on your
+  own, and stay to answer its questions. Pass on to the task's lead of the moment
+  (`hc ls --json --label task.id=<id> --label task.role=lead | jq -r '[.terminals[] | select(.status != null)][0].address // empty'`)
+  all that reaches you about the task: workers' reports, hc's notes on them, a chain's name from
+  the lead before you, and what the person types to you (tell them a new lead leads this task).
 
 ## Worker
 
@@ -73,13 +104,16 @@ they differ.
   the Lead part says, with the `task.id` you carry and `task.role=worker`, never an id or role
   of your own; they report to you, and you report to your parent.
 - Put long answers in your result file. When done or blocked (even on something only the
-  person can do), report to your parent, then finish your turn. A worker the person added
-  from Tower's list has no parent: it reports to the task's lead.
+  person can do), report with these lines, then finish your turn: your parent if it runs an agent
+  and is neither a shell nor a replaced lead, else the task's lead, else a parent hc can't read;
+  with no one, nothing is sent: keep the result file and say so.
 
   ```sh
-  me=$(hc get $HC_TERMINAL_ID); to=$(echo "$me" | jq -r '.parent // empty')
-  [ -n "$to" ] || to=$(hc ls --json --label task.id="$(echo "$me" | jq -r '.labels["task.id"]')" --label task.role=lead | jq -r '.terminals[0].address')
-  hc send "$to" "<one plain sentence: done, or what blocks you> <result file path>"
+  me=$(hc get $HC_TERMINAL_ID); p=$(printf '%s' "$me" | jq -r '.parent // empty'); to=; last=
+  if [ -n "$p" ]; then if g=$(hc get "$p"); then to=$(printf '%s' "$g" | jq -r --arg p "$p" 'select(.state == "live" and .status != null and .labels["task.role"] != "shell" and .labels["task.was"] == null) | $p'); else last=$p; fi; fi
+  [ -n "$to" ] || to=$(hc ls --json --label task.id="$(printf '%s' "$me" | jq -r '.labels["task.id"]')" --label task.role=lead | jq -r '[.terminals[] | select(.status != null)][0].address // empty')
+  [ -n "$to" ] || to=$last
+  if [ -n "$to" ]; then hc send "$to" "<one plain sentence: done, or what blocks you> <result file path>"; else echo "no one to report to: keep the result file"; fi
   ```
 
 ## Eye
